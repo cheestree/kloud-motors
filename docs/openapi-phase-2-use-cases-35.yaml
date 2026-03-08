@@ -1,0 +1,557 @@
+openapi: 3.0.3
+info:
+  title: Car Marketplace API - Phase 2
+  version: 1.0.0
+  description: |
+    OpenAPI specification generated from Phase 2 use cases:
+    - Use Case 5: Buyer-Seller Communication
+    - Use Case 3: Geographical Market Insights
+tags:
+  - name: Chat
+    description: Buyer-Seller communication endpoints
+  - name: Market Insights
+    description: Geographical market insights and listing aggregation
+
+paths:
+  /api/chat/open:
+    post:
+      tags: [Chat]
+      summary: Open or create a buyer-seller chat session
+      description: |
+        Enables messaging between a buyer and a seller for a specific listing.
+      operationId: openChat
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenChatRequest'
+      responses:
+        '200':
+          description: Chat session opened successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenChatResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/chat/{chat_id}:
+    get:
+      tags: [Chat]
+      summary: Get chat history
+      description: Retrieves message history for a specific chat session.
+      operationId: getChatHistory
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChatIdPath'
+      responses:
+        '200':
+          description: Chat history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ws/chat/{chat_id}:
+    get:
+      tags: [Chat]
+      summary: WebSocket chat endpoint
+      description: |
+        WebSocket endpoint for real-time messaging in an active chat session.
+      operationId: connectChatWebSocket
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChatIdPath'
+      responses:
+        '101':
+          description: Switching Protocols (WebSocket upgrade)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/market/insights/geo:
+    get:
+      tags: [Market Insights]
+      summary: Get geographical market insights
+      description: |
+        Returns price insights for a given car model across selected locations or generally if no locations are specified.
+      operationId: getGeoMarketInsights
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/LocationsQuery'
+        - $ref: '#/components/parameters/YearFromQuery'
+        - $ref: '#/components/parameters/YearToQuery'
+        - $ref: '#/components/parameters/FuelTypeQuery'
+      responses:
+        '200':
+          description: Geographical insights retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoInsightsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/market/price-comparison:
+    get:
+      tags: [Market Insights]
+      summary: Compare prices across locations
+      description: Provides price comparison grouped by district, city or country for a specific car model, with optional sorting and limiting.
+      operationId: getPriceComparison
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/GroupByDistrictCityCountryQuery'
+        - $ref: '#/components/parameters/SortByQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+      responses:
+        '200':
+          description: Price comparison retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceComparisonResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/listings/aggregate:
+    get:
+      tags: [Market Insights]
+      summary: Aggregate listing metrics by location
+      description: Aggregates requested listing metrics grouped by location fields.
+      operationId: getListingsAggregate
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/MetricsQuery'
+        - $ref: '#/components/parameters/GroupByLocationQuery'
+        - $ref: '#/components/parameters/YearFromQuery'
+        - $ref: '#/components/parameters/YearToQuery'
+      responses:
+        '200':
+          description: Aggregates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingsAggregateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/listings/stats/by-location:
+    get:
+      tags: [Market Insights]
+      summary: Get listing price statistics by location
+      description: |
+        Returns minimum, maximum, average and median price for a model in a
+        selected location.
+      operationId: getListingStatsByLocation
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/LocationQuery'
+        - $ref: '#/components/parameters/YearFromQuery'
+        - $ref: '#/components/parameters/YearToQuery'
+        - $ref: '#/components/parameters/FuelTypeQuery'
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingStatsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+  parameters:
+    ChatIdPath:
+      name: chat_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Chat session ID
+
+    BrandQuery:
+      name: brand
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Car brand (e.g., Toyota)
+ 
+    ModelQuery:
+      name: model
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Car model (e.g., Corolla)
+
+    LocationsQuery:
+      name: locations
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+      description: Optional list of districts/cities for comparison
+
+    YearFromQuery:
+      name: year_from
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1886
+      description: Minimum model year filter
+
+    YearToQuery:
+      name: year_to
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1886
+      description: Maximum model year filter
+
+    FuelTypeQuery:
+      name: fuel_type
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Fuel type filter (e.g., Gasoline)
+
+    GroupByDistrictCityCountryQuery:
+      name: group_by
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [district, city, country]
+      description: Grouping field for comparison
+
+    SortByQuery:
+      name: sort_by
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [avg_price, count]
+      description: Sort field
+
+    OrderQuery:
+      name: order
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+      description: Sort order
+
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+      description: Maximum number of groups to return
+
+    MetricsQuery:
+      name: metrics
+      in: query
+      required: true
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+          enum: [avg_price, median_price, count]
+      description: Metrics to aggregate
+
+    GroupByLocationQuery:
+      name: group_by
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [location, district, city, country]
+      description: Grouping field for aggregation
+
+    LocationQuery:
+      name: location
+      in: query
+      required: false
+      schema:
+        type: string
+      description: District or city filter
+
+  responses:
+    BadRequest:
+      description: Invalid input/query parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: User not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: User does not have permission to access this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Server error while processing the request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    OpenChatRequest:
+      type: object
+      required: [seller_id, listing_id]
+      properties:
+        seller_id:
+          type: string
+          description: Seller ID
+        listing_id:
+          type: string
+          description: Car listing ID
+
+    OpenChatResponse:
+      type: object
+      required: [chat_id]
+      properties:
+        chat_id:
+          type: string
+          description: Chat session ID
+
+    Message:
+      type: object
+      required: [sender_id, message_text, timestamp]
+      properties:
+        sender_id:
+          type: string
+        message_text:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ChatHistoryResponse:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+
+    GeoInsight:
+      type: object
+      required: [location, average_price, price_trend]
+      properties:
+        location:
+          type: string
+        average_price:
+          type: number
+          format: float
+        price_trend:
+          type: string
+          description: Trend label or direction in this location
+
+    GeoInsightsResponse:
+      type: object
+      required: [insights]
+      properties:
+        insights:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoInsight'
+
+    PriceComparison:
+      type: object
+      required: [location, average_price, listing_count]
+      properties:
+        location:
+          type: string
+        average_price:
+          type: number
+          format: float
+        listing_count:
+          type: integer
+
+    PriceComparisonResponse:
+      type: object
+      required: [comparisons]
+      properties:
+        comparisons:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceComparison'
+
+    ListingsAggregateItem:
+      type: object
+      required: [location]
+      properties:
+        location:
+          type: string
+        avg_price:
+          type: number
+          format: float
+          nullable: true
+        median_price:
+          type: number
+          format: float
+          nullable: true
+        count:
+          type: integer
+          nullable: true
+      additionalProperties: true
+
+    ListingsAggregateResponse:
+      type: object
+      required: [aggregates]
+      properties:
+        aggregates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingsAggregateItem'
+
+    ListingStats:
+      type: object
+      required: [min_price, max_price, avg_price, median_price]
+      properties:
+        min_price:
+          type: number
+          format: float
+        max_price:
+          type: number
+          format: float
+        avg_price:
+          type: number
+          format: float
+        median_price:
+          type: number
+          format: float
+
+    ListingStatsResponse:
+      type: object
+      required: [stats]
+      properties:
+        stats:
+          $ref: '#/components/schemas/ListingStats'
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Optional machine-readable error code
+        details:
+          type: object
+          additionalProperties: true
+          description: Optional error details
