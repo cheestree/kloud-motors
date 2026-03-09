@@ -6,11 +6,19 @@ info:
     OpenAPI specification generated from Phase 2 use cases:
     - Use Case 5: Buyer-Seller Communication
     - Use Case 3: Geographical Market Insights
+    - Use Case 6: Visitor & User Registration
+    - Use Case 4: Seller Management & Profiling
 tags:
   - name: Chat
     description: Buyer-Seller communication endpoints
   - name: Market Insights
     description: Geographical market insights and listing aggregation
+  - name: Auth
+    description: Visitor and user registration (Use Case 6)
+  - name: Users
+    description: User profiles and favorite listings (Use Case 6)
+  - name: Sellers
+    description: Seller management and profiling (Use Case 4)
 
 paths:
   /api/chat/open:
@@ -229,6 +237,155 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: Prompt visitors to register an account so they can save listings.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user
+      description: Log in to save listings or access user profile.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/users/me/favorites:
+    get:
+      tags: [Users]
+      summary: Get user's favorite listings
+      description: Retrieve all listings the authenticated user has saved for later.
+      operationId: getFavoriteListings
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Favorite listings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoritesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/users/me/favorites/{listing_id}:
+    post:
+      tags: [Users]
+      summary: Save a listing to favorites
+      description: Save a specific listing for later. User must be registered and logged in.
+      operationId: addFavoriteListing
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingIdPath'
+      responses:
+        '200':
+          description: Listing saved successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Listing already in favorites
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags: [Users]
+      summary: Remove a listing from favorites
+      description: Remove a previously saved listing from the user's favorites.
+      operationId: removeFavoriteListing
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingIdPath'
+      responses:
+        '200':
+          description: Listing removed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/sellers/{seller_id}:
+    get:
+      tags: [Sellers]
+      summary: Get seller profile and categorization
+      description: Retrieve information about a seller, including whether they are a professional dealer or a private seller.
+      operationId: getSellerProfile
+      parameters:
+        - $ref: '#/components/parameters/SellerIdPath'
+      responses:
+        '200':
+          description: Seller profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -241,6 +398,22 @@ components:
       name: access_token
 
   parameters:
+    ListingIdPath:
+      name: listing_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Car listing ID
+
+    SellerIdPath:
+      name: seller_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Seller ID
+
     ChatIdPath:
       name: chat_id
       in: path
@@ -406,6 +579,70 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
+    RegisterUserRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginUserRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuthResponse:
+      type: object
+      required: [user_id, token]
+      properties:
+        user_id:
+          type: string
+        token:
+          type: string
+          description: JWT access token
+
+    FavoritesResponse:
+      type: object
+      required: [favorites]
+      properties:
+        favorites:
+          type: array
+          items:
+            type: string
+            description: Car listing ID or detailed listing schema
+
+    SellerProfileResponse:
+      type: object
+      required: [seller_id, name, seller_type]
+      properties:
+        seller_id:
+          type: string
+        name:
+          type: string
+        seller_type:
+          type: string
+          enum: [professional_dealer, private_seller]
+          description: Categorization of the seller
+        contact_info:
+          type: string
+          description: Optional contact information
+        rating:
+          type: number
+          format: float
+          description: Optional seller rating
+
     OpenChatRequest:
       type: object
       required: [seller_id, listing_id]
