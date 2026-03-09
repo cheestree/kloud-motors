@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Car Marketplace API - Phase 2
+  version: 1.0.0
+  description: |
+    OpenAPI specification generated from Phase 2 use cases:
+    - Use Case 1: Market Price Analysis
+    - Use Case 7: Auction Module
+tags:
+  - name: Market Price Analysis
+    description: Endpoints for average car prices.
+  - name: Auction
+    description: Endpoints for car auction listings.
+
+paths:
+  /api/market/average-price:
+    get:
+      tags: [Market Price Analysis]
+      summary: Get average market price for a specific car
+      description: Retrieve the average market price for a specific car make, model, year and location.
+      operationId: getAverageMarketPrice
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/LocationQuery'
+        - $ref: '#/components/parameters/YearFromQuery'
+        - $ref: '#/components/parameters/YearToQuery'
+      responses:
+        '200':
+          description: Average market price retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AveragePriceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auctions:
+    get:
+      tags: [Auction]
+      summary: List auctions
+      description: Returns a paginated list of car auctions, filterable by status, brand, model and location.
+      operationId: listAuctions
+      parameters:
+        - $ref: '#/components/parameters/AuctionStatusQuery'
+        - $ref: '#/components/parameters/BrandQueryOptional'
+        - $ref: '#/components/parameters/ModelQueryOptional'
+        - $ref: '#/components/parameters/LocationQuery'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+      responses:
+        '200':
+          description: List of auctions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags: [Auction]
+      summary: Create an auction listing
+      description: Allows a seller to create an auction for a car listing.
+      operationId: createAuction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auctions/{auction_id}:
+    get:
+      tags: [Auction]
+      summary: Get auction details
+      operationId: getAuction
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      responses:
+        '200':
+          description: Auction retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags: [Auction]
+      summary: Delete an auction listing
+      operationId: deleteAuction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      responses:
+        '204':
+          description: Auction deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auctions/{auction_id}/bid:
+    post:
+      tags: [Auction]
+      summary: Place a bid
+      operationId: placeBid
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidRequest'
+      responses:
+        '200':
+          description: Bid placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auctions/{auction_id}/bids:
+    get:
+      tags: [Auction]
+      summary: Get auction bids
+      operationId: getAuctionBids
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      responses:
+        '200':
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidsResponse'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained via the authentication endpoint (Use Case 6 – User Registration).
+
+  parameters:
+    BrandQuery:
+      name: brand
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Car brand
+
+    ModelQuery:
+      name: model
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Car model
+
+    LocationQuery:
+      name: location
+      in: query
+      required: false
+      schema:
+        type: string
+      description: City or region filter
+
+    YearFromQuery:
+      name: year_from
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1886
+      description: Minimum manufacturing year filter
+
+    YearToQuery:
+      name: year_to
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1886
+      description: Maximum manufacturing year filter
+
+    AuctionIdPath:
+      name: auction_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique auction identifier
+
+    AuctionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [active, completed, cancelled]
+      description: Filter by auction status
+
+    BrandQueryOptional:
+      name: brand
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Car brand filter (e.g., Toyota)
+
+    ModelQueryOptional:
+      name: model
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Car model filter (e.g., Corolla)
+
+    PageQuery:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number for pagination
+
+    PageSizeQuery:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Number of results per page
+
+  responses:
+    BadRequest:
+      description: Invalid input or query parameters.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Authentication required.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: User does not have permission to perform this action.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    AveragePriceResponse:
+      type: object
+      required: [average_price, listing_count]
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        location:
+          type: string
+        average_price:
+          type: number
+          format: float
+          description: Average listing price in USD
+        min_price:
+          type: number
+          format: float
+          description: Lowest price in matching listings
+        max_price:
+          type: number
+          format: float
+          description: Highest price in matching listings
+        listing_count:
+          type: integer
+          description: Number of listings used to calculate the average
+
+    CreateAuctionRequest:
+      type: object
+      required: [listing_id, starting_price, end_time]
+      properties:
+        listing_id:
+          type: string
+          description: ID of the existing car listing to auction
+        starting_price:
+          type: number
+          format: float
+          description: Minimum starting bid in USD
+          minimum: 0.01
+        reserve_price:
+          type: number
+          format: float
+          nullable: true
+          description: Optional minimum acceptable sale price (kept private until met)
+        end_time:
+          type: string
+          format: date-time
+          description: When the auction ends — must be a future date-time
+
+    AuctionListResponse:
+      type: object
+      required: [auctions]
+      properties:
+        total:
+          type: integer
+          description: Total number of matching auctions
+        page:
+          type: integer
+        page_size:
+          type: integer
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionResponse'
+
+
+    AuctionResponse:
+      type: object
+      required: [auction_id, listing_id, seller_id, starting_price, current_price, status, end_time]
+      properties:
+        auction_id:
+          type: string
+        listing_id:
+          type: string
+        seller_id:
+          type: string
+        starting_price:
+          type: number
+          format: float
+        reserve_met:
+          type: boolean
+          description: Whether the current highest bid has met the reserve price
+        current_price:
+          type: number
+          format: float
+          nullable: true
+          description: Current highest bid; null if no bids placed yet
+        total_bids:
+          type: integer
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        end_time:
+          type: string
+          format: date-time
+        winner_user_id:
+          type: string
+          nullable: true
+          description: Winning bidder's user ID — populated only after auction ends
+
+    BidRequest:
+      type: object
+      required: [bid_amount]
+      properties:
+        bid_amount:
+          type: number
+          format: float
+          description: Bid amount in USD — must be greater than the current highest bid
+          minimum: 0.01
+
+    BidResponse:
+      type: object
+      required: [bid_id, bid_amount, bidder_id, timestamp]
+      properties:
+        bid_id:
+          type: string
+        bid_amount:
+          type: number
+          format: float
+        bidder_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    BidsResponse:
+      type: object
+      required: [bids]
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/BidResponse'
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
