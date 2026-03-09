@@ -1,0 +1,1320 @@
+openapi: 3.0.3
+info:
+  title: Car Marketplace API
+  version: 1.0.0
+  description: |
+    - **Market Price Analysis**: Calculate the average price of cars based on brand, model, year, and location.
+    - **Filtered Search**: Allow users to search for cars based on specific criteria(make, model, year, price range, mileage, fuel type, location).
+    - **Geographical Market Insights**: Analyze car availability and price variations across different regions.
+    - **Seller Management & Profiling**: Distinguish between professional dealers and private sellers.
+    - **Buyer–Seller Communication**: Enable real-time messaging between the buyer and the seller of a specific listing.
+    - **Visitor & User Registration**: Track and register platform visitors, registered users can save favourite listings.
+    - **Auction Module**: Allow sellers to list cars under an auction format.
+    - **Listing details and comparison**: Provide detailed information on each listing and allow users to compare multiple listings side by side based on price, mileage, year and location.
+
+tags:
+  - name: Chat
+    description: Buyer-Seller communication endpoints
+  - name: Market Insights
+    description: Geographical market insights and listing aggregation
+  - name: Market Price Analysis
+    description: Endpoints for average car prices
+  - name: Auction
+    description: Endpoints for car auction listings
+  - name: Auth
+    description: Visitor and user registration
+  - name: Users
+    description: User profiles and favorite listings
+  - name: Sellers
+    description: Seller management and profiling
+  - name: Listings
+    description: Filtered car search and listing comparison
+
+paths:
+  /api/chat/open:
+    post:
+      tags: [Chat]
+      summary: Open or create a buyer-seller chat session
+      description: Enables messaging between a buyer and a seller for a specific listing.
+      operationId: openChat
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenChatRequest'
+      responses:
+        '200':
+          description: Chat session opened successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenChatResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/chat/{chat_id}:
+    get:
+      tags: [Chat]
+      summary: Get chat history
+      description: Retrieves message history for a specific chat session.
+      operationId: getChatHistory
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChatIdPath'
+      responses:
+        '200':
+          description: Chat history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatHistoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ws/chat/{chat_id}:
+    get:
+      tags: [Chat]
+      summary: WebSocket chat endpoint
+      description: WebSocket endpoint for real-time messaging in an active chat session.
+      operationId: connectChatWebSocket
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ChatIdPath'
+      responses:
+        '101':
+          description: Switching Protocols (WebSocket upgrade)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/market/insights/geo:
+    get:
+      tags: [Market Insights]
+      summary: Get geographical market insights
+      description: Returns price insights for a given car model across selected locations or generally if no locations are specified.
+      operationId: getGeoMarketInsights
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/LocationsQuery'
+        - $ref: '#/components/parameters/YearFromQuery'
+        - $ref: '#/components/parameters/YearToQuery'
+        - $ref: '#/components/parameters/FuelTypeQuery'
+      responses:
+        '200':
+          description: Geographical insights retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoInsightsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/market/price-comparison:
+    get:
+      tags: [Market Insights]
+      summary: Compare prices across locations
+      description: Provides price comparison grouped by district, city or country for a specific car model, with optional sorting and limiting.
+      operationId: getPriceComparison
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/GroupByDistrictCityCountryQuery'
+        - $ref: '#/components/parameters/SortByQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+      responses:
+        '200':
+          description: Price comparison retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceComparisonResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /api/listings/stats/by-location:
+    get:
+      tags: [Market Insights]
+      summary: Get listing price statistics by location
+      description: Returns minimum, maximum, average and median price for a model in a selected location.
+      operationId: getListingStatsByLocation
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/LocationQuery'
+        - $ref: '#/components/parameters/YearFromQuery'
+        - $ref: '#/components/parameters/YearToQuery'
+        - $ref: '#/components/parameters/FuelTypeQuery'
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingStatsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/market/average-price:
+    get:
+      tags: [Market Price Analysis]
+      summary: Get average market price for a specific car
+      description: Retrieve the average market price for a specific car make, model, year and location.
+      operationId: getAverageMarketPrice
+      parameters:
+        - $ref: '#/components/parameters/BrandQuery'
+        - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/LocationQuery'
+        - $ref: '#/components/parameters/YearFromQuery'
+        - $ref: '#/components/parameters/YearToQuery'
+      responses:
+        '200':
+          description: Average market price retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AveragePriceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auctions:
+    get:
+      tags: [Auction]
+      summary: List auctions
+      description: Returns a paginated list of car auctions, filterable by status, brand, model and location.
+      operationId: listAuctions
+      parameters:
+        - $ref: '#/components/parameters/AuctionStatusQuery'
+        - $ref: '#/components/parameters/BrandQueryOptional'
+        - $ref: '#/components/parameters/ModelQueryOptional'
+        - $ref: '#/components/parameters/LocationQuery'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+      responses:
+        '200':
+          description: List of auctions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags: [Auction]
+      summary: Create an auction listing
+      description: Allows a seller to create an auction for a car listing.
+      operationId: createAuction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auctions/{auction_id}:
+    get:
+      tags: [Auction]
+      summary: Get auction details
+      operationId: getAuction
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      responses:
+        '200':
+          description: Auction retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags: [Auction]
+      summary: Delete an auction listing
+      operationId: deleteAuction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      responses:
+        '204':
+          description: Auction deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auctions/{auction_id}/bid:
+    post:
+      tags: [Auction]
+      summary: Place a bid
+      operationId: placeBid
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidRequest'
+      responses:
+        '200':
+          description: Bid placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auctions/{auction_id}/bids:
+    get:
+      tags: [Auction]
+      summary: Get auction bids
+      operationId: getAuctionBids
+      parameters:
+        - $ref: '#/components/parameters/AuctionIdPath'
+      responses:
+        '200':
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidsResponse'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: Prompt visitors to register an account so they can save listings.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user
+      description: Log in to save listings or access user profile.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/users/me/favorites:
+    get:
+      tags: [Users]
+      summary: Get user's favorite listings
+      description: Retrieve all listings the authenticated user has saved for later.
+      operationId: getFavoriteListings
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Favorite listings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoritesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/users/me/favorites/{listing_id}:
+    post:
+      tags: [Users]
+      summary: Save a listing to favorites
+      description: Save a specific listing for later. User must be registered and logged in.
+      operationId: addFavoriteListing
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingIdPath'
+      responses:
+        '200':
+          description: Listing saved successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Listing already in favorites
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags: [Users]
+      summary: Remove a listing from favorites
+      description: Remove a previously saved listing from the user's favorites.
+      operationId: removeFavoriteListing
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingIdPath'
+      responses:
+        '200':
+          description: Listing removed successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/sellers/{seller_id}:
+    get:
+      tags: [Sellers]
+      summary: Get seller profile and categorization
+      description: Retrieve information about a seller, including whether they are a professional dealer or a private seller.
+      operationId: getSellerProfile
+      parameters:
+        - $ref: '#/components/parameters/SellerIdPath'
+      responses:
+        '200':
+          description: Seller profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/:
+    get:
+      tags: [Listings]
+      summary: Filtered car search
+      description: Search for car listings using filters such as mileage, price range, make, model, year, and fuel type.
+      operationId: searchCars
+      parameters:
+        - name: make
+          in: query
+          description: Car manufacturer (e.g. Toyota, Ford)
+          schema:
+            type: string
+        - name: model
+          in: query
+          description: Car model (e.g. Corolla, Mustang)
+          schema:
+            type: string
+        - name: year
+          in: query
+          description: Manufacturing year
+          schema:
+            type: integer
+        - name: minPrice
+          in: query
+          description: Minimum price in USD
+          schema:
+            type: number
+            format: float
+        - name: maxPrice
+          in: query
+          description: Maximum price in USD
+          schema:
+            type: number
+            format: float
+        - name: maxMileage
+          in: query
+          description: Maximum mileage in miles
+          schema:
+            type: integer
+        - name: fuelType
+          in: query
+          description: Fuel type (e.g. gasoline, diesel, electric)
+          schema:
+            type: string
+            enum: [gasoline, diesel, hybrid, electric]
+        - name: location
+          in: query
+          description: City or region to filter listings by
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: A paginated list of car listings matching the filters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: Total number of matching listings
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  listings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CarSummary'
+        '400':
+          description: Invalid query parameters
+
+  /api/{id}:
+    get:
+      tags: [Listings]
+      summary: Get listing details
+      description: Retrieve full details for a specific car listing.
+      operationId: getCarById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique listing identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Full details of the car listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarListing'
+        '404':
+          description: Listing not found
+
+  /api/compare:
+    get:
+      tags: [Listings]
+      summary: Compare multiple listings
+      description: Retrieve and compare multiple car listings side by side based on price, mileage, year, and location.
+      operationId: compareListings
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          description: Comma-separated list of listing IDs to compare
+          schema:
+            type: string
+            example: abc123,def456,ghi789
+      responses:
+        '200':
+          description: Comparison data for the requested listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  listings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CarListing'
+        '400':
+          description: Missing or invalid IDs parameter
+        '404':
+          description: One or more listings not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+  parameters:
+    ListingIdPath:
+      name: listing_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Car listing ID
+
+    SellerIdPath:
+      name: seller_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Seller ID
+
+    ChatIdPath:
+      name: chat_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Chat session ID
+
+    AuctionIdPath:
+      name: auction_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique auction identifier
+
+    BrandQuery:
+      name: brand
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Car brand (e.g., Toyota)
+
+    ModelQuery:
+      name: model
+      in: query
+      required: true
+      schema:
+        type: string
+      description: Car model (e.g., Corolla)
+
+    BrandQueryOptional:
+      name: brand
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Car brand filter (e.g., Toyota)
+
+    ModelQueryOptional:
+      name: model
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Car model filter (e.g., Corolla)
+
+    LocationQuery:
+      name: location
+      in: query
+      required: false
+      schema:
+        type: string
+      description: District, city or region filter
+
+    LocationsQuery:
+      name: locations
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+      description: Optional list of districts/cities for comparison
+
+    YearFromQuery:
+      name: year_from
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1886
+      description: Minimum model year filter
+
+    YearToQuery:
+      name: year_to
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1886
+      description: Maximum model year filter
+
+    FuelTypeQuery:
+      name: fuel_type
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Fuel type filter (e.g., Gasoline)
+
+    GroupByDistrictCityCountryQuery:
+      name: group_by
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [district, city, country]
+      description: Grouping field for comparison
+
+    SortByQuery:
+      name: sort_by
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [avg_price, count]
+      description: Sort field
+
+    OrderQuery:
+      name: order
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+      description: Sort order
+
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+      description: Maximum number of groups to return
+
+    MetricsQuery:
+      name: metrics
+      in: query
+      required: true
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+          enum: [avg_price, median_price, count]
+      description: Metrics to aggregate
+
+    GroupByLocationQuery:
+      name: group_by
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [location, district, city, country]
+      description: Grouping field for aggregation
+
+    AuctionStatusQuery:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [active, completed, cancelled]
+      description: Filter by auction status
+
+    PageQuery:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number for pagination
+
+    PageSizeQuery:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Number of results per page
+
+  responses:
+    BadRequest:
+      description: Invalid input/query parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: User not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: User does not have permission to access this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Server error while processing the request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    RegisterUserRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginUserRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuthResponse:
+      type: object
+      required: [user_id, token]
+      properties:
+        user_id:
+          type: string
+        token:
+          type: string
+          description: JWT access token
+
+    FavoritesResponse:
+      type: object
+      required: [favorites]
+      properties:
+        favorites:
+          type: array
+          items:
+            type: string
+            description: Car listing ID or detailed listing schema
+
+    SellerProfileResponse:
+      type: object
+      required: [seller_id, name, seller_type]
+      properties:
+        seller_id:
+          type: string
+        name:
+          type: string
+        seller_type:
+          type: string
+          enum: [professional_dealer, private_seller]
+          description: Categorization of the seller
+        contact_info:
+          type: string
+          description: Optional contact information
+        rating:
+          type: number
+          format: float
+          description: Optional seller rating
+
+    OpenChatRequest:
+      type: object
+      required: [seller_id, listing_id]
+      properties:
+        seller_id:
+          type: string
+          description: Seller ID
+        listing_id:
+          type: string
+          description: Car listing ID
+
+    OpenChatResponse:
+      type: object
+      required: [chat_id]
+      properties:
+        chat_id:
+          type: string
+          description: Chat session ID
+
+    Message:
+      type: object
+      required: [sender_id, message_text, timestamp]
+      properties:
+        sender_id:
+          type: string
+        message_text:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ChatHistoryResponse:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+
+    GeoInsight:
+      type: object
+      required: [location, average_price, price_trend]
+      properties:
+        location:
+          type: string
+        average_price:
+          type: number
+          format: float
+        price_trend:
+          type: string
+          description: Trend label or direction in this location
+
+    GeoInsightsResponse:
+      type: object
+      required: [insights]
+      properties:
+        insights:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoInsight'
+
+    PriceComparison:
+      type: object
+      required: [location, average_price, listing_count]
+      properties:
+        location:
+          type: string
+        average_price:
+          type: number
+          format: float
+        listing_count:
+          type: integer
+
+    PriceComparisonResponse:
+      type: object
+      required: [comparisons]
+      properties:
+        comparisons:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceComparison'
+
+    ListingsAggregateItem:
+      type: object
+      required: [location]
+      properties:
+        location:
+          type: string
+        avg_price:
+          type: number
+          format: float
+          nullable: true
+        median_price:
+          type: number
+          format: float
+          nullable: true
+        count:
+          type: integer
+          nullable: true
+      additionalProperties: true
+
+    ListingsAggregateResponse:
+      type: object
+      required: [aggregates]
+      properties:
+        aggregates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingsAggregateItem'
+
+    ListingStats:
+      type: object
+      required: [min_price, max_price, avg_price, median_price]
+      properties:
+        min_price:
+          type: number
+          format: float
+        max_price:
+          type: number
+          format: float
+        avg_price:
+          type: number
+          format: float
+        median_price:
+          type: number
+          format: float
+
+    ListingStatsResponse:
+      type: object
+      required: [stats]
+      properties:
+        stats:
+          $ref: '#/components/schemas/ListingStats'
+
+    AveragePriceResponse:
+      type: object
+      required: [average_price, listing_count]
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        location:
+          type: string
+        average_price:
+          type: number
+          format: float
+          description: Average listing price in USD
+        min_price:
+          type: number
+          format: float
+          description: Lowest price in matching listings
+        max_price:
+          type: number
+          format: float
+          description: Highest price in matching listings
+        listing_count:
+          type: integer
+          description: Number of listings used to calculate the average
+
+    CreateAuctionRequest:
+      type: object
+      required: [listing_id, starting_price, end_time]
+      properties:
+        listing_id:
+          type: string
+          description: ID of the existing car listing to auction
+        starting_price:
+          type: number
+          format: float
+          description: Minimum starting bid in USD
+          minimum: 0.01
+        reserve_price:
+          type: number
+          format: float
+          nullable: true
+          description: Optional minimum acceptable sale price (kept private until met)
+        end_time:
+          type: string
+          format: date-time
+          description: When the auction ends, must be a future date-time
+
+    AuctionListResponse:
+      type: object
+      required: [auctions]
+      properties:
+        total:
+          type: integer
+          description: Total number of matching auctions
+        page:
+          type: integer
+        page_size:
+          type: integer
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionResponse'
+
+    AuctionResponse:
+      type: object
+      required: [auction_id, listing_id, seller_id, starting_price, current_price, status, end_time]
+      properties:
+        auction_id:
+          type: string
+        listing_id:
+          type: string
+        seller_id:
+          type: string
+        starting_price:
+          type: number
+          format: float
+        reserve_met:
+          type: boolean
+          description: Whether the current highest bid has met the reserve price
+        current_price:
+          type: number
+          format: float
+          nullable: true
+          description: Current highest bid, null if no bids placed yet
+        total_bids:
+          type: integer
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        end_time:
+          type: string
+          format: date-time
+        winner_user_id:
+          type: string
+          nullable: true
+          description: Winning bidder user ID, populated only after auction ends
+
+    BidRequest:
+      type: object
+      required: [bid_amount]
+      properties:
+        bid_amount:
+          type: number
+          format: float
+          description: Bid amount in USD, must be greater than the current highest bid
+          minimum: 0.01
+
+    BidResponse:
+      type: object
+      required: [bid_id, bid_amount, bidder_id, timestamp]
+      properties:
+        bid_id:
+          type: string
+        bid_amount:
+          type: number
+          format: float
+        bidder_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    BidsResponse:
+      type: object
+      required: [bids]
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/BidResponse'
+
+    CarSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        price:
+          type: number
+          format: float
+        mileage:
+          type: integer
+        location:
+          type: string
+        fuelType:
+          type: string
+
+    CarListing:
+      allOf:
+        - $ref: '#/components/schemas/CarSummary'
+        - type: object
+          properties:
+            trim:
+              type: string
+            transmission:
+              type: string
+              enum: [automatic, manual]
+            color:
+              type: string
+            sellerType:
+              type: string
+              enum: [dealer, private]
+            description:
+              type: string
+            listedAt:
+              type: string
+              format: date-time
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Optional machine-readable error code
+        details:
+          type: object
+          additionalProperties: true
+          description: Optional error details
