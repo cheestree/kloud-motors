@@ -15,7 +15,7 @@ info:
 tags:
   - name: Chat
     description: Buyer-Seller communication endpoints
-  - name: Market Insights
+  - name: Geographical Market Insights
     description: Geographical market insights and listing aggregation
   - name: Market Price Analysis
     description: Endpoints for average car prices
@@ -118,26 +118,28 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/market/insights/geo:
+  /api/market/insights/aggregates:
     get:
-      tags: [Market Insights]
-      summary: Get geographical market insights
-      description: Returns price insights for a given car model across selected locations or generally if no locations are specified.
-      operationId: getGeoMarketInsights
+      tags: [Geographical Market Insights]
+      summary: Get aggregated market insights
+      description: Returns aggregated market metrics for a specific car model, grouped by location level.
+      operationId: getMarketInsightsAggregates
       parameters:
         - $ref: '#/components/parameters/BrandQuery'
         - $ref: '#/components/parameters/ModelQuery'
+        - $ref: '#/components/parameters/MetricsQuery'
+        - $ref: '#/components/parameters/GroupByLocationQuery'
         - $ref: '#/components/parameters/LocationsQuery'
         - $ref: '#/components/parameters/YearFromQuery'
         - $ref: '#/components/parameters/YearToQuery'
         - $ref: '#/components/parameters/FuelTypeQuery'
       responses:
         '200':
-          description: Geographical insights retrieved successfully
+          description: Aggregated market insights retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GeoInsightsResponse'
+                $ref: '#/components/schemas/ListingsAggregateResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -151,7 +153,7 @@ paths:
 
   /api/market/price-comparison:
     get:
-      tags: [Market Insights]
+      tags: [Geographical Market Insights]
       summary: Compare prices across locations
       description: Provides price comparison grouped by district, city or country for a specific car model, with optional sorting and limiting.
       operationId: getPriceComparison
@@ -183,7 +185,7 @@ paths:
 
   /api/listings/stats/by-location:
     get:
-      tags: [Market Insights]
+      tags: [Geographical Market Insights]
       summary: Get listing price statistics by location
       description: Returns minimum, maximum, average and median price for a model in a selected location.
       operationId: getListingStatsByLocation
