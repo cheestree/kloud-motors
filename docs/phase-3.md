@@ -4,6 +4,22 @@
 
 ### Use cases 1 - Market Price Analysis
 
+1. **Statistical Price Analysis**
+    The system shall allow any user (authenticated or not) to request market price statistics for a car by specifying at least the brand and model.
+
+2. **Filtering Options**
+    The user may optionally filter the price analysis by year range (from/to). If no filters are applied, the system shall return statistics for all listings of that make/model.
+
+3. **Response Format**
+    The system shall compute and return this statistics based on matching listings: average price, minimum price, maximum price, total number of listings used in the calculation
+
+4. **Public Accessibility**
+    Market price analysis endpoints shall be publicly accessible without requiring user authentication.
+
+5. **Input Validation**
+    The system shall validate all input parameters. Invalid or missing mandatory parameters shall result in an HTTP 400 response with a descriptive error message.
+
+
 ### Use Case 2 - Filtered Search
 
 ### Use Case 3 - Geographical Market Insights
@@ -50,6 +66,30 @@
 
 ### Use Case 6 - Visitor & User Registration
 
+### Use Case 7 - Auction Module
+
+1. **Auction Creation**
+    The system shall allow authenticated sellers to create an auction for an existing car listing.
+
+2. **Auction Configuration**
+    When creating an auction, the seller must specify the starting price, the optional reserve price, and auction duration (start and end time). 
+
+3. **Auction Display**
+    The system shall allow users to retrieve a list of auctions, filterable by: auction status (active, ended), car brand and model, and location.
+
+4. **Bid Placement**
+    The system shall allow authenticated users to place bids on active auctions.
+
+5. **Bid Validation**
+    The system shall validate that each bid is higher than the current highest bid before accepting it.
+
+6. **Auction Conclusion**
+    The system shall automatically determine the outcome of an auction when the configured end time is reached.
+
+7. **Real-Time Auction Updates**
+    The system shall notify connected clients in real time when a new bid is placed on an active auction and when an auction ends. These notifications shall be delivered using WebSocket connections.
+
+
 ### Use Case 8 - Listing details and comparison*
 
 ## Application architecture
@@ -58,21 +98,42 @@
 graph LR
     CLIENT([Client])
     API[API Gateway]
+
     AUTH[Auth Service]
+    
     CHAT[Chat Service]
     CHAT_DB[(Chat Database)]
     MESSAGE_BROKER[[Message Broker<br/>Pub/Sub]]
+    
     GEO_MARKET[Geographic Market Insights Service]
+    
+    MARKET_PRICE[Market Price Analysis Service]
+    
+    AUCTION[Auction Service]
+    AUCTION_DB[(Auctions Database)]
+
     DB[(Listings Database)]
 
     CLIENT -- REST / HTTPS --> API
     CLIENT -- WebSocket / WSS --> API
+
     API -- gRPC --> AUTH
+
     API -- gRPC --> CHAT
     API -- WebSocket --> CHAT
+
     API -- gRPC --> GEO_MARKET
+    API -- gRPC --> MARKET_PRICE
+    
+    API -- gRPC --> AUCTION
+    API -- WebSocket --> AUCTION
+
     MESSAGE_BROKER -- Pub/Sub --> CHAT
     CHAT -- Push --> MESSAGE_BROKER
+
     GEO_MARKET -- SQL / TCP --> DB
+    MARKET_PRICE -- SQL / TCP --> DB
+
     CHAT -- SQL / TCP --> CHAT_DB
+    AUCTION -- SQL / TCP --> AUCTION_DB
 ```
