@@ -19,8 +19,19 @@
 5. **Input Validation**
     The system shall validate all input parameters. Invalid or missing mandatory parameters shall result in an HTTP 400 response with a descriptive error message.
 
-
 ### Use Case 2 - Filtered Search
+
+1. **Search by Multiple Criteria**
+    The system shall allow users to search for car listings by specifying any combination of the following criteria: brand, model, year range (from/to), price range (min/max), fuel type, and location (country/district/city). The system shall return listings that match all provided criteria.
+
+2. **Pagination Support**
+    The search results shall be paginated. The user may specify the page number and page size. The response shall include the total number of matching listings and the total number of pages based on the page size.
+
+3. **Sorting Options**
+    The user shall be able to sort search results by price (ascending/descending) or by year (newest/oldest). If no sorting option is specified, results shall be returned in a default order (e.g., most recent listings first).
+
+4. **Public Accessibility**
+    The search endpoint shall be publicly accessible without requiring user authentication.
 
 ### Use Case 3 - Geographical Market Insights
 
@@ -65,6 +76,7 @@
     The system shall handle WebSocket disconnections gracefully. If a client disconnects unexpectedly, the session shall remain open server-side and the client shall be able to reconnect and resume the conversation without data loss.
 
 ### Use Case 6 - Visitor & User Registration
+
 1. **User Registration**
     The system shall allow a visitor to create an account by providing, at minimum, an email and password. Email addresses must be unique and attempts to register an existing email shall return an HTTP 409 response. Invalid input shall return an HTTP 400 response.
 
@@ -86,7 +98,7 @@
     The system shall allow authenticated sellers to create an auction for an existing car listing.
 
 2. **Auction Configuration**
-    When creating an auction, the seller must specify the starting price, the optional reserve price, and auction duration (start and end time). 
+    When creating an auction, the seller must specify the starting price, the optional reserve price, and auction duration (start and end time).
 
 3. **Auction Display**
     The system shall allow users to retrieve a list of auctions, filterable by: auction status (active, ended), car brand and model, and location.
@@ -103,8 +115,16 @@
 7. **Real-Time Auction Updates**
     The system shall notify connected clients in real time when a new bid is placed on an active auction and when an auction ends. These notifications shall be delivered using WebSocket connections.
 
-
 ### Use Case 8 - Listing details and comparison*
+
+1. **Listing Details Retrieval**
+    The system shall allow users to retrieve detailed information about a specific car listing by providing its unique identifier. The response shall include all relevant attributes of the listing, such as brand, model, year, price, fuel type, location, and seller information.
+
+2. **Listing Comparison**
+    The system shall allow users to compare multiple car listings by providing a list of their unique identifiers. The response shall return the details of each listing side by side, enabling users to easily compare attributes such as price, year, and location.
+
+3. **Public Accessibility**
+    Both the listing details and comparison endpoints shall be publicly accessible without requiring user authentication.
 
 ## Application architecture
 
