@@ -50,19 +50,19 @@
 
 ### Use Case 6 - Visitor & User Registration
 1. **User Registration**
-    The system should allow a visitor to create an account by providing, at minimum, an email and password. Email addresses must be unique and attempts to register an existing email need to return an HTTP 409 response. Passwords must meet a minimum length of 8 characters and include at least 1 special character.
+    The system shall allow a visitor to create an account by providing, at minimum, an email and password. Email addresses must be unique and attempts to register an existing email shall return an HTTP 409 response. Invalid input shall return an HTTP 400 response.
 
 2. **User Login**
-    The system shall allow a registered user to authenticate via email and password. On success, the system should issue a JWT or session cookie. In case of invalid credentials, returns a HTTP 401 response.
+    The system shall allow a registered user to authenticate via email and password. On success, the system shall issue a JWT or session cookie. Invalid credentials shall return an HTTP 401 response, and invalid input shall return an HTTP 400 response.
 
 3. **Save Listing to Favorites**
-    An authenticated user shall be able to save a listing to their favorites by providing the listing identifier. The operation must be idempotent: saving an already-saved listing cannot create duplicates. Unauthenticated requests return an HTTP 401 response.
+    An authenticated user shall be able to save a listing to their favorites by providing the listing identifier. If the listing does not exist, the system shall return an HTTP 404 response; if the listing is already in favorites, it shall return an HTTP 409 response. Unauthenticated requests shall return an HTTP 401 response.
 
 4. **Remove Listing from Favorites**
-    An authenticated user shall be able to remove a listing from their favorites. If the listing is not in the user's favorites, the system returns a HTTP 404 response.
+    An authenticated user shall be able to remove a listing from their favorites. If the listing is not found, the system shall return an HTTP 404 response. Unauthenticated requests shall return an HTTP 401 response.
 
 5. **Favorites Retrieval**
-    An authenticated user shall be able to retrieve their saved listings, including listing identifier, title, price and location. The response should be paginated and sorted by the save timestamp in descending order.
+    An authenticated user shall be able to retrieve their saved listings. The response shall include a list of saved listing identifiers. Unauthenticated requests shall return an HTTP 401 response.
 
 ### Use Case 8 - Listing details and comparison*
 
