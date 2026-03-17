@@ -153,6 +153,11 @@ graph LR
     
     MARKET_PRICE[Market Price Analysis Service]
     
+    USERS[Users Service]
+    USERS_DB[(Users Database)]
+
+    SELLERS[Sellers Service]
+
     AUCTION[Auction Service]
     AUCTION_DB[(Auctions Database)]
 
@@ -171,6 +176,9 @@ graph LR
 
     API -- gRPC --> GEO_MARKET
     API -- gRPC --> MARKET_PRICE
+
+    API -- gRPC --> USERS
+    API -- gRPC --> SELLERS
     
     API -- gRPC --> AUCTION
     API -- WebSocket --> AUCTION
@@ -183,9 +191,13 @@ graph LR
     MESSAGE_BROKER -- Pub/Sub --> CHAT
     CHAT -- Push --> MESSAGE_BROKER
     CHAT -- gRPC --> AUTH
+    USERS -- gRPC --> AUTH
+    SELLERS -- gRPC --> AUTH
 
     GEO_MARKET -- SQL / TCP --> DB
     MARKET_PRICE -- SQL / TCP --> DB
+    USERS -- SQL / TCP --> USERS_DB
+    SELLERS -- SQL / TCP --> DB
 
     CHAT -- SQL / TCP --> CHAT_DB
     AUCTION -- SQL / TCP --> AUCTION_DB
