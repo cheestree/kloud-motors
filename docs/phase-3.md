@@ -2,13 +2,13 @@
 
 ## Functional requirements
 
-### Use cases 1 - Market Price Analysis
+### Use case 1 - Market Price Analysis
 
 1. **Statistical Price Analysis**
     The system shall allow any user (authenticated or not) to request market price statistics for a car by specifying at least the brand and model.
 
 2. **Filtering Options**
-    The user may optionally filter the price analysis by year range (from/to). If no filters are applied, the system shall return statistics for all listings of that make/model.
+    The user may optionally filter the price analysis by year range (from/to) and location. If no filters are applied, the system shall return statistics for all listings of that make/model.
 
 3. **Response Format**
     The system shall compute and return this statistics based on matching listings: average price, minimum price, maximum price, total number of listings used in the calculation
