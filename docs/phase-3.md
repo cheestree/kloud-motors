@@ -52,6 +52,15 @@
 
 ### Use Case 4 - Seller Management & Profiling
 
+1. **Seller Type Classification**
+    The system shall classify each seller as `professional_dealer` or `private_seller` and expose that categorization through the seller profile endpoint.
+
+2. **Seller Profile Retrieval**
+    The system shall expose a public endpoint to retrieve a seller profile by seller_id. The response should include seller_id, name, seller_type and may include contact_info and rating. If the seller_id does not exist, the system shall return an HTTP 404 response.
+
+3. **Input Validation**
+    The system shall validate the seller_id parameter and return an HTTP 400 response when it is missing or malformed.
+
 ### Use Case 5 - Buyer–Seller Communication
 
 1. **Chat Session Initiation**
