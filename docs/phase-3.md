@@ -156,6 +156,9 @@ graph LR
     AUCTION[Auction Service]
     AUCTION_DB[(Auctions Database)]
 
+    LISTINGS[Listings Service]
+    SEARCH[Search Service]
+
     DB[(Listings Database)]
 
     CLIENT -- REST / HTTPS --> API
@@ -172,6 +175,9 @@ graph LR
     API -- gRPC --> AUCTION
     API -- WebSocket --> AUCTION
 
+    API -- gRPC --> LISTINGS
+    API -- gRPC --> SEARCH
+
     AUTH -- SQL / TCP --> AUTH_DB
 
     MESSAGE_BROKER -- Pub/Sub --> CHAT
@@ -183,4 +189,7 @@ graph LR
 
     CHAT -- SQL / TCP --> CHAT_DB
     AUCTION -- SQL / TCP --> AUCTION_DB
+
+    LISTINGS -- SQL / TCP --> DB
+    SEARCH -- SQL / TCP --> DB
 ```
