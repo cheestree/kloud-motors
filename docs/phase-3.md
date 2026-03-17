@@ -65,6 +65,20 @@
     The system shall handle WebSocket disconnections gracefully. If a client disconnects unexpectedly, the session shall remain open server-side and the client shall be able to reconnect and resume the conversation without data loss.
 
 ### Use Case 6 - Visitor & User Registration
+1. **User Registration**
+    The system shall allow a visitor to create an account by providing, at minimum, an email and password. Email addresses must be unique and attempts to register an existing email shall return an HTTP 409 response. Invalid input shall return an HTTP 400 response.
+
+2. **User Login**
+    The system shall allow a registered user to authenticate via email and password. On success, the system shall issue a JWT or session cookie. Invalid credentials shall return an HTTP 401 response, and invalid input shall return an HTTP 400 response.
+
+3. **Save Listing to Favorites**
+    An authenticated user shall be able to save a listing to their favorites by providing the listing identifier. If the listing does not exist, the system shall return an HTTP 404 response; if the listing is already in favorites, it shall return an HTTP 409 response. Unauthenticated requests shall return an HTTP 401 response.
+
+4. **Remove Listing from Favorites**
+    An authenticated user shall be able to remove a listing from their favorites. If the listing is not found, the system shall return an HTTP 404 response. Unauthenticated requests shall return an HTTP 401 response.
+
+5. **Favorites Retrieval**
+    An authenticated user shall be able to retrieve their saved listings. The response shall include a list of saved listing identifiers. Unauthenticated requests shall return an HTTP 401 response.
 
 ### Use Case 7 - Auction Module
 
