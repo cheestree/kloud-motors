@@ -114,6 +114,7 @@ graph LR
     API[API Gateway]
 
     AUTH[Auth Service]
+    AUTH_DB[(Auth Database)]
     
     CHAT[Chat Service]
     CHAT_DB[(Chat Database)]
@@ -142,8 +143,11 @@ graph LR
     API -- gRPC --> AUCTION
     API -- WebSocket --> AUCTION
 
+    AUTH -- SQL / TCP --> AUTH_DB
+
     MESSAGE_BROKER -- Pub/Sub --> CHAT
     CHAT -- Push --> MESSAGE_BROKER
+    CHAT -- gRPC --> AUTH
 
     GEO_MARKET -- SQL / TCP --> DB
     MARKET_PRICE -- SQL / TCP --> DB
