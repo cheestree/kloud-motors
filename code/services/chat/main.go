@@ -1,21 +1,45 @@
 package main
 
 import (
-  "fmt"
+	"context"
+	"log"
+	"net"
+
+	proto "chat/proto"
+
+	"google.golang.org/grpc"
 )
 
-//TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
+type server struct {
+	proto.ChatServiceServer
+}
+
+func (s *server) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (*proto.OpenChatResponse, error) {
+	// verify if the two users exist or not and the seller is really a seller
+	// verify if the listing belongs to the seller
+	// create or return a new chat between the buyer and the seller
+	return &proto.OpenChatResponse{}, nil
+}
+
+func (s *server) GetChatHistory(ctx context.Context, req *proto.GetChatHistoryRequest) (*proto.GetChatHistoryResponse, error) {
+	// verify if the chat exists
+	// verify if the listing is still open
+	// verify if the requesting user belongs to the chat
+	return &proto.GetChatHistoryResponse{}, nil
+}
 
 func main() {
-  //TIP <p>Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined text
-  // to see how GoLand suggests fixing the warning.</p><p>Alternatively, if available, click the lightbulb to view possible fixes.</p>
-  s := "gopher"
-  fmt.Printf("Hello and welcome, %s!\n", s)
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("Error on listen: %v", err)
+	}
 
-  for i := 1; i <= 5; i++ {
-	//TIP <p>To start your debugging session, right-click your code in the editor and select the Debug option.</p> <p>We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-	// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.</p>
-	fmt.Println("i =", 100/i)
-  }
+	s := grpc.NewServer()
+	proto.RegisterChatServiceServer(s, &server{})
+
+	log.Println("gRPC server is running on " + lis.Addr().String() + "...")
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+	}
 }

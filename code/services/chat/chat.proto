@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package chat;
+option go_package = "./proto";
+
+service ChatService {
+  rpc OpenChat(OpenChatRequest) returns (OpenChatResponse);
+  rpc GetChatHistory(GetChatHistoryRequest) returns (GetChatHistoryResponse);
+}
+
+message OpenChatRequest {
+  string user_id = 1;
+  string seller_id = 2;
+  string listing_id = 3;
+}
+
+message OpenChatResponse {
+  string chat_id = 2;
+}
+
+message GetChatHistoryRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+message GetChatHistoryResponse {
+  repeated ChatMessage messages = 1;
+}
+
+message ChatMessage {
+  string sender_id = 1;
+  string content = 2;
+  int64 timestamp = 3;
+}
