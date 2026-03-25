@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package geo_market_insights;
+option go_package = "./proto";
+
+service GeoMarketInsightsService {
+  rpc Aggregates(AggregatesRequest) returns (AggregatesResponse);
+  rpc PriceComparison(PriceComparisonRequest) returns (PriceComparisonResponse);
+  rpc ByLocation(ByLocationRequest) returns (ByLocationResponse);
+}
+
+message AggregatesRequest {
+  string brand = 1;
+  string model = 2;
+  repeated MetricType metrics = 3;
+  GroupBy group_by = 4;
+  optional Locations locations = 5;
+  optional int32 year_from = 6;
+  optional int32 year_to = 7;
+  optional string fuel_type = 8;
+  optional int32 limit = 9;
+  optional int32 skip = 10;
+}
+
+message AggregatesResponse {
+  repeated Aggregates aggregates = 1;
+  Pagination pagination = 2;
+}
+
+message Aggregates {
+  string location = 1;
+  int32 avg_price = 2;
+  int32 median_price = 3;
+  int32 count = 4;
+}
+
+message PriceComparisonRequest {
+  string brand = 1;
+  string model = 2;
+  GroupBy group_by = 4;
+  optional SortBy sort_by = 5;
+  optional Order order = 6;
+  optional int32 limit = 7;
+  optional int32 skip = 8;
+}
+
+message PriceComparisonResponse {
+  repeated Comparisons comparisons = 1;
+  Pagination pagination = 2;
+}
+
+message ByLocationRequest {
+  string brand = 1;
+  string model = 2;
+  optional string location = 3;
+  optional int32 year_from = 4;
+  optional int32 year_to = 5;
+  optional string fuel_type = 6;
+}
+
+message ByLocationResponse {
+  Stats stats = 1;
+}
+
+message Stats {
+  int32 min_price = 1;
+  int32 max_price = 2;
+  int32 avg_price = 3;
+  int32 median_price = 4;
+}
+
+message Comparisons {
+  string location = 1;
+  int32 average_price = 2;
+  int32 listing_count = 3;
+}
+
+enum MetricType {
+  METRIC_TYPE_AVG_PRICE = 0;
+  METRIC_TYPE_MEDIAN_PRICE = 1;
+  METRIC_TYPE_COUNT = 2;
+}
+
+enum GroupBy {
+  GROUP_BY_DISTRICT = 0;
+  GROUP_BY_CITY = 1;
+  GROUP_BY_COUNTRY = 2;
+}
+
+enum SortBy {
+  SORT_BY_AVG_PRICE = 0;
+  SORT_BY_COUNT = 1;
+}
+
+enum Order {
+  ORDER_ASC = 0;
+  ORDER_DESC = 1;
+}
+
+message Locations {
+  repeated string location = 1;
+}
+
+message Pagination {
+  int32 limit = 1;
+  int32 skip = 2;
+  bool has_next = 3;
+  optional int32 next_skip = 4;
+}
+
+

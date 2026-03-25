@@ -25,10 +25,18 @@ message GetChatHistoryRequest {
 
 message GetChatHistoryResponse {
   repeated ChatMessage messages = 1;
+  Pagination pagination = 3;
 }
 
 message ChatMessage {
   string sender_id = 1;
   string content = 2;
   int64 timestamp = 3;
+}
+
+message Pagination {
+  int32 limit = 1;
+  int32 skip = 2;
+  bool has_next = 3;
+  optional int32 next_skip = 4;
 }
