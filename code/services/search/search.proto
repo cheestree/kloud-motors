@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package search;
+option go_package = "./proto";
+
+
+service SearchService {
+    // Search for car listings based on various criteria such as make, model, year, price range, mileage, fuel type, and location.
+    rpc Search (SearchRequest) returns (SearchResponse);
+}
+
+message SearchRequest {
+    string make = 1;
+    string model = 2;
+    int32 year = 3;
+    double min_price = 4;
+    double max_price = 5;
+    int32 max_mileage = 6;
+    string fuel_type = 7;
+    string location = 8;
+    int32 page = 9;
+    int32 page_size = 10;
+}
+
+message SearchResponse {
+    int32 total = 1;
+    int32 page = 2;
+    int32 page_size = 3;
+    repeated ListingSummary listings = 4;
+}
+
+message ListingSummary {
+    string id = 1;
+    string make = 2;
+    string model = 3;
+    int32 year = 4;
+    double price = 5;
+    int32 mileage = 6;
+    string location = 7;
+    string fuel_type = 8;
+}

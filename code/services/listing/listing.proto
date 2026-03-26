@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package listing;
+option go_package = "./proto";
+
+service ListingService {
+    // Get detailed information about a specific car listing by its ID.
+    rpc GetListingDetails (ListingDetailsRequest) returns (ListingDetailsResponse);
+    // Compare multiple car listings by their IDs to see their details side by side.
+    rpc CompareListings (CompareListingsRequest) returns (CompareListingsResponse);
+    // CRUD operations for listings
+    rpc CreateListing (CreateListingRequest) returns (ListingDetailsResponse);
+    // Update an existing listing by its ID with new details.
+    rpc UpdateListing (UpdateListingRequest) returns (ListingDetailsResponse);
+    // Delete a listing by its ID, removing it from the platform.
+    rpc DeleteListing (DeleteListingRequest) returns (DeleteListingResponse);
+}
+
+message Listing {
+    string id = 1;
+    string make = 2;
+    string model = 3;
+    int32 year = 4;
+    double price = 5;
+    int32 mileage = 6;
+    string location = 7;
+    string fuel_type = 8;
+}
+
+message ListingDetailsRequest {
+    string id = 1;
+}
+
+message ListingDetailsResponse {
+    string id = 1;
+    string make = 2;
+    string model = 3;
+    int32 year = 4;
+    double price = 5;
+    int32 mileage = 6;
+    string location = 7;
+    string fuel_type = 8;
+    string trim = 9;
+    string transmission = 10;
+    string color = 11;
+    string seller_type = 12;
+    string description = 13;
+    string listed_at = 14;
+    repeated string images = 15;
+}
+
+message CompareListingsRequest {
+    repeated string ids = 1;
+}
+
+message CompareListingsResponse {
+    repeated ListingDetailsResponse listings = 1;
+}
+
+message CreateListingRequest {
+    string make = 1;
+    string model = 2;
+    int32 year = 3;
+    double price = 4;
+    int32 mileage = 5;
+    string location = 6;
+    string fuel_type = 7;
+    string trim = 8;
+    string transmission = 9;
+    string color = 10;
+    string seller_type = 11;
+    string description = 12;
+    repeated string images = 13;
+}
+
+message UpdateListingRequest {
+    string id = 1;
+    string make = 2;
+    string model = 3;
+    int32 year = 4;
+    double price = 5;
+    int32 mileage = 6;
+    string location = 7;
+    string fuel_type = 8;
+    string trim = 9;
+    string transmission = 10;
+    string color = 11;
+    string seller_type = 12;
+    string description = 13;
+    repeated string images = 14;
+}
+
+message DeleteListingRequest {
+    string id = 1;
+}
+
+message DeleteListingResponse {
+    bool success = 1;
+}
