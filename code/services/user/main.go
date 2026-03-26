@@ -91,7 +91,24 @@ func (s *server) CheckUserExists(ctx context.Context, req *proto.CheckUserExists
 	return &proto.CheckUserExistsResponse{Exists: exists}, nil
 }
 
+func initDB() {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatalf("DATABASE_URL is not set")
+	}
+
+	var err error
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+
+	db.AutoMigrate(&User{}, &Favorite{})
+}
+
 func main() {
+	initDB()
+
 	lis, err := net.Listen("tcp", ":50053")
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
