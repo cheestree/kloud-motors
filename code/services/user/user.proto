@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package user;
+option go_package = "./proto";
+
+service UserService {
+    rpc RegisterUser (RegisterUserRequest) returns (AuthResponse);
+    rpc LoginUser (LoginUserRequest) returns (AuthResponse);
+    rpc GetFavorites (GetFavoritesRequest) returns (FavoritesResponse);
+    rpc AddFavorite (AddFavoriteRequest) returns (FavoriteMutationResponse);
+    rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
+}
+
+message RegisterUserRequest {
+    string name = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message LoginUserRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message AuthResponse {
+    string user_id = 1;
+    string token = 2;
+}
+
+message GetFavoritesRequest {
+    string user_id = 1;
+}
+
+message FavoritesResponse {
+    repeated string favorites = 1;
+}
+
+message AddFavoriteRequest {
+    string user_id = 1;
+    string listing_id = 2;
+}
+
+message RemoveFavoriteRequest {
+    string user_id = 1;
+    string listing_id = 2;
+}
+
+message FavoriteMutationResponse {
+    bool success = 1;
+    string message = 2;
+}
