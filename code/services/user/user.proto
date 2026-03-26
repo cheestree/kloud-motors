@@ -9,6 +9,7 @@ service UserService {
     rpc GetFavorites (GetFavoritesRequest) returns (FavoritesResponse);
     rpc AddFavorite (AddFavoriteRequest) returns (FavoriteMutationResponse);
     rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
+    rpc CheckUserExists (CheckUserExistsRequest) returns (CheckUserExistsResponse);
 }
 
 message RegisterUserRequest {
@@ -48,4 +49,12 @@ message RemoveFavoriteRequest {
 message FavoriteMutationResponse {
     bool success = 1;
     string message = 2;
+}
+
+message CheckUserExistsRequest {
+    string email = 1;
+}
+
+message CheckUserExistsResponse {
+    bool exists = 1;
 }

@@ -24,12 +24,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
   user:
+    container_name: user-service
     build: ./code/services/user
     ports:
       - "50053:50053"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${AUTH_DATABASE_URL}
+    depends_on:
+      - auth-db
 
   auth-db:
     container_name: auth-db
