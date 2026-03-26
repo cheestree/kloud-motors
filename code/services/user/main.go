@@ -18,6 +18,9 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+var db *gorm.DB
+
 type server struct {
 	proto.UnimplementedUserServiceServer
 }
@@ -79,6 +82,75 @@ func (s *server) LoginUser(ctx context.Context, req *proto.LoginUserRequest) (*p
 	return &proto.AuthResponse{
 		UserId: user.ID,
 		Token:  "token-placeholder",
+	}, nil
+}
+
+func (s *server) GetFavorites(ctx context.Context, req *proto.GetFavoritesRequest) (*proto.FavoritesResponse, error) {
+	if req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	var favorites []Favorite
+	if err := db.Where("user_id = ?", req.UserId).Find(&favorites).Error; err != nil {
+		return nil, status.Error(codes.Internal, "failed to get favorites")
+	}
+
+	listings := make([]string, len(favorites))
+	for i, f := range favorites {
+		listings[i] = f.ListingID
+	}
+
+	return &proto.FavoritesResponse{
+		Favorites: listings,
+	}, nil
+}
+
+func (s *server) AddFavorite(ctx context.Context, req *proto.AddFavoriteRequest) (*proto.FavoriteMutationResponse, error) {
+	if req.UserId == "" || req.ListingId == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id and listing_id are required")
+	}
+
+	fav := Favorite{
+		UserID:    req.UserId,
+		ListingID: req.ListingId,
+	}
+
+	if err := db.Create(&fav).Error; err != nil {
+		return &proto.FavoriteMutationResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &proto.FavoriteMutationResponse{
+		Success: true,
+		Message: "favorite added",
+	}, nil
+}
+
+func (s *server) RemoveFavorite(ctx context.Context, req *proto.RemoveFavoriteRequest) (*proto.FavoriteMutationResponse, error) {
+	if req.UserId == "" || req.ListingId == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id and listing_id are required")
+	}
+
+	res := db.Where("user_id = ? AND listing_id = ?", req.UserId, req.ListingId).Delete(&Favorite{})
+	if res.Error != nil {
+		return &proto.FavoriteMutationResponse{
+			Success: false,
+			Message: res.Error.Error(),
+		}, nil
+	}
+
+	if res.RowsAffected == 0 {
+		return &proto.FavoriteMutationResponse{
+			Success: false,
+			Message: "favorite not found",
+		}, nil
+	}
+
+	return &proto.FavoriteMutationResponse{
+		Success: true,
+		Message: "favorite removed",
 	}, nil
 }
 
