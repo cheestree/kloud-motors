@@ -1,0 +1,25 @@
+syntax = "proto3";
+package marketprice;
+option go_package = "./proto";
+
+service MarketPriceService {
+    rpc GetAverageMarketPrice (AveragePriceRequest) returns (AveragePriceResponse);
+}
+
+message AveragePriceRequest {
+    string brand = 1;
+    string model = 2;
+    string location = 3;
+    int32 year_from = 4;
+    int32 year_to = 5;
+}
+
+message AveragePriceResponse {
+    string brand = 1;
+    string model = 2;
+    string location = 3;
+    double average_price = 4;
+    double min_price = 5;
+    double max_price = 6;
+    int32 listing_count = 7;
+}

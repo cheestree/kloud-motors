@@ -13,6 +13,13 @@ services:
       - "50052:50052"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+  marketprice:
+    container_name: marketprice-service
+    build: ./code/services/marketprice
+    ports:
+      - "50053:50053"
+    environment:
+      DATABASE_URL: ${LISTING_DATABASE_URL}
   postgres:
     container_name: listing-db
     image: postgres:16
