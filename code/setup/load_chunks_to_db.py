@@ -2,14 +2,14 @@
 """Load a CSV file in chunks and insert selected columns into PostgreSQL."""
 
 import argparse
+from dataclasses import dataclass, field
 import os
 import sys
-from typing import Any, Dict, List, Set, Tuple, cast
+from typing import Any, Dict, List, Set, Tuple
 from dotenv import load_dotenv
 load_dotenv("../../.env")
 
 import pandas as pd
-from pandas.api import types as pdt
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -28,7 +28,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-
 DEFAULT_COLUMNS = [
     "vin",
     "stockNum",
@@ -41,7 +40,6 @@ DEFAULT_COLUMNS = [
     "brandName",
     "modelName",
     "vf_ModelYear",
-    "vf_Trim",
     "vf_BodyClass",
     "vf_FuelTypePrimary",
     "vf_TransmissionStyle",
@@ -53,6 +51,18 @@ DEFAULT_COLUMNS = [
     "dealerID",
 ]
 
+# Explicit dtypes to prevent pandas from guessing wrong types across chunks.
+COLUMN_DTYPES: Dict[str, str] = {
+    "askPrice": "Int64",
+    "msrp": "Int64",
+    "mileage": "Int64",
+    "isNew": "boolean",
+    "vf_ModelYear": "Int64",
+    "vf_EngineCylinders": "Float64",
+    "vf_EngineHP": "Float64",
+    "dealerID": "Int64",
+}
+
 BRAND_COLUMN = "brandName"
 MODEL_COLUMN = "modelName"
 FUEL_COLUMN = "vf_FuelTypePrimary"
@@ -60,6 +70,15 @@ TRANSMISSION_COLUMN = "vf_TransmissionStyle"
 DRIVE_TYPE_COLUMN = "vf_DriveType"
 BODY_CLASS_COLUMN = "vf_BodyClass"
 
+# Caches to avoid redundant database queries for lookup values.
+@dataclass
+class LookupCache:
+    brands: Dict[str, int] = field(default_factory=dict)
+    fuel_types: Dict[str, int] = field(default_factory=dict)
+    transmissions: Dict[str, int] = field(default_factory=dict)
+    drive_types: Dict[str, int] = field(default_factory=dict)
+    body_classes: Dict[str, int] = field(default_factory=dict)
+    models: Dict[Tuple[int, str], int] = field(default_factory=dict)
 
 def normalize_text(value: Any) -> str | None:
     if value is None:
@@ -69,35 +88,41 @@ def normalize_text(value: Any) -> str | None:
     text = str(value).strip()
     return text if text else None
 
-
 def ensure_lookup_values(
     conn,
     table: Table,
     value_column: Column,
     values: Set[str],
+    cache: Dict[str, int],
 ) -> Dict[str, int]:
     if not values:
-        return {}
+        return cache
+
+    missing = values - cache.keys()
+    if not missing:
+        return cache
 
     conn.execute(
         pg_insert(table)
-        .values([{value_column.name: value} for value in sorted(values)])
+        .values([{value_column.name: value} for value in sorted(missing)])
         .on_conflict_do_nothing(index_elements=[value_column.name])
     )
 
     rows = conn.execute(
-        select(table.c.id, value_column).where(value_column.in_(values))
+        select(table.c.id, value_column).where(value_column.in_(missing))
     ).all()
-    return {value: item_id for item_id, value in rows}
+    cache.update({value: item_id for item_id, value in rows})
+    return cache
 
 
 def ensure_model_values(
     conn,
     model_table: Table,
     model_pairs: Set[Tuple[int, str]],
+    cache: Dict[Tuple[int, str], int],
 ) -> Dict[Tuple[int, str], int]:
     if not model_pairs:
-        return {}
+        return cache
 
     valid_pairs = [
         (brand_id, model_name)
@@ -105,28 +130,33 @@ def ensure_model_values(
         if isinstance(brand_id, int) and isinstance(model_name, str)
     ]
     if not valid_pairs:
-        return {}
+        return cache
+
+    missing_pairs = [(b, m) for b, m in valid_pairs if (b, m) not in cache]
+    if not missing_pairs:
+        return cache
 
     conn.execute(
         pg_insert(model_table)
         .values(
             [
                 {"brand_id": brand_id, "name": model_name}
-                for brand_id, model_name in sorted(valid_pairs)
+                for brand_id, model_name in sorted(missing_pairs)
             ]
         )
         .on_conflict_do_nothing(index_elements=["brand_id", "name"])
     )
 
-    brand_ids = sorted({brand_id for brand_id, _ in valid_pairs})
-    model_names = sorted({model_name for _, model_name in valid_pairs})
+    missing_brand_ids = sorted({b for b, _ in missing_pairs})
+    missing_model_names = sorted({m for _, m in missing_pairs})
     rows = conn.execute(
         select(model_table.c.id, model_table.c.brand_id, model_table.c.name).where(
-            model_table.c.brand_id.in_(brand_ids),
-            model_table.c.name.in_(model_names),
+            model_table.c.brand_id.in_(missing_brand_ids),
+            model_table.c.name.in_(missing_model_names),
         )
     ).all()
-    return {(brand_id, model_name): item_id for item_id, brand_id, model_name in rows}
+    cache.update({(brand_id, model_name): item_id for item_id, brand_id, model_name in rows})
+    return cache
 
 
 def transform_chunk(
@@ -138,6 +168,7 @@ def transform_chunk(
     transmission_table: Table,
     drive_type_table: Table,
     body_class_table: Table,
+    cache: LookupCache,
 ) -> pd.DataFrame:
     transformed = chunk.copy()
 
@@ -148,63 +179,58 @@ def transform_chunk(
     drive_type_series = transformed[DRIVE_TYPE_COLUMN].map(normalize_text)
     body_class_series = transformed[BODY_CLASS_COLUMN].map(normalize_text)
 
-    brand_map = ensure_lookup_values(
-        conn,
-        brand_table,
-        brand_table.c.name,
-        {value for value in brand_series if isinstance(value, str) and value},
+    ensure_lookup_values(
+        conn, brand_table, brand_table.c.name,
+        {v for v in brand_series if isinstance(v, str) and v},
+        cache.brands,
     )
-    fuel_map = ensure_lookup_values(
-        conn,
-        fuel_type_table,
-        fuel_type_table.c.name,
-        {value for value in fuel_series if isinstance(value, str) and value},
+    ensure_lookup_values(
+        conn, fuel_type_table, fuel_type_table.c.name,
+        {v for v in fuel_series if isinstance(v, str) and v},
+        cache.fuel_types,
     )
-    transmission_map = ensure_lookup_values(
-        conn,
-        transmission_table,
-        transmission_table.c.name,
-        {value for value in transmission_series if isinstance(value, str) and value},
+    ensure_lookup_values(
+        conn, transmission_table, transmission_table.c.name,
+        {v for v in transmission_series if isinstance(v, str) and v},
+        cache.transmissions,
     )
-    drive_type_map = ensure_lookup_values(
-        conn,
-        drive_type_table,
-        drive_type_table.c.name,
-        {value for value in drive_type_series if isinstance(value, str) and value},
+    ensure_lookup_values(
+        conn, drive_type_table, drive_type_table.c.name,
+        {v for v in drive_type_series if isinstance(v, str) and v},
+        cache.drive_types,
     )
-    body_class_map = ensure_lookup_values(
-        conn,
-        body_class_table,
-        body_class_table.c.name,
-        {value for value in body_class_series if isinstance(value, str) and value},
+    ensure_lookup_values(
+        conn, body_class_table, body_class_table.c.name,
+        {v for v in body_class_series if isinstance(v, str) and v},
+        cache.body_classes,
     )
 
-    transformed["brand_id"] = brand_series.map(brand_map)
-    transformed["fuel_type_id"] = fuel_series.map(fuel_map)
-    transformed["transmission_id"] = transmission_series.map(transmission_map)
-    transformed["drive_type_id"] = drive_type_series.map(drive_type_map)
-    transformed["body_class_id"] = body_class_series.map(body_class_map)
+    transformed["brand_id"] = brand_series.map(cache.brands)
+    transformed["fuel_type_id"] = fuel_series.map(cache.fuel_types)
+    transformed["transmission_id"] = transmission_series.map(cache.transmissions)
+    transformed["drive_type_id"] = drive_type_series.map(cache.drive_types)
+    transformed["body_class_id"] = body_class_series.map(cache.body_classes)
 
     model_pairs: Set[Tuple[int, str]] = set()
     for brand_name, model_name in zip(brand_series, model_series):
         if brand_name is None or model_name is None:
             continue
-        brand_id = brand_map.get(brand_name)
+        brand_id = cache.brands.get(brand_name)
         if brand_id is not None:
             model_pairs.add((brand_id, model_name))
 
-    model_map = ensure_model_values(conn, model_table, model_pairs)
+    ensure_model_values(conn, model_table, model_pairs, cache.models)
 
     model_ids: List[int | None] = []
     for brand_name, model_name in zip(brand_series, model_series):
         if brand_name is None or model_name is None:
             model_ids.append(None)
             continue
-        brand_id = brand_map.get(brand_name)
+        brand_id = cache.brands.get(brand_name)
         if brand_id is None:
             model_ids.append(None)
             continue
-        model_ids.append(model_map.get((brand_id, model_name)))
+        model_ids.append(cache.models.get((brand_id, model_name)))
 
     transformed["model_id"] = pd.Series(model_ids, index=transformed.index)
     transformed["brand_id"] = transformed["brand_id"].astype("Int64")
@@ -227,38 +253,45 @@ def transform_chunk(
     return transformed
 
 
-def create_fact_table(
-    table_name: str,
-    metadata: MetaData,
-    transformed_chunk: pd.DataFrame,
-) -> Table:
-    columns: List[Column] = []
-    for name, dtype in transformed_chunk.dtypes.items():
-        column_name = str(name)
-        if column_name == "brand_id":
-            columns.append(Column(column_name, Integer(), ForeignKey("brand.id")))
-            continue
-        if column_name == "model_id":
-            columns.append(Column(column_name, Integer(), ForeignKey("model.id")))
-            continue
-        if column_name == "fuel_type_id":
-            columns.append(Column(column_name, Integer(), ForeignKey("fuel_type.id")))
-            continue
-        if column_name == "transmission_id":
-            columns.append(Column(column_name, Integer(), ForeignKey("transmission.id")))
-            continue
-        if column_name == "drive_type_id":
-            columns.append(Column(column_name, Integer(), ForeignKey("drive_type.id")))
-            continue
-        if column_name == "body_class_id":
-            columns.append(Column(column_name, Integer(), ForeignKey("body_class.id")))
-            continue
-        if column_name in ("color", "interiorColor"):
-            columns.append(Column(column_name, Text))
-            continue
-        columns.append(Column(column_name, cast(Any, dtype_to_sqlalchemy(dtype))))
+def create_fact_table(table_name: str, metadata: MetaData) -> Table:
+    # Hardcoded schema, avoids dtype instability across chunks.
+    return Table(
+        table_name,
+        metadata,
+        Column("vin", Text, primary_key=True),
+        Column("stockNum", Text),
+        Column("firstSeen", DateTime),
+        Column("lastSeen", DateTime),
+        Column("askPrice", BigInteger),
+        Column("msrp", BigInteger),
+        Column("mileage", BigInteger),
+        Column("isNew", Boolean),
+        Column("vf_ModelYear", BigInteger),
+        Column("vf_EngineCylinders", Float),
+        Column("vf_EngineHP", Float),
+        Column("color", Text),
+        Column("interiorColor", Text),
+        Column("dealerID", BigInteger),
+        Column("brand_id", Integer, ForeignKey("brand.id")),
+        Column("model_id", Integer, ForeignKey("model.id")),
+        Column("fuel_type_id", Integer, ForeignKey("fuel_type.id")),
+        Column("transmission_id", Integer, ForeignKey("transmission.id")),
+        Column("drive_type_id", Integer, ForeignKey("drive_type.id")),
+        Column("body_class_id", Integer, ForeignKey("body_class.id")),
+    )
 
-    return Table(table_name, metadata, *columns)
+
+def upsert_dataframe(df: pd.DataFrame, table: Table, conn) -> None:
+    deduped = df.drop_duplicates(subset=["vin"], keep="last")
+    records = deduped.where(pd.notna(deduped), None).to_dict(orient="records")
+    if not records:
+        return
+    stmt = pg_insert(table).values(records)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["vin"],
+        set_={col: stmt.excluded[col] for col in deduped.columns if col != "vin"},
+    )
+    conn.execute(stmt)
 
 
 def parse_args() -> argparse.Namespace:
@@ -278,7 +311,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--chunk-size",
         type=int,
-        default=256,
+        default=16384,
         help="Number of rows per chunk.",
     )
     parser.add_argument(
@@ -294,18 +327,6 @@ def parse_args() -> argparse.Namespace:
         help="Maximum number of rows to process.",
     )
     return parser.parse_args()
-
-
-def dtype_to_sqlalchemy(dtype) -> object:
-    if pdt.is_integer_dtype(dtype):
-        return BigInteger()
-    if pdt.is_float_dtype(dtype):
-        return Float()
-    if pdt.is_bool_dtype(dtype):
-        return Boolean()
-    if pdt.is_datetime64_any_dtype(dtype):
-        return DateTime()
-    return Text()
 
 
 def resolve_columns(dataset: str, num_columns: int | None) -> List[str]:
@@ -342,6 +363,9 @@ def main() -> int:
         print("No columns selected.", file=sys.stderr)
         return 1
 
+    # Filter COLUMN_DTYPES to only columns actually being loaded.
+    active_dtypes = {k: v for k, v in COLUMN_DTYPES.items() if k in selected_columns}
+
     engine = create_engine(database_url)
 
     try:
@@ -349,6 +373,7 @@ def main() -> int:
             args.dataset,
             usecols=selected_columns,
             chunksize=args.chunk_size,
+            dtype=active_dtypes,
         )
     except ValueError as exc:
         print(f"Invalid column selection: {exc}", file=sys.stderr)
@@ -411,9 +436,10 @@ def main() -> int:
         UniqueConstraint("brand_id", "name", name="uq_model_brand_name"),
     )
 
-
     with engine.begin() as conn:
         metadata.create_all(conn)
+
+        cache = LookupCache()
 
         first_transformed = transform_chunk(
             first_chunk,
@@ -424,18 +450,18 @@ def main() -> int:
             transmission_table,
             drive_type_table,
             body_class_table,
+            cache,
         )
 
         inspector = inspect(conn)
         if not inspector.has_table(args.table):
-            fact_table = create_fact_table(args.table, metadata, first_transformed)
-            from sqlalchemy.schema import CreateTable
+            fact_table = create_fact_table(args.table, metadata)
             metadata.create_all(conn)
         else:
             fact_table = Table(args.table, MetaData(), autoload_with=conn)
             existing_columns = {column.name for column in fact_table.columns}
             missing_columns = [
-                column for column in first_transformed.columns if column not in existing_columns
+                col for col in first_transformed.columns if col not in existing_columns
             ]
             if missing_columns:
                 print(
@@ -445,16 +471,18 @@ def main() -> int:
                 )
                 return 1
 
-        first_transformed.to_sql(args.table, conn, if_exists="append", index=False)
+        upsert_dataframe(first_transformed, fact_table, conn)
 
-        for chunk in chunk_iter:
-            if remaining_rows is not None and remaining_rows <= 0:
-                break
-            if remaining_rows is not None and len(chunk) > remaining_rows:
-                chunk = chunk.head(remaining_rows)
-                remaining_rows = 0
-            elif remaining_rows is not None:
-                remaining_rows -= len(chunk)
+    for chunk in chunk_iter:
+        if remaining_rows is not None and remaining_rows <= 0:
+            break
+        if remaining_rows is not None and len(chunk) > remaining_rows:
+            chunk = chunk.head(remaining_rows)
+            remaining_rows = 0
+        elif remaining_rows is not None:
+            remaining_rows -= len(chunk)
+
+        with engine.begin() as conn:
             transformed = transform_chunk(
                 chunk,
                 conn,
@@ -464,11 +492,11 @@ def main() -> int:
                 transmission_table,
                 drive_type_table,
                 body_class_table,
+                cache,
             )
-            transformed.to_sql(args.table, conn, if_exists="append", index=False)
+            upsert_dataframe(transformed, fact_table, conn)
 
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
