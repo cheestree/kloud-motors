@@ -5,14 +5,14 @@ services:
     ports:
       - "50051:50051"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${LISTING_DATABASE_URL}
   listing:
     container_name: listing-service
     build: ./code/services/listing
     ports:
       - "50052:50052"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${LISTING_DATABASE_URL}
   postgres:
     container_name: listing-db
     image: postgres:16
