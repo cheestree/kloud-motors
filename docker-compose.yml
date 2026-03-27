@@ -13,7 +13,7 @@ services:
       - "50052:50052"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
-  postgres:
+  listing-db:
     container_name: listing-db
     image: postgres:16
     environment:
@@ -23,7 +23,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - listing_postgres_data:/var/lib/postgresql/data
 
   auth-db:
     container_name: auth-db
@@ -74,7 +74,7 @@ services:
       - auction_postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  listing_postgres_data:
   auth_postgres_data:
   chat_postgres_data:
   geo_postgres_data:
