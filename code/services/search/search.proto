@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package search;
+import "google/protobuf/wrappers.proto";
 option go_package = "./proto";
 
 
@@ -10,32 +11,38 @@ service SearchService {
 }
 
 message SearchRequest {
-    string make = 1;
-    string model = 2;
-    int32 year = 3;
-    double min_price = 4;
-    double max_price = 5;
-    int32 max_mileage = 6;
-    string fuel_type = 7;
-    string location = 8;
-    int32 page = 9;
-    int32 page_size = 10;
+  string make = 1;
+  string model = 2;
+  int32 year = 3;
+  int64 min_price = 4;
+  int64 max_price = 5;
+  int32 max_mileage = 6;
+  string fuel_type = 7;
+  string body_class = 8;
+  string drive_type = 9;
+  string transmission = 10;
+  google.protobuf.BoolValue is_new = 11;
+  int32 page = 12;
+  int32 page_size = 13;
 }
 
 message SearchResponse {
-    int32 total = 1;
-    int32 page = 2;
-    int32 page_size = 3;
-    repeated ListingSummary listings = 4;
+  int32 total = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  repeated ListingSummary listings = 4;
 }
 
 message ListingSummary {
-    string id = 1;
-    string make = 2;
-    string model = 3;
-    int32 year = 4;
-    double price = 5;
-    int32 mileage = 6;
-    string location = 7;
-    string fuel_type = 8;
+  string id = 1;
+  string make = 2;
+  string model = 3;
+  int32 year = 4;
+  int64 price = 5;
+  int32 mileage = 6;
+  string fuel_type = 7;
+  string body_class = 8;
+  string drive_type = 9;
+  string transmission = 10;
+  bool is_new = 11;
 }

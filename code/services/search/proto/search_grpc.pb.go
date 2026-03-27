@@ -19,9 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SearchService_Search_FullMethodName            = "/search.SearchService/Search"
-	SearchService_GetListingDetails_FullMethodName = "/search.SearchService/GetListingDetails"
-	SearchService_CompareListings_FullMethodName   = "/search.SearchService/CompareListings"
+	SearchService_Search_FullMethodName = "/search.SearchService/Search"
 )
 
 // SearchServiceClient is the client API for SearchService service.
@@ -30,10 +28,6 @@ const (
 type SearchServiceClient interface {
 	// Search for car listings based on various criteria such as make, model, year, price range, mileage, fuel type, and location.
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	// Get detailed information about a specific car listing by its ID.
-	GetListingDetails(ctx context.Context, in *ListingDetailsRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error)
-	// Compare multiple car listings by their IDs to see their details side by side.
-	CompareListings(ctx context.Context, in *CompareListingsRequest, opts ...grpc.CallOption) (*CompareListingsResponse, error)
 }
 
 type searchServiceClient struct {
@@ -54,36 +48,12 @@ func (c *searchServiceClient) Search(ctx context.Context, in *SearchRequest, opt
 	return out, nil
 }
 
-func (c *searchServiceClient) GetListingDetails(ctx context.Context, in *ListingDetailsRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListingDetailsResponse)
-	err := c.cc.Invoke(ctx, SearchService_GetListingDetails_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *searchServiceClient) CompareListings(ctx context.Context, in *CompareListingsRequest, opts ...grpc.CallOption) (*CompareListingsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CompareListingsResponse)
-	err := c.cc.Invoke(ctx, SearchService_CompareListings_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // SearchServiceServer is the server API for SearchService service.
 // All implementations must embed UnimplementedSearchServiceServer
 // for forward compatibility.
 type SearchServiceServer interface {
 	// Search for car listings based on various criteria such as make, model, year, price range, mileage, fuel type, and location.
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
-	// Get detailed information about a specific car listing by its ID.
-	GetListingDetails(context.Context, *ListingDetailsRequest) (*ListingDetailsResponse, error)
-	// Compare multiple car listings by their IDs to see their details side by side.
-	CompareListings(context.Context, *CompareListingsRequest) (*CompareListingsResponse, error)
 	mustEmbedUnimplementedSearchServiceServer()
 }
 
@@ -96,12 +66,6 @@ type UnimplementedSearchServiceServer struct{}
 
 func (UnimplementedSearchServiceServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Search not implemented")
-}
-func (UnimplementedSearchServiceServer) GetListingDetails(context.Context, *ListingDetailsRequest) (*ListingDetailsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetListingDetails not implemented")
-}
-func (UnimplementedSearchServiceServer) CompareListings(context.Context, *CompareListingsRequest) (*CompareListingsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CompareListings not implemented")
 }
 func (UnimplementedSearchServiceServer) mustEmbedUnimplementedSearchServiceServer() {}
 func (UnimplementedSearchServiceServer) testEmbeddedByValue()                       {}
@@ -142,42 +106,6 @@ func _SearchService_Search_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SearchService_GetListingDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListingDetailsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SearchServiceServer).GetListingDetails(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SearchService_GetListingDetails_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SearchServiceServer).GetListingDetails(ctx, req.(*ListingDetailsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SearchService_CompareListings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CompareListingsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SearchServiceServer).CompareListings(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SearchService_CompareListings_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SearchServiceServer).CompareListings(ctx, req.(*CompareListingsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // SearchService_ServiceDesc is the grpc.ServiceDesc for SearchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -188,14 +116,6 @@ var SearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _SearchService_Search_Handler,
-		},
-		{
-			MethodName: "GetListingDetails",
-			Handler:    _SearchService_GetListingDetails_Handler,
-		},
-		{
-			MethodName: "CompareListings",
-			Handler:    _SearchService_CompareListings_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
