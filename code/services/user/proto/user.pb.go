@@ -26,6 +26,9 @@ type RegisterUserRequest struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	IsSeller      bool                   `protobuf:"varint,4,opt,name=is_seller,json=isSeller,proto3" json:"is_seller,omitempty"`
+	SellerType    string                 `protobuf:"bytes,5,opt,name=seller_type,json=sellerType,proto3" json:"seller_type,omitempty"`
+	ContactInfo   string                 `protobuf:"bytes,6,opt,name=contact_info,json=contactInfo,proto3" json:"contact_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -77,6 +80,27 @@ func (x *RegisterUserRequest) GetEmail() string {
 func (x *RegisterUserRequest) GetPassword() string {
 	if x != nil {
 		return x.Password
+	}
+	return ""
+}
+
+func (x *RegisterUserRequest) GetIsSeller() bool {
+	if x != nil {
+		return x.IsSeller
+	}
+	return false
+}
+
+func (x *RegisterUserRequest) GetSellerType() string {
+	if x != nil {
+		return x.SellerType
+	}
+	return ""
+}
+
+func (x *RegisterUserRequest) GetContactInfo() string {
+	if x != nil {
+		return x.ContactInfo
 	}
 	return ""
 }
@@ -522,11 +546,15 @@ var File_user_proto protoreflect.FileDescriptor
 const file_user_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"user.proto\x12\x04user\"[\n" +
+	"user.proto\x12\x04user\"\xbc\x01\n" +
 	"\x13RegisterUserRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"D\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x1b\n" +
+	"\tis_seller\x18\x04 \x01(\bR\bisSeller\x12\x1f\n" +
+	"\vseller_type\x18\x05 \x01(\tR\n" +
+	"sellerType\x12!\n" +
+	"\fcontact_info\x18\x06 \x01(\tR\vcontactInfo\"D\n" +
 	"\x10LoginUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"=\n" +

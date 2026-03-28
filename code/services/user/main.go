@@ -49,11 +49,22 @@ func (s *server) RegisterUser(ctx context.Context, req *proto.RegisterUserReques
 		return nil, status.Error(codes.Internal, "failed to hash password")
 	}
 
+	if req.IsSeller {
+		if req.SellerType != "professional_dealer" && req.SellerType != "private_seller" {
+			return nil, status.Error(codes.InvalidArgument, "seller_type must be either 'professional_dealer' or 'private_seller' for sellers")
+		}
+	} else if req.SellerType != "" {
+		return nil, status.Error(codes.InvalidArgument, "seller_type should not be provided for non-sellers")
+	}
+
 	newUser := User{
-		ID:       uuid.New().String(),
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: string(hashedPassword),
+		ID:          uuid.New().String(),
+		Name:        req.Name,
+		Email:       req.Email,
+		Password:    string(hashedPassword),
+		IsSeller:    req.IsSeller,
+		SellerType:  req.SellerType,
+		ContactInfo: req.ContactInfo,
 	}
 
 	if err := db.Create(&newUser).Error; err != nil {
