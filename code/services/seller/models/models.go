@@ -8,3 +8,7 @@ type Seller struct {
 	ContactInfo string
 	Rating      float64
 }
+
+func (Seller) TableName() string {
+	return "users"
+}
