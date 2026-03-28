@@ -4,10 +4,12 @@
 import os
 import sys
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, String, Integer, Text, BigInteger, DateTime, Boolean, ForeignKey, UniqueConstraint, MetaData, Table
+from sqlalchemy import create_engine, Column, String, Integer, Text, BigInteger, DateTime, Boolean, ForeignKey, UniqueConstraint, MetaData, Table, Float
 
 # Load environment variables from .env file
-load_dotenv("../../.env")
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+dotenv_path = os.path.join(base_dir, ".env")
+load_dotenv(dotenv_path)
 
 def main():
     database_url = os.getenv("AUTH_PYTHON_DATABASE_URL")
@@ -27,6 +29,10 @@ def main():
         Column("name", Text),
         Column("email", Text, unique=True, index=True),
         Column("password", Text),
+        Column("is_seller", Boolean, default=False),
+        Column("seller_type", String(50)),
+        Column("contact_info", Text),
+        Column("rating", Float),
     )
 
     # Define Favorite table
@@ -40,6 +46,8 @@ def main():
     )
 
     try:
+        print("Dropping existing tables...")
+        metadata.drop_all(engine)
         print("Creating tables...")
         metadata.create_all(engine)
         print("Tables created successfully!")

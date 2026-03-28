@@ -35,6 +35,16 @@ services:
     depends_on:
       - auth-db
 
+  seller:
+    container_name: seller-service
+    build: ./code/services/seller
+    ports:
+      - "50054:50054"
+    environment:
+      DATABASE_URL: ${AUTH_DATABASE_URL}
+    depends_on:
+      - auth-db
+
   auth-db:
     container_name: auth-db
     image: postgres:16
