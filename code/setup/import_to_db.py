@@ -8,7 +8,6 @@ def main():
     parser.add_argument("--dataset", required=True, help="O ficheiro CSV final deduped")
     args = parser.parse_args()
 
-    # Liga ao PostgreSQL exposto na tua máquina no port 5432 pelo Docker (credentials reais do .env)
     db_url = "postgresql://listing_user:listing_password@localhost:5432/listing_db"
     engine = create_engine(db_url)
 
@@ -16,7 +15,6 @@ def main():
     df = pd.read_csv(args.dataset, low_memory=False)
 
     print("A importar dados para a tabela 'listings' na Base de Dados Postgres...")
-    # Isto vai criar a tabela "listings" automaticamente e meter lá as colunas todas exatas!
     df.to_sql('listings', engine, if_exists='replace', index=False)
     
     print("Sucesso! A tabela 'listings' foi criada e populada.")

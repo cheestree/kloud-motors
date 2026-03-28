@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -9,44 +11,52 @@ import (
 
 	proto "marketprice/proto"
 
+	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+var db *sql.DB
 
 type server struct {
 	proto.UnimplementedMarketPriceServiceServer
 }
 
 func (s *server) GetAverageMarketPrice(ctx context.Context, req *proto.AveragePriceRequest) (*proto.AveragePriceResponse, error) {
-	query := db.Table("listings")
+	query := `SELECT 
+		COALESCE(AVG("askPrice"), 0), 
+		COALESCE(MIN("askPrice"), 0), 
+		COALESCE(MAX("askPrice"), 0), 
+		COUNT("askPrice") 
+		FROM listings WHERE 1=1`
+
+	var args []interface{}
+	argId := 1
 
 	if req.Brand != "" {
-		query = query.Where(`"brandName" = ?`, req.Brand)
+		query += fmt.Sprintf(` AND "brandName" = $%d`, argId)
+		args = append(args, req.Brand)
+		argId++
 	}
 	if req.Model != "" {
-		query = query.Where(`"modelName" = ?`, req.Model)
+		query += fmt.Sprintf(` AND "modelName" = $%d`, argId)
+		args = append(args, req.Model)
+		argId++
 	}
 	if req.YearFrom != 0 {
-		query = query.Where(`"vf_ModelYear" >= ?`, req.YearFrom)
+		query += fmt.Sprintf(` AND "vf_ModelYear" >= $%d`, argId)
+		args = append(args, req.YearFrom)
+		argId++
 	}
 	if req.YearTo != 0 {
-		query = query.Where(`"vf_ModelYear" <= ?`, req.YearTo)
+		query += fmt.Sprintf(` AND "vf_ModelYear" <= $%d`, argId)
+		args = append(args, req.YearTo)
+		argId++
 	}
 
 	var avgPrice, minPrice, maxPrice float64
 	var count int32
 
-	row := query.Select(
-		"COALESCE(AVG(\"askPrice\"), 0)", 
-		"COALESCE(MIN(\"askPrice\"), 0)", 
-		"COALESCE(MAX(\"askPrice\"), 0)", 
-		"COUNT(\"askPrice\")",
-	).Row()
-	
-	err := row.Scan(&avgPrice, &minPrice, &maxPrice, &count)
+	err := db.QueryRow(query, args...).Scan(&avgPrice, &minPrice, &maxPrice, &count)
 	if err != nil {
 		log.Printf("Erro na query: %v", err)
 		return nil, err
@@ -71,11 +81,10 @@ func initDB() {
 
 	var err error
 	for i := 0; i < 10; i++ {
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		db, err = sql.Open("postgres", dsn)
 		if err == nil {
-			sqlDB, _ := db.DB()
-			if pingErr := sqlDB.Ping(); pingErr == nil {
-				return 
+			if pingErr := db.Ping(); pingErr == nil {
+				return
 			}
 		}
 		log.Printf("A aguardar pela base de dados... (%d/10)", i+1)
