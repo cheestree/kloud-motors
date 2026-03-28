@@ -58,7 +58,7 @@ func (s *server) GetAverageMarketPrice(ctx context.Context, req *proto.AveragePr
 
 	err := db.QueryRow(query, args...).Scan(&avgPrice, &minPrice, &maxPrice, &count)
 	if err != nil {
-		log.Printf("Erro na query: %v", err)
+		log.Printf("Error in query: %v", err)
 		return nil, err
 	}
 
@@ -87,7 +87,7 @@ func initDB() {
 				return
 			}
 		}
-		log.Printf("A aguardar pela base de dados... (%d/10)", i+1)
+		log.Printf("Waiting for database... (%d/10)", i+1)
 		time.Sleep(3 * time.Second)
 	}
 
