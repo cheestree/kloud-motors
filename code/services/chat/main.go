@@ -1,45 +1,89 @@
 package main
 
 import (
+	"chat/proto"
+	pubsub2 "chat/pubsub"
+	ws2 "chat/ws"
 	"context"
 	"log"
 	"net"
-
-	proto "chat/proto"
+	"net/http"
+	"os"
+	"strconv"
 
 	"google.golang.org/grpc"
 )
 
-type server struct {
-	proto.ChatServiceServer
-}
-
-func (s *server) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (*proto.OpenChatResponse, error) {
-	// verify if the two users exist or not and the seller is really a seller
-	// verify if the listing belongs to the seller
-	// create or return a new chat between the buyer and the seller
-	return &proto.OpenChatResponse{}, nil
-}
-
-func (s *server) GetChatHistory(ctx context.Context, req *proto.GetChatHistoryRequest) (*proto.GetChatHistoryResponse, error) {
-	// verify if the chat exists
-	// verify if the listing is still open
-	// verify if the requesting user belongs to the chat
-	return &proto.GetChatHistoryResponse{}, nil
-}
-
 func main() {
-	lis, err := net.Listen("tcp", ":50051")
+	nodeID := getenv("POD_ID", localNodeID())
+	pubsub, err := pubsub2.NewGCPPubSub(context.Background(), pubsub2.GCPPubSubConfig{
+		ProjectID:       getenv("GCP_PROJECT_ID", ""),
+		TopicID:         getenv("GCP_PUBSUB_TOPIC", "chat-events"),
+		SubscriptionID:  getenv("GCP_PUBSUB_SUBSCRIPTION", "chat-sub-"+nodeID),
+		NodeID:          nodeID,
+		CreateResources: getenvBool("GCP_PUBSUB_AUTOCREATE", false),
+	})
+
 	if err != nil {
-		log.Fatalf("Error on listen: %v", err)
+		log.Fatalf("pubsub init: %v", err)
+	}
+	defer pubsub.Close()
+
+	hub := ws2.NewHub(pubsub)
+
+	// ── gRPC (OpenChat, GetChatHistory) ──────────────────────────────────────
+	grpcLis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("grpc listen: %v", err)
 	}
 
-	s := grpc.NewServer()
-	proto.RegisterChatServiceServer(s, &server{})
+	grpcSrv := grpc.NewServer()
+	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{})
 
-	log.Println("gRPC server is running on " + lis.Addr().String() + "...")
+	go func() {
+		log.Println("gRPC listening on :50051")
+		if err := grpcSrv.Serve(grpcLis); err != nil {
+			log.Fatalf("grpc serve: %v", err)
+		}
+	}()
 
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+	// ── HTTP / WebSocket ──────────────────────────────────────────────────────
+	ws := &wsServer{hub: hub}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
+
+	log.Println("WS listening on :8080")
+	if err := http.ListenAndServe(":8080", mux); err != nil {
+		log.Fatalf("http serve: %v", err)
 	}
+}
+
+func getenv(key, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
+}
+
+func getenvBool(key string, fallback bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+
+	return b
+}
+
+func localNodeID() string {
+	host, err := os.Hostname()
+	if err != nil || host == "" {
+		return "chat-local"
+	}
+	return host
 }
