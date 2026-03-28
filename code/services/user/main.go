@@ -6,10 +6,12 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	. "user/models"
 	proto "user/proto"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
@@ -23,6 +25,36 @@ var db *gorm.DB
 
 type server struct {
 	proto.UnimplementedUserServiceServer
+}
+
+type UserClaims struct {
+	UserID     string `json:"user_id"`
+	Email      string `json:"email"`
+	IsSeller   bool   `json:"is_seller"`
+	SellerType string `json:"seller_type,omitempty"`
+	jwt.RegisteredClaims
+}
+
+func generateJWT(user *User) (string, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return "", status.Error(codes.Internal, "JWT_SECRET is not configured")
+	}
+
+	claims := UserClaims{
+		UserID:     user.ID,
+		Email:      user.Email,
+		IsSeller:   user.IsSeller,
+		SellerType: user.SellerType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   user.ID,
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
 }
 
 func CheckUserExists(email string) bool {
@@ -71,9 +103,14 @@ func (s *server) RegisterUser(ctx context.Context, req *proto.RegisterUserReques
 		return nil, status.Error(codes.Internal, "failed to create user")
 	}
 
+	token, err := generateJWT(&newUser)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to generate token")
+	}
+
 	return &proto.AuthResponse{
 		UserId: newUser.ID,
-		Token:  "token-placeholder", // Token generation not in scope, just returning dummy
+		Token:  token,
 	}, nil
 }
 
@@ -90,9 +127,14 @@ func (s *server) LoginUser(ctx context.Context, req *proto.LoginUserRequest) (*p
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 
+	token, err := generateJWT(&user)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to generate token")
+	}
+
 	return &proto.AuthResponse{
 		UserId: user.ID,
-		Token:  "token-placeholder",
+		Token:  token,
 	}, nil
 }
 
