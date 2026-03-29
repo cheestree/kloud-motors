@@ -232,7 +232,7 @@ func (x *SearchResponse) GetListings() []*ListingSummary {
 
 type ListingSummary struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Make          string                 `protobuf:"bytes,2,opt,name=make,proto3" json:"make,omitempty"`
 	Model         string                 `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
 	Year          int32                  `protobuf:"varint,4,opt,name=year,proto3" json:"year,omitempty"`
@@ -277,11 +277,11 @@ func (*ListingSummary) Descriptor() ([]byte, []int) {
 	return file_search_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ListingSummary) GetId() string {
+func (x *ListingSummary) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
-	return ""
+	return 0
 }
 
 func (x *ListingSummary) GetMake() string {
@@ -383,7 +383,7 @@ const file_search_proto_rawDesc = "" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x122\n" +
 	"\blistings\x18\x04 \x03(\v2\x16.search.ListingSummaryR\blistings\"\xa4\x02\n" +
 	"\x0eListingSummary\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04make\x18\x02 \x01(\tR\x04make\x12\x14\n" +
 	"\x05model\x18\x03 \x01(\tR\x05model\x12\x12\n" +
 	"\x04year\x18\x04 \x01(\x05R\x04year\x12\x14\n" +

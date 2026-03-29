@@ -28,7 +28,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-load_dotenv("../../../.env")
+load_dotenv("../../.env")
 
 # Columns the loader expects in the input CSV.
 EXPECTED_COLUMNS = [
@@ -183,7 +183,8 @@ def create_fact_table(table_name: str, metadata: MetaData) -> Table:
     return Table(
         table_name,
         metadata,
-        Column("vin",                  Text,       primary_key=True),
+        Column("id", Integer, primary_key=True, autoincrement=True),
+        Column("vin",                  Text,       unique=True, nullable=False),
         Column("stock_num",            Text),
         Column("first_seen",           DateTime),
         Column("last_seen",            DateTime),

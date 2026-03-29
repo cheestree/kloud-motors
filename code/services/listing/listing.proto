@@ -14,10 +14,14 @@ service ListingService {
     rpc UpdateListing (UpdateListingRequest) returns (ListingDetailsResponse);
     // Delete a listing by its ID, removing it from the platform.
     rpc DeleteListing (DeleteListingRequest) returns (DeleteListingResponse);
+    // Checks if a listing with the given ID exists and belongs to a seller.
+    rpc CheckListingOwnership (CheckListingOwnershipRequest) returns (CheckListingOwnershipResponse);
+    // Checks if a listing with the tiven ID is open.
+    rpc CheckListingOpen (CheckListingOpenRequest) returns (CheckListingOpenResponse);
 }
 
 message Listing {
-    string id = 1;
+    int64 id = 1;
     string make = 2;
     string model = 3;
     int32 year = 4;
@@ -28,11 +32,11 @@ message Listing {
 }
 
 message ListingDetailsRequest {
-    string id = 1;
+    int64 id = 1;
 }
 
 message ListingDetailsResponse {
-    string id = 1;
+    int64 id = 1;
     string make = 2;
     string model = 3;
     int32 year = 4;
@@ -50,7 +54,7 @@ message ListingDetailsResponse {
 }
 
 message CompareListingsRequest {
-    repeated string ids = 1;
+    repeated int64 ids = 1;
 }
 
 message CompareListingsResponse {
@@ -74,7 +78,7 @@ message CreateListingRequest {
 }
 
 message UpdateListingRequest {
-    string id = 1;
+    int64 id = 1;
     string make = 2;
     string model = 3;
     int32 year = 4;
@@ -91,9 +95,26 @@ message UpdateListingRequest {
 }
 
 message DeleteListingRequest {
-    string id = 1;
+    int64 id = 1;
 }
 
 message DeleteListingResponse {
     bool success = 1;
+}
+
+message CheckListingOwnershipRequest {
+    int64 listing_id = 1;
+    int64 dealer_id = 2;
+}
+
+message CheckListingOwnershipResponse {
+    bool is_owner = 1;
+}
+
+message CheckListingOpenRequest {
+    int64 listing_id = 1;
+}
+
+message CheckListingOpenResponse {
+    bool is_open = 1;
 }

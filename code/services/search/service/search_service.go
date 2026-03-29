@@ -2,31 +2,9 @@ package service
 
 import (
 	"context"
+	"search/domain"
 	"search/repository"
 )
-
-type SearchParams struct {
-	Make         string
-	Model        string
-	Year         int32
-	MinPrice     int64
-	MaxPrice     int64
-	MaxMileage   int32
-	FuelType     string
-	BodyClass    string
-	DriveType    string
-	Transmission string
-	IsNew        *bool
-	Page         int32
-	PageSize     int32
-}
-
-type SearchResult struct {
-	Total    int32
-	Page     int32
-	PageSize int32
-	Listings []repository.ListingSummary
-}
 
 type SearchService struct {
 	repository *repository.SearchRepository
@@ -36,7 +14,7 @@ func NewSearchService(repository *repository.SearchRepository) *SearchService {
 	return &SearchService{repository: repository}
 }
 
-func (s *SearchService) Search(ctx context.Context, params SearchParams) (*SearchResult, error) {
+func (s *SearchService) Search(ctx context.Context, params domain.SearchParams) (*domain.SearchResult, error) {
 	page := params.Page
 	if page <= 0 {
 		page = 1
@@ -70,7 +48,7 @@ func (s *SearchService) Search(ctx context.Context, params SearchParams) (*Searc
 		return nil, err
 	}
 
-	return &SearchResult{
+	return &domain.SearchResult{
 		Total:    total,
 		Page:     page,
 		PageSize: pageSize,

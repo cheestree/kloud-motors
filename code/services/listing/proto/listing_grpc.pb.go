@@ -19,11 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ListingService_GetListingDetails_FullMethodName = "/listing.ListingService/GetListingDetails"
-	ListingService_CompareListings_FullMethodName   = "/listing.ListingService/CompareListings"
-	ListingService_CreateListing_FullMethodName     = "/listing.ListingService/CreateListing"
-	ListingService_UpdateListing_FullMethodName     = "/listing.ListingService/UpdateListing"
-	ListingService_DeleteListing_FullMethodName     = "/listing.ListingService/DeleteListing"
+	ListingService_GetListingDetails_FullMethodName     = "/listing.ListingService/GetListingDetails"
+	ListingService_CompareListings_FullMethodName       = "/listing.ListingService/CompareListings"
+	ListingService_CreateListing_FullMethodName         = "/listing.ListingService/CreateListing"
+	ListingService_UpdateListing_FullMethodName         = "/listing.ListingService/UpdateListing"
+	ListingService_DeleteListing_FullMethodName         = "/listing.ListingService/DeleteListing"
+	ListingService_CheckListingOwnership_FullMethodName = "/listing.ListingService/CheckListingOwnership"
+	ListingService_CheckListingOpen_FullMethodName      = "/listing.ListingService/CheckListingOpen"
 )
 
 // ListingServiceClient is the client API for ListingService service.
@@ -36,8 +38,14 @@ type ListingServiceClient interface {
 	CompareListings(ctx context.Context, in *CompareListingsRequest, opts ...grpc.CallOption) (*CompareListingsResponse, error)
 	// CRUD operations for listings
 	CreateListing(ctx context.Context, in *CreateListingRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error)
+	// Update an existing listing by its ID with new details.
 	UpdateListing(ctx context.Context, in *UpdateListingRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error)
+	// Delete a listing by its ID, removing it from the platform.
 	DeleteListing(ctx context.Context, in *DeleteListingRequest, opts ...grpc.CallOption) (*DeleteListingResponse, error)
+	// Checks if a listing with the given ID exists and belongs to a seller.
+	CheckListingOwnership(ctx context.Context, in *CheckListingOwnershipRequest, opts ...grpc.CallOption) (*CheckListingOwnershipResponse, error)
+	// Checks if a listing with the tiven ID is open.
+	CheckListingOpen(ctx context.Context, in *CheckListingOpenRequest, opts ...grpc.CallOption) (*CheckListingOpenResponse, error)
 }
 
 type listingServiceClient struct {
@@ -98,6 +106,26 @@ func (c *listingServiceClient) DeleteListing(ctx context.Context, in *DeleteList
 	return out, nil
 }
 
+func (c *listingServiceClient) CheckListingOwnership(ctx context.Context, in *CheckListingOwnershipRequest, opts ...grpc.CallOption) (*CheckListingOwnershipResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckListingOwnershipResponse)
+	err := c.cc.Invoke(ctx, ListingService_CheckListingOwnership_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *listingServiceClient) CheckListingOpen(ctx context.Context, in *CheckListingOpenRequest, opts ...grpc.CallOption) (*CheckListingOpenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckListingOpenResponse)
+	err := c.cc.Invoke(ctx, ListingService_CheckListingOpen_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ListingServiceServer is the server API for ListingService service.
 // All implementations must embed UnimplementedListingServiceServer
 // for forward compatibility.
@@ -108,8 +136,14 @@ type ListingServiceServer interface {
 	CompareListings(context.Context, *CompareListingsRequest) (*CompareListingsResponse, error)
 	// CRUD operations for listings
 	CreateListing(context.Context, *CreateListingRequest) (*ListingDetailsResponse, error)
+	// Update an existing listing by its ID with new details.
 	UpdateListing(context.Context, *UpdateListingRequest) (*ListingDetailsResponse, error)
+	// Delete a listing by its ID, removing it from the platform.
 	DeleteListing(context.Context, *DeleteListingRequest) (*DeleteListingResponse, error)
+	// Checks if a listing with the given ID exists and belongs to a seller.
+	CheckListingOwnership(context.Context, *CheckListingOwnershipRequest) (*CheckListingOwnershipResponse, error)
+	// Checks if a listing with the tiven ID is open.
+	CheckListingOpen(context.Context, *CheckListingOpenRequest) (*CheckListingOpenResponse, error)
 	mustEmbedUnimplementedListingServiceServer()
 }
 
@@ -134,6 +168,12 @@ func (UnimplementedListingServiceServer) UpdateListing(context.Context, *UpdateL
 }
 func (UnimplementedListingServiceServer) DeleteListing(context.Context, *DeleteListingRequest) (*DeleteListingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteListing not implemented")
+}
+func (UnimplementedListingServiceServer) CheckListingOwnership(context.Context, *CheckListingOwnershipRequest) (*CheckListingOwnershipResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckListingOwnership not implemented")
+}
+func (UnimplementedListingServiceServer) CheckListingOpen(context.Context, *CheckListingOpenRequest) (*CheckListingOpenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckListingOpen not implemented")
 }
 func (UnimplementedListingServiceServer) mustEmbedUnimplementedListingServiceServer() {}
 func (UnimplementedListingServiceServer) testEmbeddedByValue()                        {}
@@ -246,6 +286,42 @@ func _ListingService_DeleteListing_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ListingService_CheckListingOwnership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckListingOwnershipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ListingServiceServer).CheckListingOwnership(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ListingService_CheckListingOwnership_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ListingServiceServer).CheckListingOwnership(ctx, req.(*CheckListingOwnershipRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ListingService_CheckListingOpen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckListingOpenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ListingServiceServer).CheckListingOpen(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ListingService_CheckListingOpen_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ListingServiceServer).CheckListingOpen(ctx, req.(*CheckListingOpenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ListingService_ServiceDesc is the grpc.ServiceDesc for ListingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -272,6 +348,14 @@ var ListingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteListing",
 			Handler:    _ListingService_DeleteListing_Handler,
+		},
+		{
+			MethodName: "CheckListingOwnership",
+			Handler:    _ListingService_CheckListingOwnership_Handler,
+		},
+		{
+			MethodName: "CheckListingOpen",
+			Handler:    _ListingService_CheckListingOpen_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

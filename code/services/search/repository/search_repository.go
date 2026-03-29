@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"search/domain"
 	"strings"
 )
 
@@ -27,25 +28,11 @@ type SearchFilters struct {
 	PageSize     int32
 }
 
-type ListingSummary struct {
-	ID           string
-	Make         string
-	Model        string
-	Year         int32
-	Price        int64
-	Mileage      int32
-	FuelType     string
-	BodyClass    string
-	DriveType    string
-	Transmission string
-	IsNew        bool
-}
-
 func NewSearchRepository(db *sql.DB) *SearchRepository {
 	return &SearchRepository{db: db}
 }
 
-func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([]ListingSummary, int32, error) {
+func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([]domain.ListingSummary, int32, error) {
 	clauses := make([]string, 0)
 	args := make([]interface{}, 0)
 
@@ -135,9 +122,9 @@ func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([
 	}
 	defer rows.Close()
 
-	listings := make([]ListingSummary, 0)
+	listings := make([]domain.ListingSummary, 0)
 	for rows.Next() {
-		var s ListingSummary
+		var s domain.ListingSummary
 		if err := rows.Scan(
 			&s.ID, &s.Make, &s.Model, &s.Year,
 			&s.Price, &s.Mileage,

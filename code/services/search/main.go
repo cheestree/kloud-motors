@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"search/domain"
 	proto "search/proto"
 	"search/repository"
 	"search/service"
@@ -28,7 +29,7 @@ func (s *server) Search(ctx context.Context, req *proto.SearchRequest) (*proto.S
 		isNew = &v
 	}
 
-	result, err := s.service.Search(ctx, service.SearchParams{
+	result, err := s.service.Search(ctx, domain.SearchParams{
 		Make:         req.Make,
 		Model:        req.Model,
 		Year:         req.Year,
