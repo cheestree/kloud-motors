@@ -1,20 +1,73 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
+	"net"
+	"os"
+	"strconv"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/grpc"
+
+	proto "geographic-maket-insights/proto"
+	"geographic-maket-insights/repository"
+	"geographic-maket-insights/repository/postgres"
 )
 
-//TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 func main() {
-	//TIP <p>Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined text
-	// to see how GoLand suggests fixing the warning.</p><p>Alternatively, if available, click the lightbulb to view possible fixes.</p>
-	s := "gopher"
-	fmt.Printf("Hello and welcome, %s!\n", s)
-
-	for i := 1; i <= 5; i++ {
-		//TIP <p>To start your debugging session, right-click your code in the editor and select the Debug option.</p> <p>We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-		// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.</p>
-		fmt.Println("i =", 100/i)
+	grpcPort := getenv("GRPC_PORT", "50052")
+	postgresDSN := getenv("POSTGRES_DSN", "")
+	if postgresDSN == "" {
+		log.Fatal("POSTGRES_DSN is required")
 	}
+
+	pool, err := pgxpool.New(context.Background(), postgresDSN)
+	if err != nil {
+		log.Fatalf("postgres connect error: %v", err)
+	}
+	defer pool.Close()
+
+	serverConfig := repository.QueryConfig{
+		Schema:       getenv("POSTGRES_SCHEMA", "public"),
+		Table:        getenv("POSTGRES_TABLE", "listings"),
+		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
+		MaxLimit:     getenvInt("MAX_LIMIT", 100),
+	}
+
+	repo := postgres.NewPostgresRepo(pool, serverConfig)
+
+	grpcSrv := grpc.NewServer()
+	proto.RegisterGeoMarketInsightsServiceServer(grpcSrv, NewGeoServer(repo))
+
+	lis, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		log.Fatalf("listen error: %v", err)
+	}
+
+	log.Printf("geo-market-insights gRPC listening on :%s", grpcPort)
+	if err := grpcSrv.Serve(lis); err != nil {
+		log.Fatalf("grpc serve error: %v", err)
+	}
+}
+
+func getenv(key, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
+}
+
+func getenvInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return n
 }
