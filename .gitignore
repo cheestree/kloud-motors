@@ -2,3 +2,4 @@
 code/setup/data/*.csv
 venv/
 .env
+*.csv
