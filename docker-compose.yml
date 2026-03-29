@@ -20,6 +20,17 @@ services:
       - "50053:50053"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+      
+  auction:
+    container_name: auction-service
+    build: ./code/services/auction
+    ports:
+      - "50054:50054"
+      - "8080:8080"
+    environment:
+      AUCTION_DATABASE_URL: ${AUCTION_DATABASE_URL}
+    depends_on:
+      - auction-db
   postgres:
     container_name: listing-db
     image: postgres:16
