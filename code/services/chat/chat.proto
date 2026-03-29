@@ -21,6 +21,8 @@ message OpenChatResponse {
 message GetChatHistoryRequest {
   string chat_id = 1;
   string user_id = 2;
+  int32 limit = 3;
+  int32 skip = 4;
 }
 
 message GetChatHistoryResponse {

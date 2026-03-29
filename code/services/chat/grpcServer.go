@@ -40,6 +40,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 			return nil, status.Errorf(codes.Internal, "failed to index seller participant: %v", err)
 		}
 	} else {
+		// TODO: Check if it is the correct way to do
 		chatID = buildChatID(listingID, req.GetUserId(), req.GetSellerId())
 	}
 
@@ -51,22 +52,15 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 		return nil, status.Error(codes.InvalidArgument, "chat_id and user_id are required")
 	}
 
-	// Extract listing_id from chat_id (it was encoded during OpenChat)
-	// Or pass it as a separate parameter in proto if needed
-	// For now, we validate with UserCanAccessChat
-
 	if s.indexStore != nil {
-		// TODO: Extract listing_id from chatID or pass as separate param
-		// Example: decode listing_id from chat_id hash
-		// For now, we skip this validation - you need to decode the listing_id
+		canAccess, err := s.indexStore.UserCanAccessChat(ctx, req.GetUserId(), req.GetChatId())
+		if err != nil {
+			return nil, err
+		}
 
-		// allowed, err := s.indexStore.UserCanAccessChat(ctx, req.GetUserId(), listingID)
-		// if err != nil {
-		// 	return nil, status.Errorf(codes.Internal, "failed to validate chat access: %v", err)
-		// }
-		// if !allowed {
-		// 	return nil, status.Error(codes.PermissionDenied, "user cannot access this chat")
-		// }
+		if !canAccess {
+			return nil, status.Error(codes.PermissionDenied, "permission denied")
+		}
 	}
 
 	if s.messageStore == nil {

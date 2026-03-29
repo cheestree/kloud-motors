@@ -6,12 +6,11 @@ import (
 )
 
 type ChatMessage struct {
-	ID       string
-	ChatID   string
-	UserID   string
-	UserName string
-	Message  string
-	Time     time.Time
+	ID      string
+	ChatID  string
+	UserID  string
+	Message string
+	Time    time.Time
 }
 
 type MessageRepo interface {

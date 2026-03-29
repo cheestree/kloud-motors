@@ -129,6 +129,8 @@ type GetChatHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ChatId        string                 `protobuf:"bytes,1,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	Skip          int32                  `protobuf:"varint,4,opt,name=skip,proto3" json:"skip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -177,9 +179,24 @@ func (x *GetChatHistoryRequest) GetUserId() string {
 	return ""
 }
 
+func (x *GetChatHistoryRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetChatHistoryRequest) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
+}
+
 type GetChatHistoryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Messages      []*ChatMessage         `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	Pagination    *Pagination            `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -217,6 +234,13 @@ func (*GetChatHistoryResponse) Descriptor() ([]byte, []int) {
 func (x *GetChatHistoryResponse) GetMessages() []*ChatMessage {
 	if x != nil {
 		return x.Messages
+	}
+	return nil
+}
+
+func (x *GetChatHistoryResponse) GetPagination() *Pagination {
+	if x != nil {
+		return x.Pagination
 	}
 	return nil
 }
@@ -281,6 +305,74 @@ func (x *ChatMessage) GetTimestamp() int64 {
 	return 0
 }
 
+type Pagination struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Skip          int32                  `protobuf:"varint,2,opt,name=skip,proto3" json:"skip,omitempty"`
+	HasNext       bool                   `protobuf:"varint,3,opt,name=has_next,json=hasNext,proto3" json:"has_next,omitempty"`
+	NextSkip      *int32                 `protobuf:"varint,4,opt,name=next_skip,json=nextSkip,proto3,oneof" json:"next_skip,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Pagination) Reset() {
+	*x = Pagination{}
+	mi := &file_chat_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Pagination) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Pagination) ProtoMessage() {}
+
+func (x *Pagination) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Pagination.ProtoReflect.Descriptor instead.
+func (*Pagination) Descriptor() ([]byte, []int) {
+	return file_chat_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Pagination) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *Pagination) GetSkip() int32 {
+	if x != nil {
+		return x.Skip
+	}
+	return 0
+}
+
+func (x *Pagination) GetHasNext() bool {
+	if x != nil {
+		return x.HasNext
+	}
+	return false
+}
+
+func (x *Pagination) GetNextSkip() int32 {
+	if x != nil && x.NextSkip != nil {
+		return *x.NextSkip
+	}
+	return 0
+}
+
 var File_chat_proto protoreflect.FileDescriptor
 
 const file_chat_proto_rawDesc = "" +
@@ -293,16 +385,29 @@ const file_chat_proto_rawDesc = "" +
 	"\n" +
 	"listing_id\x18\x03 \x01(\tR\tlistingId\"+\n" +
 	"\x10OpenChatResponse\x12\x17\n" +
-	"\achat_id\x18\x02 \x01(\tR\x06chatId\"I\n" +
+	"\achat_id\x18\x02 \x01(\tR\x06chatId\"s\n" +
 	"\x15GetChatHistoryRequest\x12\x17\n" +
 	"\achat_id\x18\x01 \x01(\tR\x06chatId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"G\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x12\n" +
+	"\x04skip\x18\x04 \x01(\x05R\x04skip\"y\n" +
 	"\x16GetChatHistoryResponse\x12-\n" +
-	"\bmessages\x18\x01 \x03(\v2\x11.chat.ChatMessageR\bmessages\"b\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.chat.ChatMessageR\bmessages\x120\n" +
+	"\n" +
+	"pagination\x18\x03 \x01(\v2\x10.chat.PaginationR\n" +
+	"pagination\"b\n" +
 	"\vChatMessage\x12\x1b\n" +
 	"\tsender_id\x18\x01 \x01(\tR\bsenderId\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\tR\acontent\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp2\x95\x01\n" +
+	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"\x81\x01\n" +
+	"\n" +
+	"Pagination\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x12\n" +
+	"\x04skip\x18\x02 \x01(\x05R\x04skip\x12\x19\n" +
+	"\bhas_next\x18\x03 \x01(\bR\ahasNext\x12 \n" +
+	"\tnext_skip\x18\x04 \x01(\x05H\x00R\bnextSkip\x88\x01\x01B\f\n" +
+	"\n" +
+	"_next_skip2\x95\x01\n" +
 	"\vChatService\x129\n" +
 	"\bOpenChat\x12\x15.chat.OpenChatRequest\x1a\x16.chat.OpenChatResponse\x12K\n" +
 	"\x0eGetChatHistory\x12\x1b.chat.GetChatHistoryRequest\x1a\x1c.chat.GetChatHistoryResponseB\tZ\a./protob\x06proto3"
@@ -319,25 +424,27 @@ func file_chat_proto_rawDescGZIP() []byte {
 	return file_chat_proto_rawDescData
 }
 
-var file_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_chat_proto_goTypes = []any{
 	(*OpenChatRequest)(nil),        // 0: chat.OpenChatRequest
 	(*OpenChatResponse)(nil),       // 1: chat.OpenChatResponse
 	(*GetChatHistoryRequest)(nil),  // 2: chat.GetChatHistoryRequest
 	(*GetChatHistoryResponse)(nil), // 3: chat.GetChatHistoryResponse
 	(*ChatMessage)(nil),            // 4: chat.ChatMessage
+	(*Pagination)(nil),             // 5: chat.Pagination
 }
 var file_chat_proto_depIdxs = []int32{
 	4, // 0: chat.GetChatHistoryResponse.messages:type_name -> chat.ChatMessage
-	0, // 1: chat.ChatService.OpenChat:input_type -> chat.OpenChatRequest
-	2, // 2: chat.ChatService.GetChatHistory:input_type -> chat.GetChatHistoryRequest
-	1, // 3: chat.ChatService.OpenChat:output_type -> chat.OpenChatResponse
-	3, // 4: chat.ChatService.GetChatHistory:output_type -> chat.GetChatHistoryResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 1: chat.GetChatHistoryResponse.pagination:type_name -> chat.Pagination
+	0, // 2: chat.ChatService.OpenChat:input_type -> chat.OpenChatRequest
+	2, // 3: chat.ChatService.GetChatHistory:input_type -> chat.GetChatHistoryRequest
+	1, // 4: chat.ChatService.OpenChat:output_type -> chat.OpenChatResponse
+	3, // 5: chat.ChatService.GetChatHistory:output_type -> chat.GetChatHistoryResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_chat_proto_init() }
@@ -345,13 +452,14 @@ func file_chat_proto_init() {
 	if File_chat_proto != nil {
 		return
 	}
+	file_chat_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_proto_rawDesc), len(file_chat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

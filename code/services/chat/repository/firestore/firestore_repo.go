@@ -43,7 +43,6 @@ func (s *MessageRepo) SaveMessage(ctx context.Context, msg repository.ChatMessag
 		Collection(s.collection).Doc(msg.ID).
 		Set(ctx, map[string]any{
 			"user_id":   msg.UserID,
-			"user_name": msg.UserName,
 			"message":   msg.Message,
 			"time":      msg.Time,
 		})
@@ -83,7 +82,6 @@ func (s *MessageRepo) ListChatMessages(ctx context.Context, chatID string, limit
 	for _, d := range docs {
 		var row struct {
 			UserID   string    `firestore:"user_id"`
-			UserName string    `firestore:"user_name"`
 			Message  string    `firestore:"message"`
 			Time     time.Time `firestore:"time"`
 		}
@@ -94,7 +92,6 @@ func (s *MessageRepo) ListChatMessages(ctx context.Context, chatID string, limit
 			ID:       d.Ref.ID,
 			ChatID:   chatID,
 			UserID:   row.UserID,
-			UserName: row.UserName,
 			Message:  row.Message,
 			Time:     row.Time,
 		})

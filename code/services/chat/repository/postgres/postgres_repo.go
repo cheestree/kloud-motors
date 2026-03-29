@@ -26,11 +26,11 @@ func NewPostgresIndexRepo(ctx context.Context, dsn string) (*IndexRepo, error) {
 
 func (s *IndexRepo) UpsertChatParticipant(ctx context.Context, userID, listingID, brand, model string) (string, error) {
 	if userID == "" || listingID == "" || brand == "" || model == "" {
-		return "", fmt.Errorf("user_id, listing_id, brand, and model are all required")
+		return "", fmt.Errorf("user_id, listing_id, make, and model are all required")
 	}
 
 	const q = `
-		INSERT INTO "chat-db".chat (user_id, listing_id, brand, model)
+		INSERT INTO "chat-db".chat (user_id, listing_id, make, model)
 		VALUES ($1, $2, $3, $4)
 		RETURNING chat_id
 	`
