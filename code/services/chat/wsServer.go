@@ -1,9 +1,12 @@
 package main
 
 import (
+	"chat/repository"
 	"chat/ws"
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -13,7 +16,9 @@ import (
 )
 
 type wsServer struct {
-	hub *ws.Hub
+	hub          *ws.Hub
+	messageStore repository.MessageRepo
+	indexStore   repository.ChatIndexRepo
 }
 
 type InboundMessage struct {
@@ -49,7 +54,26 @@ func (s *wsServer) ServeWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: verify user belongs to this chat (MongoDB)
+	if s.indexStore != nil {
+		// Extract listing_id from request (query param, header, or URL)
+		// Example: listingID := r.URL.Query().Get("listing_id")
+		// For now, we need you to decide how listing_id comes from the client
+
+		// TODO: Extract listing_id from request
+		listingID := r.URL.Query().Get("listing_id")
+		if listingID != "" {
+			allowed, err := s.indexStore.UserCanAccessChat(r.Context(), userID, listingID)
+			if err != nil {
+				log.Printf("chat access check error user=%s listing=%s err=%v", userID, listingID, err)
+				http.Error(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+			if !allowed {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+		}
+	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -70,14 +94,47 @@ func (s *wsServer) onMessage(chatID, userID string, raw []byte) {
 		return
 	}
 
-	// TODO: persist to MongoDB
-
 	out := OutboundMessage{
-		ID:       "msg_" + time.Now().Format("20060102150405"),
+		ID:       fmt.Sprintf("msg_%d", time.Now().UnixNano()),
 		ChatID:   chatID,
 		SenderID: userID,
 		Content:  in.Content,
 		SentAt:   time.Now().UTC(),
+	}
+
+	if s.messageStore != nil {
+		err := s.messageStore.SaveMessage(context.Background(), repository.ChatMessage{
+			ID:       out.ID,
+			ChatID:   out.ChatID,
+			UserID:   out.SenderID,
+			UserName: userID, // Use userID as name, or extract from header if available
+			Message:  out.Content,
+			Time:     out.SentAt,
+		})
+		if err != nil {
+			log.Printf("save message error chat=%s user=%s err=%v", chatID, userID, err)
+			return
+		}
+	}
+
+	if s.indexStore != nil {
+		// Extract listing_id from request context or query param
+		listingID := r.URL.Query().Get("listing_id")
+		if listingID != "" {
+			// TODO: Get brand and model from request or listing service
+			brand := r.URL.Query().Get("brand")
+			model := r.URL.Query().Get("model")
+
+			if brand == "" || model == "" {
+				log.Printf("warning: brand or model missing for user=%s listing=%s", userID, listingID)
+			}
+
+			_, err := s.indexStore.UpsertChatParticipant(context.Background(), userID, listingID, brand, model)
+			if err != nil {
+				log.Printf("index update error user=%s listing=%s err=%v", userID, listingID, err)
+				return
+			}
+		}
 	}
 
 	payload, err := json.Marshal(out)

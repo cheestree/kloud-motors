@@ -3,6 +3,8 @@ package main
 import (
 	"chat/proto"
 	pubsub2 "chat/pubsub"
+	"chat/repository/firestore"
+	"chat/repository/postgres"
 	ws2 "chat/ws"
 	"context"
 	"log"
@@ -29,6 +31,23 @@ func main() {
 	}
 	defer pubsub.Close()
 
+	firestoreProjectID := getenv("FIREBASE_PROJECT_ID", getenv("GCP_PROJECT_ID", ""))
+	messageStore, err := firestore.NewFirestoreMessageRepo(
+		context.Background(),
+		firestoreProjectID,
+		getenv("FIRESTORE_MESSAGES_COLLECTION", "messages"),
+	)
+	if err != nil {
+		log.Fatalf("firestore init: %v", err)
+	}
+	defer messageStore.Close()
+
+	indexStore, err := postgres.NewPostgresIndexRepo(context.Background(), getenv("POSTGRES_DSN", ""))
+	if err != nil {
+		log.Fatalf("postgres init: %v", err)
+	}
+	defer indexStore.Close()
+
 	hub := ws2.NewHub(pubsub)
 
 	// ── gRPC (OpenChat, GetChatHistory) ──────────────────────────────────────
@@ -38,7 +57,11 @@ func main() {
 	}
 
 	grpcSrv := grpc.NewServer()
-	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{})
+	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{
+		messageStore: messageStore,
+		indexStore:   indexStore,
+		historyLimit: getenvInt("CHAT_HISTORY_LIMIT", 50),
+	})
 
 	go func() {
 		log.Println("gRPC listening on :50051")
@@ -48,7 +71,7 @@ func main() {
 	}()
 
 	// ── HTTP / WebSocket ──────────────────────────────────────────────────────
-	ws := &wsServer{hub: hub}
+	ws := &wsServer{hub: hub, messageStore: messageStore, indexStore: indexStore}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
 
@@ -78,6 +101,20 @@ func getenvBool(key string, fallback bool) bool {
 	}
 
 	return b
+}
+
+func getenvInt(key string, fallback int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+
+	return n
 }
 
 func localNodeID() string {
