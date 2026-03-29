@@ -4,35 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"search/domain"
 	"strings"
+
+	"services/search/domain"
+	"services/shared"
 )
 
 type SearchRepository struct {
 	db *sql.DB
 }
 
-type SearchFilters struct {
-	Make         string
-	Model        string
-	Year         int32
-	MinPrice     int64
-	MaxPrice     int64
-	MaxMileage   int32
-	FuelType     string
-	BodyClass    string
-	DriveType    string
-	Transmission string
-	IsNew        *bool
-	Page         int32
-	PageSize     int32
-}
-
 func NewSearchRepository(db *sql.DB) *SearchRepository {
 	return &SearchRepository{db: db}
 }
 
-func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([]domain.ListingSummary, int32, error) {
+func (r *SearchRepository) Search(ctx context.Context, filters domain.SearchParams) ([]shared.ListingSummary, int32, error) {
 	clauses := make([]string, 0)
 	args := make([]interface{}, 0)
 
@@ -81,6 +67,23 @@ func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([
 		clauses = append(clauses, fmt.Sprintf("ad.is_new = $%d", len(args)))
 	}
 
+	if filters.State != "" {
+		args = append(args, "%"+filters.State+"%")
+		clauses = append(clauses, fmt.Sprintf("ad.state ILIKE $%d", len(args)))
+	}
+	if filters.District != "" {
+		args = append(args, "%"+filters.District+"%")
+		clauses = append(clauses, fmt.Sprintf("ad.district ILIKE $%d", len(args)))
+	}
+	if filters.City != "" {
+		args = append(args, "%"+filters.City+"%")
+		clauses = append(clauses, fmt.Sprintf("ad.city ILIKE $%d", len(args)))
+	}
+	if filters.Country != "" {
+		args = append(args, "%"+filters.Country+"%")
+		clauses = append(clauses, fmt.Sprintf("ad.country ILIKE $%d", len(args)))
+	}
+
 	whereSQL := ""
 	if len(clauses) > 0 {
 		whereSQL = " WHERE " + strings.Join(clauses, " AND ")
@@ -102,7 +105,7 @@ func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([
 	args = append(args, filters.PageSize, (filters.Page-1)*filters.PageSize)
 	limitIdx, offsetIdx := len(args)-1, len(args)
 
-	selectQuery := "SELECT ad.vin," +
+	selectQuery := "SELECT ad.id," +
 		" COALESCE(b.name, '')," +
 		" COALESCE(m.name, '')," +
 		" COALESCE(ad.model_year, 0)," +
@@ -112,9 +115,14 @@ func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([
 		" COALESCE(bc.name, '')," +
 		" COALESCE(dt.name, '')," +
 		" COALESCE(tr.name, '')," +
-		" COALESCE(ad.is_new, false)" +
+		" COALESCE(ad.is_new, false)," +
+		" COALESCE(ad.city, '')," +
+		" COALESCE(ad.district, '')," +
+		" COALESCE(ad.state, '')," +
+		" COALESCE(ad.country, '')," +
+		" ad.last_seen" +
 		baseSQL + whereSQL +
-		fmt.Sprintf(" ORDER BY ad.last_seen DESC NULLS LAST, ad.vin ASC LIMIT $%d OFFSET $%d", limitIdx, offsetIdx)
+		fmt.Sprintf(" ORDER BY ad.last_seen DESC NULLS LAST, ad.id ASC LIMIT $%d OFFSET $%d", limitIdx, offsetIdx)
 
 	rows, err := r.db.QueryContext(ctx, selectQuery, args...)
 	if err != nil {
@@ -122,17 +130,18 @@ func (r *SearchRepository) Search(ctx context.Context, filters SearchFilters) ([
 	}
 	defer rows.Close()
 
-	listings := make([]domain.ListingSummary, 0)
+	listings := make([]shared.ListingSummary, 0)
 	for rows.Next() {
-		var s domain.ListingSummary
+		var s shared.ListingSummary
 		if err := rows.Scan(
-			&s.ID, &s.Make, &s.Model, &s.Year,
+			&s.Id, &s.Make, &s.Model, &s.Year,
 			&s.Price, &s.Mileage,
 			&s.FuelType, &s.BodyClass, &s.DriveType, &s.Transmission,
-			&s.IsNew,
+			&s.IsNew, &s.City, &s.District, &s.State, &s.Country, &s.LastSeen,
 		); err != nil {
 			return nil, 0, err
 		}
+		fmt.Printf("DEBUG: id=%d city=%q district=%q state=%q country=%q last_seen=%q\n", s.Id, s.City, s.District, s.State, s.Country, s.LastSeen)
 		listings = append(listings, s)
 	}
 	if err := rows.Err(); err != nil {

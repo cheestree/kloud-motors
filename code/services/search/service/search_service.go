@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
-	"search/domain"
-	"search/repository"
+	"services/search/domain"
+
+	"services/search/repository"
 )
 
 type SearchService struct {
@@ -27,7 +28,7 @@ func (s *SearchService) Search(ctx context.Context, params domain.SearchParams) 
 		pageSize = 100
 	}
 
-	filters := repository.SearchFilters{
+	filters := domain.SearchParams{
 		Make:         params.Make,
 		Model:        params.Model,
 		Year:         params.Year,
@@ -41,6 +42,10 @@ func (s *SearchService) Search(ctx context.Context, params domain.SearchParams) 
 		IsNew:        params.IsNew,
 		Page:         page,
 		PageSize:     pageSize,
+		State:        params.State,
+		District:     params.District,
+		City:         params.City,
+		Country:      params.Country,
 	}
 
 	listings, total, err := s.repository.Search(ctx, filters)

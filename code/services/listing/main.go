@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
-	"listing/domain"
-	proto "listing/proto"
-	"listing/repository"
-	"listing/service"
 	"log"
 	"net"
 	"os"
+
+	"services/listing/proto"
+	"services/listing/repository"
+	"services/listing/service"
+	"services/shared"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -56,31 +57,6 @@ func (s *server) CompareListings(ctx context.Context, req *proto.CompareListings
 	return &proto.CompareListingsResponse{Listings: responses}, nil
 }
 
-/*
-func (s *server) CreateListing(ctx context.Context, req *proto.CreateListingRequest) (*proto.ListingDetailsResponse, error) {
-	return &proto.ListingDetailsResponse{}, nil
-}
-
-func (s *server) UpdateListing(ctx context.Context, req *proto.UpdateListingRequest) (*proto.ListingDetailsResponse, error) {
-	return &proto.ListingDetailsResponse{}, nil
-}
-
-func (s *server) DeleteListing(ctx context.Context, req *proto.DeleteListingRequest) (*proto.DeleteListingResponse, error) {
-	return &proto.DeleteListingResponse{Success: true}, nil
-}
-*/
-
-func (s *server) CheckListingOpen(ctx context.Context, req *proto.CheckListingOpenRequest) (*proto.CheckListingOpenResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "listing_id is required")
-	}
-	isOpen, err := s.service.CheckListingOpen(ctx, req.ListingId)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to check listing open: %v", err)
-	}
-	return &proto.CheckListingOpenResponse{IsOpen: isOpen}, nil
-}
-
 func (s *server) CheckListingOwnership(ctx context.Context, req *proto.CheckListingOwnershipRequest) (*proto.CheckListingOwnershipResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "listing_id and dealer_id are required")
@@ -92,25 +68,60 @@ func (s *server) CheckListingOwnership(ctx context.Context, req *proto.CheckList
 	return &proto.CheckListingOwnershipResponse{IsOwner: isOwner}, nil
 }
 
-func toListingDetailsResponse(listing *domain.ListingDetails) *proto.ListingDetailsResponse {
+func (s *server) GetListingSummary(ctx context.Context, req *proto.ListingDetailsRequest) (*shared.ListingSummary, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "listing id is required")
+	}
+
+	summary, err := s.service.GetListingSummary(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to fetch listing summary: %v", err)
+	}
+	if summary == nil {
+		return nil, status.Error(codes.NotFound, "listing not found")
+	}
+
+	return &shared.ListingSummary{
+		Id:           summary.Id,
+		Make:         summary.Make,
+		Model:        summary.Model,
+		Year:         summary.Year,
+		Price:        summary.Price,
+		Mileage:      summary.Mileage,
+		FuelType:     summary.FuelType,
+		BodyClass:    summary.BodyClass,
+		DriveType:    summary.DriveType,
+		Transmission: summary.Transmission,
+		IsNew:        summary.IsNew,
+		City:         summary.City,
+		District:     summary.District,
+		State:        summary.State,
+		Country:      summary.Country,
+	}, nil
+}
+
+func toListingDetailsResponse(listing *shared.ListingDetails) *proto.ListingDetailsResponse {
 	if listing == nil {
 		return nil
 	}
 	return &proto.ListingDetailsResponse{
-		Id:           listing.ID,
+		Id:           listing.Id,
 		Make:         listing.Make,
 		Model:        listing.Model,
 		Year:         listing.Year,
-		Price:        listing.Price,
+		Price:        float64(listing.Price),
 		Mileage:      listing.Mileage,
-		Location:     listing.Location,
+		City:         listing.City,
+		District:     listing.District,
+		State:        listing.State,
+		Country:      listing.Country,
 		FuelType:     listing.FuelType,
 		Trim:         listing.Trim,
 		Transmission: listing.Transmission,
 		Color:        listing.Color,
 		SellerType:   listing.SellerType,
 		Description:  listing.Description,
-		ListedAt:     listing.ListedAt,
+		ListedAt:     listing.LastSeen,
 		Images:       listing.Images,
 	}
 }

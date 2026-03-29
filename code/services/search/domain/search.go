@@ -1,5 +1,7 @@
 package domain
 
+import "services/shared"
+
 type SearchParams struct {
 	Make         string
 	Model        string
@@ -14,25 +16,15 @@ type SearchParams struct {
 	IsNew        *bool
 	Page         int32
 	PageSize     int32
-}
-
-type ListingSummary struct {
-	ID           int64
-	Make         string
-	Model        string
-	Year         int32
-	Price        int64
-	Mileage      int32
-	FuelType     string
-	BodyClass    string
-	DriveType    string
-	Transmission string
-	IsNew        bool
+	State        string
+	District     string
+	City         string
+	Country      string
 }
 
 type SearchResult struct {
 	Total    int32
 	Page     int32
 	PageSize int32
-	Listings []ListingSummary
+	Listings []shared.ListingSummary
 }

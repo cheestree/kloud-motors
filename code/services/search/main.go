@@ -6,10 +6,12 @@ import (
 	"log"
 	"net"
 	"os"
-	"search/domain"
-	proto "search/proto"
-	"search/repository"
-	"search/service"
+	"services/search/proto"
+
+	"services/search/domain"
+	"services/search/repository"
+	"services/search/service"
+	"services/shared"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -48,10 +50,10 @@ func (s *server) Search(ctx context.Context, req *proto.SearchRequest) (*proto.S
 		return nil, status.Errorf(codes.Internal, "search failed: %v", err)
 	}
 
-	listings := make([]*proto.ListingSummary, 0, len(result.Listings))
+	listings := make([]*shared.ListingSummary, 0, len(result.Listings))
 	for _, item := range result.Listings {
-		listings = append(listings, &proto.ListingSummary{
-			Id:           item.ID,
+		listings = append(listings, &shared.ListingSummary{
+			Id:           item.Id,
 			Make:         item.Make,
 			Model:        item.Model,
 			Year:         item.Year,
@@ -62,6 +64,11 @@ func (s *server) Search(ctx context.Context, req *proto.SearchRequest) (*proto.S
 			DriveType:    item.DriveType,
 			Transmission: item.Transmission,
 			IsNew:        item.IsNew,
+			City:         item.City,
+			District:     item.District,
+			State:        item.State,
+			Country:      item.Country,
+			LastSeen:     item.LastSeen,
 		})
 	}
 

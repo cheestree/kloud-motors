@@ -1,14 +1,18 @@
 services:
   search:
     container_name: search-service
-    build: ./code/services/search
+    build:
+      context: ./code/services
+      dockerfile: search/Dockerfile
     ports:
       - "50051:50051"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
   listing:
     container_name: listing-service
-    build: ./code/services/listing
+    build:
+      context: ./code/services
+      dockerfile: listing/Dockerfile
     ports:
       - "50052:50052"
     environment:

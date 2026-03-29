@@ -3,8 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
-	"listing/domain"
-	"listing/repository"
+
+	"services/listing/repository"
+	"services/shared"
 )
 
 type ListingService struct {
@@ -15,7 +16,7 @@ func NewListingService(repository *repository.ListingRepository) *ListingService
 	return &ListingService{repository: repository}
 }
 
-func (s *ListingService) GetListingDetails(ctx context.Context, id int64) (*domain.ListingDetails, error) {
+func (s *ListingService) GetListingDetails(ctx context.Context, id int64) (*shared.ListingDetails, error) {
 	if id <= 0 {
 		return nil, fmt.Errorf("invalid ID: must be a positive integer")
 	}
@@ -29,9 +30,9 @@ func (s *ListingService) GetListingDetails(ctx context.Context, id int64) (*doma
 	return listing, nil
 }
 
-func (s *ListingService) CompareListings(ctx context.Context, ids []int64) ([]*domain.ListingDetails, error) {
+func (s *ListingService) CompareListings(ctx context.Context, ids []int64) ([]*shared.ListingDetails, error) {
 	if len(ids) == 0 {
-		return []*domain.ListingDetails{}, nil
+		return []*shared.ListingDetails{}, nil
 	}
 	for _, id := range ids {
 		if id <= 0 {
@@ -65,11 +66,18 @@ func (s *ListingService) CheckListingOwnership(ctx context.Context, listingID in
 	return s.repository.CheckListingOwnership(ctx, listingID, dealerID)
 }
 
-func (s *ListingService) CheckListingOpen(ctx context.Context, listingID int64) (bool, error) {
-	if listingID <= 0 {
-		return false, fmt.Errorf("invalid ID: must be a positive integer")
+func (s *ListingService) GetListingSummary(ctx context.Context, id int64) (*shared.ListingSummary, error) {
+	if id <= 0 {
+		return nil, fmt.Errorf("invalid ID: must be a positive integer")
 	}
-	return s.repository.CheckListingOpen(ctx, listingID)
+	summary, err := s.repository.GetListingSummary(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if summary == nil {
+		return nil, ErrListingNotFound
+	}
+	return summary, nil
 }
 
 var ErrListingNotFound = fmt.Errorf("listing not found")
