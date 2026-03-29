@@ -17,7 +17,7 @@ services:
     container_name: marketprice-service
     build: ./code/services/marketprice
     ports:
-      - "50053:50053"
+      - "50055:50055"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
       
@@ -25,7 +25,7 @@ services:
     container_name: auction-service
     build: ./code/services/auction
     ports:
-      - "50054:50054"
+      - "50056:50056"
       - "8080:8080"
     environment:
       AUCTION_DATABASE_URL: ${AUCTION_DATABASE_URL}

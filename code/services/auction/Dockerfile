@@ -13,7 +13,7 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/auction-service .
 
-EXPOSE 50054
+EXPOSE 50056
 EXPOSE 8080
 
 CMD ["./auction-service"]

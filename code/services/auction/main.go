@@ -65,7 +65,7 @@ func main() {
 		hub = ws2.NewHub(nil)
 	}
 
-	lis, err := net.Listen("tcp", ":50054")
+	lis, err := net.Listen("tcp", ":50056")
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}

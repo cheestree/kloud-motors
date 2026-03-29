@@ -122,6 +122,7 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequest) (*proto.CreateAuctionResponse, error) {
 	// 1. Make a gRPC call to the Listing Service to get listing details
 	// 2. Verify if the listing belongs to the seller (user requesting the creation)
+	
 	// 3. Verify if the listing is available
 
 	// 4. Create the auction in auction-db

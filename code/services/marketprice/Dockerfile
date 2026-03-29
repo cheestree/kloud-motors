@@ -13,6 +13,6 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/marketprice-service .
 
-EXPOSE 50053
+EXPOSE 50055
 
 CMD ["./marketprice-service"]
