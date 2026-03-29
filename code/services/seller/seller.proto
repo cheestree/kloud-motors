@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package seller;
+option go_package = "./proto";
+
+service SellerService {
+    rpc GetSellerProfile (GetSellerProfileRequest) returns (SellerProfileResponse);
+    rpc VerifySellerProfile (VerifySellerRequest) returns (VerifySellerResponse);
+}
+
+message GetSellerProfileRequest {
+    string seller_id = 1;
+}
+
+message SellerProfileResponse {
+    string seller_id = 1;
+    string name = 2;
+    string seller_type = 3;
+    string contact_info = 4;
+    double rating = 5;
+}
+
+message VerifySellerRequest {
+    string seller_id = 1;
+}
+
+message VerifySellerResponse {
+    bool is_seller = 1;
+}
