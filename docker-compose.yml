@@ -1,0 +1,81 @@
+services:
+  search:
+    container_name: search-service
+    build: ./code/services/search
+    ports:
+      - "50051:50051"
+    environment:
+      DATABASE_URL: ${LISTING_DATABASE_URL}
+  listing:
+    container_name: listing-service
+    build: ./code/services/listing
+    ports:
+      - "50052:50052"
+    environment:
+      DATABASE_URL: ${LISTING_DATABASE_URL}
+  postgres:
+    container_name: listing-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${LISTING_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${LISTING_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${LISTING_POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  auth-db:
+    container_name: auth-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+
+  chat-db:
+    container_name: chat-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${CHAT_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CHAT_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${CHAT_POSTGRES_DB}
+    ports:
+      - "5434:5432"
+    volumes:
+      - chat_postgres_data:/var/lib/postgresql/data
+
+  geo-db:
+    container_name: geo-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${GEO_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${GEO_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${GEO_POSTGRES_DB}
+    ports:
+      - "5435:5432"
+    volumes:
+      - geo_postgres_data:/var/lib/postgresql/data
+
+  auction-db:
+    container_name: auction-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${AUCTION_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUCTION_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUCTION_POSTGRES_DB}
+    ports:
+      - "5436:5432"
+    volumes:
+      - auction_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  auth_postgres_data:
+  chat_postgres_data:
+  geo_postgres_data:
+  auction_postgres_data:
