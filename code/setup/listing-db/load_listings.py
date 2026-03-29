@@ -58,6 +58,10 @@ EXPECTED_COLUMNS = [
     "trim",
     "turbo",
     "electrification_level",
+    "district",
+    "city",
+    "country",
+    "state"
 ]
 
 # Columns that require a lookup table (normalised dimension).
@@ -82,6 +86,7 @@ COLUMN_DTYPES: Dict[str, str] = {
     "displacement_l":     "Float64",
     "doors":              "Int64",
     "transmission_speeds": "Int64",
+    # district, city, country are text, so no dtype needed (default is object)
 }
 
 
@@ -210,6 +215,10 @@ def create_fact_table(table_name: str, metadata: MetaData) -> Table:
         Column("drive_type_id",        Integer, ForeignKey("drive_type.id")),
         Column("body_class_id",        Integer, ForeignKey("body_class.id")),
         Column("electrification_level_id", Integer, ForeignKey("electrification_level.id")),
+        Column("district",             Text),
+        Column("city",                 Text),
+        Column("country",              Text),
+        Column("state",                Text),
     )
 
 
