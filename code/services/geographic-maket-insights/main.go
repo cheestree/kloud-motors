@@ -9,7 +9,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	proto "geographic-maket-insights/proto"
+	"geographic-maket-insights/proto"
 	"geographic-maket-insights/repository"
 	"geographic-maket-insights/repository/postgres"
 )
@@ -23,7 +23,7 @@ func main() {
 
 	repoConfig := repository.DBConfig{
 		Schema:       getenv("POSTGRES_SCHEMA", "public"),
-		Table:        getenv("POSTGRES_TABLE", "listings"),
+		Table:        getenv("POSTGRES_TABLE", "automotive_data"),
 		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
 		MaxLimit:     getenvInt("MAX_LIMIT", 100),
 		Dsn:          getenv("POSTGRES_DSN", "localhost"),

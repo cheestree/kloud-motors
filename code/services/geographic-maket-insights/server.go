@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	proto "geographic-maket-insights/proto"
+	"geographic-maket-insights/proto"
 	"geographic-maket-insights/repository"
 )
 
