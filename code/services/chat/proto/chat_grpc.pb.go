@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ChatService_GetActiveChats_FullMethodName = "/chat.ChatService/GetActiveChats"
 	ChatService_OpenChat_FullMethodName       = "/chat.ChatService/OpenChat"
 	ChatService_GetChatHistory_FullMethodName = "/chat.ChatService/GetChatHistory"
 )
@@ -27,6 +28,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatServiceClient interface {
+	GetActiveChats(ctx context.Context, in *GetActiveChatsRequest, opts ...grpc.CallOption) (*GetActiveChatsResponse, error)
 	OpenChat(ctx context.Context, in *OpenChatRequest, opts ...grpc.CallOption) (*OpenChatResponse, error)
 	GetChatHistory(ctx context.Context, in *GetChatHistoryRequest, opts ...grpc.CallOption) (*GetChatHistoryResponse, error)
 }
@@ -37,6 +39,16 @@ type chatServiceClient struct {
 
 func NewChatServiceClient(cc grpc.ClientConnInterface) ChatServiceClient {
 	return &chatServiceClient{cc}
+}
+
+func (c *chatServiceClient) GetActiveChats(ctx context.Context, in *GetActiveChatsRequest, opts ...grpc.CallOption) (*GetActiveChatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetActiveChatsResponse)
+	err := c.cc.Invoke(ctx, ChatService_GetActiveChats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *chatServiceClient) OpenChat(ctx context.Context, in *OpenChatRequest, opts ...grpc.CallOption) (*OpenChatResponse, error) {
@@ -63,6 +75,7 @@ func (c *chatServiceClient) GetChatHistory(ctx context.Context, in *GetChatHisto
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
 type ChatServiceServer interface {
+	GetActiveChats(context.Context, *GetActiveChatsRequest) (*GetActiveChatsResponse, error)
 	OpenChat(context.Context, *OpenChatRequest) (*OpenChatResponse, error)
 	GetChatHistory(context.Context, *GetChatHistoryRequest) (*GetChatHistoryResponse, error)
 	mustEmbedUnimplementedChatServiceServer()
@@ -75,6 +88,9 @@ type ChatServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedChatServiceServer struct{}
 
+func (UnimplementedChatServiceServer) GetActiveChats(context.Context, *GetActiveChatsRequest) (*GetActiveChatsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetActiveChats not implemented")
+}
 func (UnimplementedChatServiceServer) OpenChat(context.Context, *OpenChatRequest) (*OpenChatResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method OpenChat not implemented")
 }
@@ -100,6 +116,24 @@ func RegisterChatServiceServer(s grpc.ServiceRegistrar, srv ChatServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ChatService_ServiceDesc, srv)
+}
+
+func _ChatService_GetActiveChats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetActiveChatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).GetActiveChats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_GetActiveChats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).GetActiveChats(ctx, req.(*GetActiveChatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatService_OpenChat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -145,6 +179,10 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "chat.ChatService",
 	HandlerType: (*ChatServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetActiveChats",
+			Handler:    _ChatService_GetActiveChats_Handler,
+		},
 		{
 			MethodName: "OpenChat",
 			Handler:    _ChatService_OpenChat_Handler,

@@ -21,6 +21,13 @@ type ChatMessage struct {
 	Time    time.Time
 }
 
+type ChatSummary struct {
+	ChatID    string
+	ListingID string
+	Brand     string
+	Model     string
+}
+
 type MessageRepo interface {
 	SaveMessage(ctx context.Context, msg ChatMessage) error
 	ListChatMessages(ctx context.Context, chatID string, limit, skip int) ([]ChatMessage, error)
@@ -29,6 +36,7 @@ type MessageRepo interface {
 
 type ChatIndexRepo interface {
 	UpsertChatParticipant(ctx context.Context, userID, listingID, brand, model string) (string, error)
+	ListUserChats(ctx context.Context, userID string) ([]ChatSummary, error)
 	UserCanAccessChat(ctx context.Context, userID, listingID string) (bool, error)
 	Close() error
 }

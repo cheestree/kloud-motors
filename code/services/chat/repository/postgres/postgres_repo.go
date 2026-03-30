@@ -81,6 +81,40 @@ func (s *RelationalRepo) UserCanAccessChat(ctx context.Context, userID, listingI
 	return allowed, nil
 }
 
+func (s *RelationalRepo) ListUserChats(ctx context.Context, userID string) ([]repository.ChatSummary, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("user_id is required")
+	}
+
+	q := fmt.Sprintf(`
+		SELECT chat_id, listing_id, brand, model
+		FROM %s
+		WHERE user_id = $1
+		ORDER BY chat_id DESC
+	`, s.qualifiedTable())
+
+	rows, err := s.pool.Query(ctx, q, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list user chats: %w", err)
+	}
+	defer rows.Close()
+
+	chats := make([]repository.ChatSummary, 0)
+	for rows.Next() {
+		var chat repository.ChatSummary
+		if err := rows.Scan(&chat.ChatID, &chat.ListingID, &chat.Brand, &chat.Model); err != nil {
+			return nil, fmt.Errorf("scan user chats: %w", err)
+		}
+		chats = append(chats, chat)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate user chats: %w", err)
+	}
+
+	return chats, nil
+}
+
 func (db *RelationalRepo) NormalizePage(limitRaw, skipRaw int32) (int, int) {
 	limit := int(limitRaw)
 	if limit <= 0 {

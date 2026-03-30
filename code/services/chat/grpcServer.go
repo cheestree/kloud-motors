@@ -18,6 +18,33 @@ type grpcServer struct {
 	historyLimit int
 }
 
+func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveChatsRequest) (*proto.GetActiveChatsResponse, error) {
+	if req.GetUserId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+
+	if s.indexStore == nil {
+		return &proto.GetActiveChatsResponse{Chats: []*proto.ChatsSummary{}}, nil
+	}
+
+	chats, err := s.indexStore.ListUserChats(ctx, req.GetUserId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list active chats: %v", err)
+	}
+
+	protoChats := make([]*proto.ChatsSummary, 0, len(chats))
+	for _, chat := range chats {
+		protoChats = append(protoChats, &proto.ChatsSummary{
+			ChatId:    chat.ChatID,
+			ListingId: chat.ListingID,
+			Brand:     chat.Brand,
+			Model:     chat.Model,
+		})
+	}
+
+	return &proto.GetActiveChatsResponse{Chats: protoChats}, nil
+}
+
 func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (*proto.OpenChatResponse, error) {
 	if req.GetUserId() == "" || req.GetSellerId() == "" || req.GetListingId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id, seller_id and listing_id are required")

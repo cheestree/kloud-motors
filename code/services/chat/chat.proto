@@ -4,8 +4,24 @@ package chat;
 option go_package = "./proto";
 
 service ChatService {
+  rpc GetActiveChats(GetActiveChatsRequest) returns (GetActiveChatsResponse);
   rpc OpenChat(OpenChatRequest) returns (OpenChatResponse);
   rpc GetChatHistory(GetChatHistoryRequest) returns (GetChatHistoryResponse);
+}
+
+message GetActiveChatsRequest {
+  string user_id = 1;
+}
+
+message GetActiveChatsResponse {
+  repeated ChatsSummary chats = 1;
+}
+
+message ChatsSummary {
+  string chat_id = 1;
+  string listing_id = 2;
+  string brand = 3;
+  string model = 4;
 }
 
 message OpenChatRequest {
