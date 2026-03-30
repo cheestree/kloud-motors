@@ -1,19 +1,23 @@
 services:
   search:
     container_name: search-service
-    build: ./code/services/search
+    build:
+      context: ./code/services
+      dockerfile: search/Dockerfile
     ports:
       - "50051:50051"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
   listing:
     container_name: listing-service
-    build: ./code/services/listing
+    build:
+      context: ./code/services
+      dockerfile: listing/Dockerfile
     ports:
       - "50052:50052"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
-  postgres:
+  listing-db:
     container_name: listing-db
     image: postgres:16
     environment:
@@ -23,7 +27,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - listing_postgres_data:/var/lib/postgresql/data
 
   user:
     container_name: user-service
@@ -107,7 +111,7 @@ services:
       - auction_postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  listing_postgres_data:
   user_postgres_data:
   seller_postgres_data:
   chat_postgres_data:
