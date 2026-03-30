@@ -547,7 +547,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/:
+  /api/listings/search:
     get:
       tags: [Listings]
       summary: Filtered car search
@@ -631,7 +631,7 @@ paths:
         '400':
           description: Invalid query parameters
 
-  /api/{id}:
+  /api/listings/{id}:
     get:
       tags: [Listings]
       summary: Get listing details
@@ -654,7 +654,7 @@ paths:
         '404':
           description: Listing not found
 
-  /api/compare:
+  /api/listings/compare:
     get:
       tags: [Listings]
       summary: Compare multiple listings
