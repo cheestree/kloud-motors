@@ -5,10 +5,6 @@ type User struct {
 	Name        string
 	Email       string `gorm:"uniqueIndex"`
 	Password    string
-	IsSeller    bool   `gorm:"default:false"`
-	SellerType  string `gorm:"type:varchar(50)"`
-	ContactInfo string
-	Rating      float64
 }
 
 type Favorite struct {

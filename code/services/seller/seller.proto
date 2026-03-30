@@ -5,11 +5,19 @@ option go_package = "./proto";
 
 service SellerService {
     rpc GetSellerProfile (GetSellerProfileRequest) returns (SellerProfileResponse);
+    rpc CreateSeller (CreateSellerRequest) returns (SellerProfileResponse);
     rpc VerifySellerProfile (VerifySellerRequest) returns (VerifySellerResponse);
 }
 
 message GetSellerProfileRequest {
     string seller_id = 1;
+}
+
+message CreateSellerRequest {
+    string seller_id = 1;
+    string name = 2;
+    string seller_type = 3;
+    string contact_info = 4;
 }
 
 message SellerProfileResponse {

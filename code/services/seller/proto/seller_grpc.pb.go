@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	SellerService_GetSellerProfile_FullMethodName    = "/seller.SellerService/GetSellerProfile"
 	SellerService_VerifySellerProfile_FullMethodName = "/seller.SellerService/VerifySellerProfile"
+	SellerService_CreateSeller_FullMethodName        = "/seller.SellerService/CreateSeller"
 )
 
 // SellerServiceClient is the client API for SellerService service.
@@ -29,6 +30,7 @@ const (
 type SellerServiceClient interface {
 	GetSellerProfile(ctx context.Context, in *GetSellerProfileRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error)
 	VerifySellerProfile(ctx context.Context, in *VerifySellerRequest, opts ...grpc.CallOption) (*VerifySellerResponse, error)
+	CreateSeller(ctx context.Context, in *CreateSellerRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error)
 }
 
 type sellerServiceClient struct {
@@ -59,12 +61,23 @@ func (c *sellerServiceClient) VerifySellerProfile(ctx context.Context, in *Verif
 	return out, nil
 }
 
+func (c *sellerServiceClient) CreateSeller(ctx context.Context, in *CreateSellerRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SellerProfileResponse)
+	err := c.cc.Invoke(ctx, SellerService_CreateSeller_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SellerServiceServer is the server API for SellerService service.
 // All implementations must embed UnimplementedSellerServiceServer
 // for forward compatibility.
 type SellerServiceServer interface {
 	GetSellerProfile(context.Context, *GetSellerProfileRequest) (*SellerProfileResponse, error)
 	VerifySellerProfile(context.Context, *VerifySellerRequest) (*VerifySellerResponse, error)
+	CreateSeller(context.Context, *CreateSellerRequest) (*SellerProfileResponse, error)
 	mustEmbedUnimplementedSellerServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedSellerServiceServer) GetSellerProfile(context.Context, *GetSe
 }
 func (UnimplementedSellerServiceServer) VerifySellerProfile(context.Context, *VerifySellerRequest) (*VerifySellerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifySellerProfile not implemented")
+}
+func (UnimplementedSellerServiceServer) CreateSeller(context.Context, *CreateSellerRequest) (*SellerProfileResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateSeller not implemented")
 }
 func (UnimplementedSellerServiceServer) mustEmbedUnimplementedSellerServiceServer() {}
 func (UnimplementedSellerServiceServer) testEmbeddedByValue()                       {}
@@ -138,6 +154,24 @@ func _SellerService_VerifySellerProfile_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SellerService_CreateSeller_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSellerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SellerServiceServer).CreateSeller(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SellerService_CreateSeller_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SellerServiceServer).CreateSeller(ctx, req.(*CreateSellerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SellerService_ServiceDesc is the grpc.ServiceDesc for SellerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var SellerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifySellerProfile",
 			Handler:    _SellerService_VerifySellerProfile_Handler,
+		},
+		{
+			MethodName: "CreateSeller",
+			Handler:    _SellerService_CreateSeller_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

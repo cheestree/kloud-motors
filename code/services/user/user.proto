@@ -16,9 +16,6 @@ message RegisterUserRequest {
     string name = 1;
     string email = 2;
     string password = 3;
-    bool is_seller = 4;
-    string seller_type = 5;
-    string contact_info = 6;
 }
 
 message LoginUserRequest {

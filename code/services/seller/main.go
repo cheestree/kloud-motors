@@ -23,6 +23,43 @@ type server struct {
 	proto.UnimplementedSellerServiceServer
 }
 
+func (s *server) CreateSeller(ctx context.Context, req *proto.CreateSellerRequest) (*proto.SellerProfileResponse, error) {
+	if req.SellerId == "" || req.Name == "" || req.SellerType == "" || req.ContactInfo == "" {
+		return nil, status.Error(codes.InvalidArgument, "seller_id, name, seller_type, and contact_info are required")
+	}
+
+	if req.SellerType != "professional_dealer" && req.SellerType != "private_seller" {
+		return nil, status.Error(codes.InvalidArgument, "seller_type must be either 'professional_dealer' or 'private_seller'")
+	}
+
+	var existing Seller
+	if err := db.Where("id = ?", req.SellerId).First(&existing).Error; err == nil {
+		return nil, status.Error(codes.AlreadyExists, "seller already exists")
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, status.Error(codes.Internal, "database error")
+	}
+
+	seller := Seller{
+		ID:          req.SellerId,
+		Name:        req.Name,
+		SellerType:  req.SellerType,
+		ContactInfo: req.ContactInfo,
+		Rating:      0,
+	}
+
+	if err := db.Create(&seller).Error; err != nil {
+		return nil, status.Error(codes.Internal, "failed to create seller")
+	}
+
+	return &proto.SellerProfileResponse{
+		SellerId:    seller.ID,
+		Name:        seller.Name,
+		SellerType:  seller.SellerType,
+		ContactInfo: seller.ContactInfo,
+		Rating:      seller.Rating,
+	}, nil
+}
+
 func (s *server) GetSellerProfile(ctx context.Context, req *proto.GetSellerProfileRequest) (*proto.SellerProfileResponse, error) {
 	if req.SellerId == "" {
 		return nil, status.Error(codes.InvalidArgument, "seller_id is required")
@@ -58,7 +95,7 @@ func (s *server) VerifySellerProfile(ctx context.Context, req *proto.VerifySelle
 		return nil, status.Error(codes.Internal, "database error")
 	}
 
-	return &proto.VerifySellerResponse{IsSeller: seller.IsSeller}, nil
+	return &proto.VerifySellerResponse{IsSeller: true}, nil
 }
 
 func initDB() {

@@ -31,10 +31,10 @@ services:
     ports:
       - "50053:50053"
     environment:
-      DATABASE_URL: ${AUTH_DATABASE_URL}
+      DATABASE_URL: ${USER_DATABASE_URL}
       JWT_SECRET: ${AUTH_JWT_SECRET}
     depends_on:
-      - auth-db
+      - user-db
 
   seller:
     container_name: seller-service
@@ -42,21 +42,33 @@ services:
     ports:
       - "50054:50054"
     environment:
-      DATABASE_URL: ${AUTH_DATABASE_URL}
+      DATABASE_URL: ${SELLER_DATABASE_URL}
     depends_on:
-      - auth-db
+      - seller-db
 
-  auth-db:
-    container_name: auth-db
+  user-db:
+    container_name: user-db
     image: postgres:16
     environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      POSTGRES_USER: ${USER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${USER_POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
-      - auth_postgres_data:/var/lib/postgresql/data
+      - user_postgres_data:/var/lib/postgresql/data
+
+  seller-db:
+    container_name: seller-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${SELLER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${SELLER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${SELLER_POSTGRES_DB}
+    ports:
+      - "5437:5432"
+    volumes:
+      - seller_postgres_data:/var/lib/postgresql/data
 
   chat-db:
     container_name: chat-db
@@ -96,7 +108,8 @@ services:
 
 volumes:
   postgres_data:
-  auth_postgres_data:
+  user_postgres_data:
+  seller_postgres_data:
   chat_postgres_data:
   geo_postgres_data:
   auction_postgres_data:

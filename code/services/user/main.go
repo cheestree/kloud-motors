@@ -30,8 +30,6 @@ type server struct {
 type UserClaims struct {
 	UserID     string `json:"user_id"`
 	Email      string `json:"email"`
-	IsSeller   bool   `json:"is_seller"`
-	SellerType string `json:"seller_type,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -44,8 +42,6 @@ func generateJWT(user *User) (string, error) {
 	claims := UserClaims{
 		UserID:     user.ID,
 		Email:      user.Email,
-		IsSeller:   user.IsSeller,
-		SellerType: user.SellerType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   user.ID,
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -81,22 +77,11 @@ func (s *server) RegisterUser(ctx context.Context, req *proto.RegisterUserReques
 		return nil, status.Error(codes.Internal, "failed to hash password")
 	}
 
-	if req.IsSeller {
-		if req.SellerType != "professional_dealer" && req.SellerType != "private_seller" {
-			return nil, status.Error(codes.InvalidArgument, "seller_type must be either 'professional_dealer' or 'private_seller' for sellers")
-		}
-	} else if req.SellerType != "" {
-		return nil, status.Error(codes.InvalidArgument, "seller_type should not be provided for non-sellers")
-	}
-
 	newUser := User{
 		ID:          uuid.New().String(),
 		Name:        req.Name,
 		Email:       req.Email,
 		Password:    string(hashedPassword),
-		IsSeller:    req.IsSeller,
-		SellerType:  req.SellerType,
-		ContactInfo: req.ContactInfo,
 	}
 
 	if err := db.Create(&newUser).Error; err != nil {

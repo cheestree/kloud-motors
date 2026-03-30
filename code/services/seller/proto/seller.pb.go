@@ -65,27 +65,30 @@ func (x *GetSellerProfileRequest) GetSellerId() string {
 	return ""
 }
 
-type VerifySellerRequest struct {
+type CreateSellerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SellerId      string                 `protobuf:"bytes,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	SellerType    string                 `protobuf:"bytes,3,opt,name=seller_type,json=sellerType,proto3" json:"seller_type,omitempty"`
+	ContactInfo   string                 `protobuf:"bytes,4,opt,name=contact_info,json=contactInfo,proto3" json:"contact_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *VerifySellerRequest) Reset() {
-	*x = VerifySellerRequest{}
+func (x *CreateSellerRequest) Reset() {
+	*x = CreateSellerRequest{}
 	mi := &file_seller_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *VerifySellerRequest) String() string {
+func (x *CreateSellerRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*VerifySellerRequest) ProtoMessage() {}
+func (*CreateSellerRequest) ProtoMessage() {}
 
-func (x *VerifySellerRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateSellerRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_seller_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -97,60 +100,37 @@ func (x *VerifySellerRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use VerifySellerRequest.ProtoReflect.Descriptor instead.
-func (*VerifySellerRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateSellerRequest.ProtoReflect.Descriptor instead.
+func (*CreateSellerRequest) Descriptor() ([]byte, []int) {
 	return file_seller_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *VerifySellerRequest) GetSellerId() string {
+func (x *CreateSellerRequest) GetSellerId() string {
 	if x != nil {
 		return x.SellerId
 	}
 	return ""
 }
 
-type VerifySellerResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	IsSeller      bool                   `protobuf:"varint,1,opt,name=is_seller,json=isSeller,proto3" json:"is_seller,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *VerifySellerResponse) Reset() {
-	*x = VerifySellerResponse{}
-	mi := &file_seller_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *VerifySellerResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*VerifySellerResponse) ProtoMessage() {}
-
-func (x *VerifySellerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_seller_proto_msgTypes[2]
+func (x *CreateSellerRequest) GetName() string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+		return x.Name
 	}
-	return mi.MessageOf(x)
+	return ""
 }
 
-// Deprecated: Use VerifySellerResponse.ProtoReflect.Descriptor instead.
-func (*VerifySellerResponse) Descriptor() ([]byte, []int) {
-	return file_seller_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *VerifySellerResponse) GetIsSeller() bool {
+func (x *CreateSellerRequest) GetSellerType() string {
 	if x != nil {
-		return x.IsSeller
+		return x.SellerType
 	}
-	return false
+	return ""
+}
+
+func (x *CreateSellerRequest) GetContactInfo() string {
+	if x != nil {
+		return x.ContactInfo
+	}
+	return ""
 }
 
 type SellerProfileResponse struct {
@@ -166,7 +146,7 @@ type SellerProfileResponse struct {
 
 func (x *SellerProfileResponse) Reset() {
 	*x = SellerProfileResponse{}
-	mi := &file_seller_proto_msgTypes[3]
+	mi := &file_seller_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -178,7 +158,7 @@ func (x *SellerProfileResponse) String() string {
 func (*SellerProfileResponse) ProtoMessage() {}
 
 func (x *SellerProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_seller_proto_msgTypes[3]
+	mi := &file_seller_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -191,7 +171,7 @@ func (x *SellerProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SellerProfileResponse.ProtoReflect.Descriptor instead.
 func (*SellerProfileResponse) Descriptor() ([]byte, []int) {
-	return file_seller_proto_rawDescGZIP(), []int{3}
+	return file_seller_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SellerProfileResponse) GetSellerId() string {
@@ -229,27 +209,122 @@ func (x *SellerProfileResponse) GetRating() float64 {
 	return 0
 }
 
+type VerifySellerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SellerId      string                 `protobuf:"bytes,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifySellerRequest) Reset() {
+	*x = VerifySellerRequest{}
+	mi := &file_seller_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifySellerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifySellerRequest) ProtoMessage() {}
+
+func (x *VerifySellerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_seller_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifySellerRequest.ProtoReflect.Descriptor instead.
+func (*VerifySellerRequest) Descriptor() ([]byte, []int) {
+	return file_seller_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *VerifySellerRequest) GetSellerId() string {
+	if x != nil {
+		return x.SellerId
+	}
+	return ""
+}
+
+type VerifySellerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IsSeller      bool                   `protobuf:"varint,1,opt,name=is_seller,json=isSeller,proto3" json:"is_seller,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifySellerResponse) Reset() {
+	*x = VerifySellerResponse{}
+	mi := &file_seller_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifySellerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifySellerResponse) ProtoMessage() {}
+
+func (x *VerifySellerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_seller_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifySellerResponse.ProtoReflect.Descriptor instead.
+func (*VerifySellerResponse) Descriptor() ([]byte, []int) {
+	return file_seller_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *VerifySellerResponse) GetIsSeller() bool {
+	if x != nil {
+		return x.IsSeller
+	}
+	return false
+}
+
 var File_seller_proto protoreflect.FileDescriptor
 
 const file_seller_proto_rawDesc = "" +
 	"\n" +
 	"\fseller.proto\x12\x06seller\"6\n" +
 	"\x17GetSellerProfileRequest\x12\x1b\n" +
-	"\tseller_id\x18\x01 \x01(\tR\bsellerId\"2\n" +
-	"\x13VerifySellerRequest\x12\x1b\n" +
-	"\tseller_id\x18\x01 \x01(\tR\bsellerId\"3\n" +
-	"\x14VerifySellerResponse\x12\x1b\n" +
-	"\tis_seller\x18\x01 \x01(\bR\bisSeller\"\xa4\x01\n" +
+	"\tseller_id\x18\x01 \x01(\tR\bsellerId\"\x8a\x01\n" +
+	"\x13CreateSellerRequest\x12\x1b\n" +
+	"\tseller_id\x18\x01 \x01(\tR\bsellerId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
+	"\vseller_type\x18\x03 \x01(\tR\n" +
+	"sellerType\x12!\n" +
+	"\fcontact_info\x18\x04 \x01(\tR\vcontactInfo\"\xa4\x01\n" +
 	"\x15SellerProfileResponse\x12\x1b\n" +
 	"\tseller_id\x18\x01 \x01(\tR\bsellerId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
 	"\vseller_type\x18\x03 \x01(\tR\n" +
 	"sellerType\x12!\n" +
 	"\fcontact_info\x18\x04 \x01(\tR\vcontactInfo\x12\x16\n" +
-	"\x06rating\x18\x05 \x01(\x01R\x06rating2\xb5\x01\n" +
+	"\x06rating\x18\x05 \x01(\x01R\x06rating\"2\n" +
+	"\x13VerifySellerRequest\x12\x1b\n" +
+	"\tseller_id\x18\x01 \x01(\tR\bsellerId\"3\n" +
+	"\x14VerifySellerResponse\x12\x1b\n" +
+	"\tis_seller\x18\x01 \x01(\bR\bisSeller2\x81\x02\n" +
 	"\rSellerService\x12R\n" +
 	"\x10GetSellerProfile\x12\x1f.seller.GetSellerProfileRequest\x1a\x1d.seller.SellerProfileResponse\x12P\n" +
-	"\x13VerifySellerProfile\x12\x1b.seller.VerifySellerRequest\x1a\x1c.seller.VerifySellerResponseB\tZ\a./protob\x06proto3"
+	"\x13VerifySellerProfile\x12\x1b.seller.VerifySellerRequest\x1a\x1c.seller.VerifySellerResponse\x12J\n" +
+	"\fCreateSeller\x12\x1b.seller.CreateSellerRequest\x1a\x1d.seller.SellerProfileResponseB\tZ\a./protob\x06proto3"
 
 var (
 	file_seller_proto_rawDescOnce sync.Once
@@ -263,20 +338,23 @@ func file_seller_proto_rawDescGZIP() []byte {
 	return file_seller_proto_rawDescData
 }
 
-var file_seller_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_seller_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_seller_proto_goTypes = []any{
 	(*GetSellerProfileRequest)(nil), // 0: seller.GetSellerProfileRequest
-	(*VerifySellerRequest)(nil),     // 1: seller.VerifySellerRequest
-	(*VerifySellerResponse)(nil),    // 2: seller.VerifySellerResponse
-	(*SellerProfileResponse)(nil),   // 3: seller.SellerProfileResponse
+	(*CreateSellerRequest)(nil),     // 1: seller.CreateSellerRequest
+	(*SellerProfileResponse)(nil),   // 2: seller.SellerProfileResponse
+	(*VerifySellerRequest)(nil),     // 3: seller.VerifySellerRequest
+	(*VerifySellerResponse)(nil),    // 4: seller.VerifySellerResponse
 }
 var file_seller_proto_depIdxs = []int32{
 	0, // 0: seller.SellerService.GetSellerProfile:input_type -> seller.GetSellerProfileRequest
-	1, // 1: seller.SellerService.VerifySellerProfile:input_type -> seller.VerifySellerRequest
-	3, // 2: seller.SellerService.GetSellerProfile:output_type -> seller.SellerProfileResponse
-	2, // 3: seller.SellerService.VerifySellerProfile:output_type -> seller.VerifySellerResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	3, // 1: seller.SellerService.VerifySellerProfile:input_type -> seller.VerifySellerRequest
+	1, // 2: seller.SellerService.CreateSeller:input_type -> seller.CreateSellerRequest
+	2, // 3: seller.SellerService.GetSellerProfile:output_type -> seller.SellerProfileResponse
+	4, // 4: seller.SellerService.VerifySellerProfile:output_type -> seller.VerifySellerResponse
+	2, // 5: seller.SellerService.CreateSeller:output_type -> seller.SellerProfileResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -293,7 +371,7 @@ func file_seller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_seller_proto_rawDesc), len(file_seller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
