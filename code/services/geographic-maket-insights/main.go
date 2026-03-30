@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 
 	proto "geographic-maket-insights/proto"
@@ -22,20 +21,19 @@ func main() {
 		log.Fatal("POSTGRES_DSN is required")
 	}
 
-	pool, err := pgxpool.New(context.Background(), postgresDSN)
-	if err != nil {
-		log.Fatalf("postgres connect error: %v", err)
-	}
-	defer pool.Close()
-
-	serverConfig := repository.QueryConfig{
+	repoConfig := repository.DBConfig{
 		Schema:       getenv("POSTGRES_SCHEMA", "public"),
 		Table:        getenv("POSTGRES_TABLE", "listings"),
 		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
 		MaxLimit:     getenvInt("MAX_LIMIT", 100),
+		Dsn:          getenv("POSTGRES_DSN", "localhost"),
 	}
 
-	repo := postgres.NewPostgresRepo(pool, serverConfig)
+	repo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
+	if err != nil {
+		log.Fatalf("postgres repo init error: %v", err)
+	}
+	defer repo.Close()
 
 	grpcSrv := grpc.NewServer()
 	proto.RegisterGeoMarketInsightsServiceServer(grpcSrv, NewGeoServer(repo))

@@ -42,9 +42,9 @@ func (s *MessageRepo) SaveMessage(ctx context.Context, msg repository.ChatMessag
 		Collection("chats").Doc(msg.ChatID).
 		Collection(s.collection).Doc(msg.ID).
 		Set(ctx, map[string]any{
-			"user_id":   msg.UserID,
-			"message":   msg.Message,
-			"time":      msg.Time,
+			"user_id": msg.UserID,
+			"message": msg.Message,
+			"time":    msg.Time,
 		})
 	if err != nil {
 		return fmt.Errorf("save firestore message: %w", err)
@@ -81,19 +81,19 @@ func (s *MessageRepo) ListChatMessages(ctx context.Context, chatID string, limit
 	messages := make([]repository.ChatMessage, 0, len(docs))
 	for _, d := range docs {
 		var row struct {
-			UserID   string    `firestore:"user_id"`
-			Message  string    `firestore:"message"`
-			Time     time.Time `firestore:"time"`
+			UserID  string    `firestore:"user_id"`
+			Message string    `firestore:"message"`
+			Time    time.Time `firestore:"time"`
 		}
 		if err := d.DataTo(&row); err != nil {
 			return nil, fmt.Errorf("decode firestore message: %w", err)
 		}
 		messages = append(messages, repository.ChatMessage{
-			ID:       d.Ref.ID,
-			ChatID:   chatID,
-			UserID:   row.UserID,
-			Message:  row.Message,
-			Time:     row.Time,
+			ID:      d.Ref.ID,
+			ChatID:  chatID,
+			UserID:  row.UserID,
+			Message: row.Message,
+			Time:    row.Time,
 		})
 	}
 

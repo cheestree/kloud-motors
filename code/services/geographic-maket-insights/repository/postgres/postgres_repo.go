@@ -11,12 +11,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PostgresRepo struct {
+type RelationalRepo struct {
 	pool *pgxpool.Pool
-	cfg  repository.QueryConfig
+	cfg  repository.DBConfig
 }
 
-func NewPostgresRepo(db *pgxpool.Pool, cfg repository.QueryConfig) *PostgresRepo {
+func NewPostgresRepo(ctx context.Context, cfg repository.DBConfig) (*RelationalRepo, error) {
+	if cfg.Dsn == "" {
+		return nil, fmt.Errorf("missing POSTGRES_DSN")
+	}
+
 	if cfg.DefaultLimit <= 0 {
 		cfg.DefaultLimit = 20
 	}
@@ -30,10 +34,15 @@ func NewPostgresRepo(db *pgxpool.Pool, cfg repository.QueryConfig) *PostgresRepo
 		cfg.Table = "listings"
 	}
 
-	return &PostgresRepo{pool: db, cfg: cfg}
+	pool, err := pgxpool.New(ctx, cfg.Dsn)
+	if err != nil {
+		return nil, fmt.Errorf("create postgres pool: %w", err)
+	}
+
+	return &RelationalRepo{pool: pool, cfg: cfg}, nil
 }
 
-func (db *PostgresRepo) NormalizePage(limitRaw, skipRaw int32) (int, int) {
+func (db *RelationalRepo) NormalizePage(limitRaw, skipRaw int32) (int, int) {
 	limit := int(limitRaw)
 	if limit <= 0 {
 		limit = db.cfg.DefaultLimit
@@ -49,7 +58,7 @@ func (db *PostgresRepo) NormalizePage(limitRaw, skipRaw int32) (int, int) {
 	return limit, skip
 }
 
-func (db *PostgresRepo) FetchAggregates(ctx context.Context, filters repository.Filters, groupCol string, locations []string, limit, skip int) ([]repository.AggregateRow, bool, error) {
+func (db *RelationalRepo) FetchAggregates(ctx context.Context, filters repository.Filters, groupCol string, locations []string, limit, skip int) ([]repository.AggregateRow, bool, error) {
 	whereSQL, args := buildBaseFilters(filters)
 	if len(locations) > 0 {
 		args = append(args, locations)
@@ -95,7 +104,7 @@ func (db *PostgresRepo) FetchAggregates(ctx context.Context, filters repository.
 	return out, hasNext, nil
 }
 
-func (db *PostgresRepo) FetchPriceComparison(
+func (db *RelationalRepo) FetchPriceComparison(
 	ctx context.Context,
 	filters repository.Filters,
 	groupCol, sortCol, order string,
@@ -139,7 +148,7 @@ func (db *PostgresRepo) FetchPriceComparison(
 	return out, hasNext, nil
 }
 
-func (db *PostgresRepo) FetchByLocation(ctx context.Context, filters repository.Filters,
+func (db *RelationalRepo) FetchByLocation(ctx context.Context, filters repository.Filters,
 	location *string) (repository.StatsRow, error) {
 	whereSQL, args := buildBaseFilters(filters)
 	if location != nil && strings.TrimSpace(*location) != "" {
@@ -193,7 +202,7 @@ func safeIdent(v string) string {
 	return `"` + v + `"`
 }
 
-func (db *PostgresRepo) qualifiedTable() string {
+func (db *RelationalRepo) qualifiedTable() string {
 	schema := safeIdent(db.cfg.Schema)
 	table := safeIdent(db.cfg.Table)
 	if schema == "" || table == "" {
@@ -202,7 +211,7 @@ func (db *PostgresRepo) qualifiedTable() string {
 	return schema + "." + table
 }
 
-func (db *PostgresRepo) Close() error {
+func (db *RelationalRepo) Close() error {
 	db.pool.Close()
 	return nil
 }

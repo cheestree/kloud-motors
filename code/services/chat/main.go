@@ -3,6 +3,7 @@ package main
 import (
 	"chat/proto"
 	pubsub2 "chat/pubsub"
+	"chat/repository"
 	"chat/repository/firestore"
 	"chat/repository/postgres"
 	ws2 "chat/ws"
@@ -32,7 +33,7 @@ func main() {
 	defer pubsub.Close()
 
 	firestoreProjectID := getenv("FIREBASE_PROJECT_ID", getenv("GCP_PROJECT_ID", ""))
-	messageStore, err := firestore.NewFirestoreMessageRepo(
+	messageRepo, err := firestore.NewFirestoreMessageRepo(
 		context.Background(),
 		firestoreProjectID,
 		getenv("FIRESTORE_MESSAGES_COLLECTION", "messages"),
@@ -40,13 +41,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("firestore init: %v", err)
 	}
-	defer messageStore.Close()
+	defer messageRepo.Close()
 
-	indexStore, err := postgres.NewPostgresIndexRepo(context.Background(), getenv("POSTGRES_DSN", ""))
+	repoConfig := repository.DBConfig{
+		Host:         getenv("POSTGRES_DSN", ""),
+		Schema:       getenv("POSTGRES_SCHEMA", "chat-db"),
+		Table:        getenv("POSTGRES_TABLE", "chat"),
+		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
+		MaxLimit:     getenvInt("MAX_LIMIT", 100),
+	}
+	relationalRepo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
+
 	if err != nil {
 		log.Fatalf("postgres init: %v", err)
 	}
-	defer indexStore.Close()
+	defer relationalRepo.Close()
 
 	hub := ws2.NewHub(pubsub)
 
@@ -58,8 +67,8 @@ func main() {
 
 	grpcSrv := grpc.NewServer()
 	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{
-		messageStore: messageStore,
-		indexStore:   indexStore,
+		messageStore: messageRepo,
+		indexStore:   relationalRepo,
 		historyLimit: getenvInt("CHAT_HISTORY_LIMIT", 50),
 	})
 
@@ -71,7 +80,7 @@ func main() {
 	}()
 
 	// ── HTTP / WebSocket ──────────────────────────────────────────────────────
-	ws := &wsServer{hub: hub, messageStore: messageStore, indexStore: indexStore}
+	ws := &wsServer{hub: hub, messageStore: messageRepo, indexStore: relationalRepo}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
 

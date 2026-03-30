@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+type DBConfig struct {
+	Schema       string
+	Table        string
+	DefaultLimit int
+	MaxLimit     int
+	Host         string
+}
+
 type ChatMessage struct {
 	ID      string
 	ChatID  string

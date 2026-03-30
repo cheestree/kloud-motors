@@ -2,11 +2,12 @@ package repository
 
 import "context"
 
-type QueryConfig struct {
+type DBConfig struct {
 	Schema       string
 	Table        string
 	DefaultLimit int
 	MaxLimit     int
+	Dsn          string
 }
 
 type Filters struct {
