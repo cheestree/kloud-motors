@@ -3,7 +3,7 @@ syntax = "proto3";
 package search;
 import "google/protobuf/wrappers.proto";
 import "shared/shared.proto";
-option go_package = "./proto";
+option go_package = "services/search/proto";
 
 
 service SearchService {
