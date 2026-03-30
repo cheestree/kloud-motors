@@ -8,6 +8,9 @@ services:
       - "50051:50051"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      listing-db:
+        condition: service_healthy
   listing:
     container_name: listing-service
     build:
@@ -17,9 +20,14 @@ services:
       - "50052:50052"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      listing-db:
+        condition: service_healthy
   listing-db:
     container_name: listing-db
-    image: postgres:16
+    build:
+      context: .
+      dockerfile: code/setup/listing-db/Dockerfile
     environment:
       POSTGRES_USER: ${LISTING_POSTGRES_USER}
       POSTGRES_PASSWORD: ${LISTING_POSTGRES_PASSWORD}
@@ -28,6 +36,15 @@ services:
       - "5432:5432"
     volumes:
       - listing_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${LISTING_POSTGRES_USER} -d ${LISTING_POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   auth-db:
     container_name: auth-db
@@ -40,6 +57,15 @@ services:
       - "5433:5432"
     volumes:
       - auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   chat-db:
     container_name: chat-db
@@ -52,6 +78,15 @@ services:
       - "5434:5432"
     volumes:
       - chat_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${CHAT_POSTGRES_USER} -d ${CHAT_POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   geo-db:
     container_name: geo-db
@@ -64,6 +99,15 @@ services:
       - "5435:5432"
     volumes:
       - geo_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${GEO_POSTGRES_USER} -d ${GEO_POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   auction-db:
     container_name: auction-db
@@ -76,6 +120,15 @@ services:
       - "5436:5432"
     volumes:
       - auction_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${AUCTION_POSTGRES_USER} -d ${AUCTION_POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   listing_postgres_data:
