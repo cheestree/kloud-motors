@@ -34,7 +34,13 @@ To run this branch, you need to have Docker installed on your machine. Follow th
     ./seed.sh
     ```
 
-The services will be available at the following gRPC endpoints:
+The services will be available at the following gRPC endpoints (doesn't include the gateway):
 
 - Searching: `localhost:50051`
 - Listing: `localhost:50052`
+
+Or, via the gateway at `localhost:8080/api` for RESTful API access:
+
+- Search: `http://localhost:8080/api/listings/search`
+- List: `http://localhost:8080/api/listings`
+- Compare: `http://localhost:8080/api/listings/compare`
