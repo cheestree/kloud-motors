@@ -26,7 +26,7 @@ type server struct {
 }
 
 func (s *server) CreateSeller(ctx context.Context, req *proto.CreateSellerRequest) (*proto.SellerProfileResponse, error) {
-	if req.SellerId == "" || req.Name == "" || req.SellerType == "" || req.ContactInfo == "" {
+	if req.SellerId <= 0 || req.Name == "" || req.SellerType == "" || req.ContactInfo == "" {
 		return nil, status.Error(codes.InvalidArgument, "seller_id, name, seller_type, and contact_info are required")
 	}
 
@@ -96,7 +96,7 @@ func (s *server) CreateListing(ctx context.Context, req *proto.CreateListingRequ
 }
 
 func (s *server) GetSellerProfile(ctx context.Context, req *proto.GetSellerProfileRequest) (*proto.SellerProfileResponse, error) {
-	if req.SellerId == "" {
+	if req.SellerId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "seller_id is required")
 	}
 
@@ -118,7 +118,7 @@ func (s *server) GetSellerProfile(ctx context.Context, req *proto.GetSellerProfi
 }
 
 func (s *server) VerifySellerProfile(ctx context.Context, req *proto.VerifySellerRequest) (*proto.VerifySellerResponse, error) {
-	if req.SellerId == "" {
+	if req.SellerId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "seller_id is required")
 	}
 

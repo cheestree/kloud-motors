@@ -6,13 +6,13 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	. "user/models"
 	proto "user/proto"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -28,7 +28,7 @@ type server struct {
 }
 
 type UserClaims struct {
-	UserID     string `json:"user_id"`
+	UserID     int64 `json:"user_id"`
 	Email      string `json:"email"`
 	jwt.RegisteredClaims
 }
@@ -43,7 +43,7 @@ func generateJWT(user *User) (string, error) {
 		UserID:     user.ID,
 		Email:      user.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   user.ID,
+			Subject:   strconv.FormatInt(user.ID, 10),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
@@ -78,7 +78,6 @@ func (s *server) RegisterUser(ctx context.Context, req *proto.RegisterUserReques
 	}
 
 	newUser := User{
-		ID:          uuid.New().String(),
 		Name:        req.Name,
 		Email:       req.Email,
 		Password:    string(hashedPassword),
@@ -124,7 +123,7 @@ func (s *server) LoginUser(ctx context.Context, req *proto.LoginUserRequest) (*p
 }
 
 func (s *server) GetFavorites(ctx context.Context, req *proto.GetFavoritesRequest) (*proto.FavoritesResponse, error) {
-	if req.UserId == "" {
+	if req.UserId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
 
@@ -133,7 +132,7 @@ func (s *server) GetFavorites(ctx context.Context, req *proto.GetFavoritesReques
 		return nil, status.Error(codes.Internal, "failed to get favorites")
 	}
 
-	listings := make([]string, len(favorites))
+	listings := make([]int64, len(favorites))
 	for i, f := range favorites {
 		listings[i] = f.ListingID
 	}
@@ -144,7 +143,7 @@ func (s *server) GetFavorites(ctx context.Context, req *proto.GetFavoritesReques
 }
 
 func (s *server) AddFavorite(ctx context.Context, req *proto.AddFavoriteRequest) (*proto.FavoriteMutationResponse, error) {
-	if req.UserId == "" || req.ListingId == "" {
+	if req.UserId <= 0 || req.ListingId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id and listing_id are required")
 	}
 
@@ -167,7 +166,7 @@ func (s *server) AddFavorite(ctx context.Context, req *proto.AddFavoriteRequest)
 }
 
 func (s *server) RemoveFavorite(ctx context.Context, req *proto.RemoveFavoriteRequest) (*proto.FavoriteMutationResponse, error) {
-	if req.UserId == "" || req.ListingId == "" {
+	if req.UserId <= 0 || req.ListingId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id and listing_id are required")
 	}
 

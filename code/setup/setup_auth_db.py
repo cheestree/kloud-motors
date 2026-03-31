@@ -25,11 +25,11 @@ def main():
     user_engine = create_engine(user_database_url)
     user_metadata = MetaData()
 
-    # Define User table (consistent with GORM model in main.go)
+    # Define User table
     users = Table(
         "users",
         user_metadata,
-        Column("id", String, primary_key=True),
+        Column("id", Integer, primary_key=True, autoincrement=True),
         Column("name", Text),
         Column("email", Text, unique=True, index=True),
         Column("password", Text),
@@ -40,8 +40,8 @@ def main():
         "favorites",
         user_metadata,
         Column("id", Integer, primary_key=True, autoincrement=True),
-        Column("user_id", String), # In a real app, this would be a ForeignKey
-        Column("listing_id", Text),
+        Column("user_id", Integer),
+        Column("listing_id", Integer),
         UniqueConstraint("user_id", "listing_id", name="idx_user_listing"),
     )
 
@@ -49,11 +49,11 @@ def main():
     seller_engine = create_engine(seller_database_url)
     seller_metadata = MetaData()
 
-    # Define Seller table (consistent with GORM model in seller service)
+    # Define Seller table
     sellers = Table(
         "sellers",
         seller_metadata,
-        Column("id", String, primary_key=True),
+        Column("id", Integer, primary_key=True, autoincrement=True),
         Column("name", Text),
         Column("seller_type", String(50)),
         Column("contact_info", Text),

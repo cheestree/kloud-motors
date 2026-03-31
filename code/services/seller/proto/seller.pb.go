@@ -23,7 +23,7 @@ const (
 
 type GetSellerProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SellerId      string                 `protobuf:"bytes,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	SellerId      int64                  `protobuf:"varint,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -58,16 +58,16 @@ func (*GetSellerProfileRequest) Descriptor() ([]byte, []int) {
 	return file_seller_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetSellerProfileRequest) GetSellerId() string {
+func (x *GetSellerProfileRequest) GetSellerId() int64 {
 	if x != nil {
 		return x.SellerId
 	}
-	return ""
+	return 0
 }
 
 type CreateSellerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SellerId      string                 `protobuf:"bytes,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	SellerId      int64                  `protobuf:"varint,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	SellerType    string                 `protobuf:"bytes,3,opt,name=seller_type,json=sellerType,proto3" json:"seller_type,omitempty"`
 	ContactInfo   string                 `protobuf:"bytes,4,opt,name=contact_info,json=contactInfo,proto3" json:"contact_info,omitempty"`
@@ -105,11 +105,11 @@ func (*CreateSellerRequest) Descriptor() ([]byte, []int) {
 	return file_seller_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CreateSellerRequest) GetSellerId() string {
+func (x *CreateSellerRequest) GetSellerId() int64 {
 	if x != nil {
 		return x.SellerId
 	}
-	return ""
+	return 0
 }
 
 func (x *CreateSellerRequest) GetName() string {
@@ -135,7 +135,7 @@ func (x *CreateSellerRequest) GetContactInfo() string {
 
 type SellerProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SellerId      string                 `protobuf:"bytes,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	SellerId      int64                  `protobuf:"varint,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	SellerType    string                 `protobuf:"bytes,3,opt,name=seller_type,json=sellerType,proto3" json:"seller_type,omitempty"`
 	ContactInfo   string                 `protobuf:"bytes,4,opt,name=contact_info,json=contactInfo,proto3" json:"contact_info,omitempty"`
@@ -174,11 +174,11 @@ func (*SellerProfileResponse) Descriptor() ([]byte, []int) {
 	return file_seller_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SellerProfileResponse) GetSellerId() string {
+func (x *SellerProfileResponse) GetSellerId() int64 {
 	if x != nil {
 		return x.SellerId
 	}
-	return ""
+	return 0
 }
 
 func (x *SellerProfileResponse) GetName() string {
@@ -211,7 +211,7 @@ func (x *SellerProfileResponse) GetRating() float64 {
 
 type VerifySellerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SellerId      string                 `protobuf:"bytes,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	SellerId      int64                  `protobuf:"varint,1,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -246,11 +246,11 @@ func (*VerifySellerRequest) Descriptor() ([]byte, []int) {
 	return file_seller_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *VerifySellerRequest) GetSellerId() string {
+func (x *VerifySellerRequest) GetSellerId() int64 {
 	if x != nil {
 		return x.SellerId
 	}
-	return ""
+	return 0
 }
 
 type VerifySellerResponse struct {
@@ -519,22 +519,22 @@ const file_seller_proto_rawDesc = "" +
 	"\n" +
 	"\fseller.proto\x12\x06seller\"6\n" +
 	"\x17GetSellerProfileRequest\x12\x1b\n" +
-	"\tseller_id\x18\x01 \x01(\tR\bsellerId\"\x8a\x01\n" +
+	"\tseller_id\x18\x01 \x01(\x03R\bsellerId\"\x8a\x01\n" +
 	"\x13CreateSellerRequest\x12\x1b\n" +
-	"\tseller_id\x18\x01 \x01(\tR\bsellerId\x12\x12\n" +
+	"\tseller_id\x18\x01 \x01(\x03R\bsellerId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
 	"\vseller_type\x18\x03 \x01(\tR\n" +
 	"sellerType\x12!\n" +
 	"\fcontact_info\x18\x04 \x01(\tR\vcontactInfo\"\xa4\x01\n" +
 	"\x15SellerProfileResponse\x12\x1b\n" +
-	"\tseller_id\x18\x01 \x01(\tR\bsellerId\x12\x12\n" +
+	"\tseller_id\x18\x01 \x01(\x03R\bsellerId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
 	"\vseller_type\x18\x03 \x01(\tR\n" +
 	"sellerType\x12!\n" +
 	"\fcontact_info\x18\x04 \x01(\tR\vcontactInfo\x12\x16\n" +
 	"\x06rating\x18\x05 \x01(\x01R\x06rating\"2\n" +
 	"\x13VerifySellerRequest\x12\x1b\n" +
-	"\tseller_id\x18\x01 \x01(\tR\bsellerId\"3\n" +
+	"\tseller_id\x18\x01 \x01(\x03R\bsellerId\"3\n" +
 	"\x14VerifySellerResponse\x12\x1b\n" +
 	"\tis_seller\x18\x01 \x01(\bR\bisSeller\"\x95\x03\n" +
 	"\x14CreateListingRequest\x12\x10\n" +
