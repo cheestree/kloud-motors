@@ -17,12 +17,12 @@ const (
 // Client is a single WebSocket connection.
 type Client struct {
 	ChatID string
-	UserID string
+	UserID int64
 	conn   *websocket.Conn
 	send   chan []byte
 }
 
-func NewClient(chatID, userID string, conn *websocket.Conn) *Client {
+func NewClient(chatID string, userID int64, conn *websocket.Conn) *Client {
 	return &Client{
 		ChatID: chatID,
 		UserID: userID,
@@ -31,7 +31,7 @@ func NewClient(chatID, userID string, conn *websocket.Conn) *Client {
 	}
 }
 
-func (c *Client) ReadPump(hub *Hub, onMessage func(chatID, userID string, raw []byte)) {
+func (c *Client) ReadPump(hub *Hub, onMessage func(chatID string, userID int64, raw []byte)) {
 	defer func() {
 		hub.Unregister(c.ChatID, c)
 		c.conn.Close()

@@ -19,12 +19,6 @@ func NewPostgresRepo(ctx context.Context, cfg repository.DBConfig) (*RelationalR
 		return nil, fmt.Errorf("missing POSTGRES_DSN")
 	}
 
-	if cfg.DefaultLimit <= 0 {
-		cfg.DefaultLimit = 20
-	}
-	if cfg.MaxLimit <= 0 {
-		cfg.MaxLimit = 100
-	}
 	if cfg.Schema == "" {
 		cfg.Schema = "chat-db"
 	}
@@ -40,11 +34,7 @@ func NewPostgresRepo(ctx context.Context, cfg repository.DBConfig) (*RelationalR
 	return &RelationalRepo{pool: pool, cfg: cfg}, nil
 }
 
-func (s *RelationalRepo) UpsertChatParticipant(ctx context.Context, userID, sellerId, listingID, brand, model string) (string, error) {
-	if userID == "" || sellerId == "" || listingID == "" || brand == "" || model == "" {
-		return "", fmt.Errorf("user_id, listing_id, brand, and model are all required")
-	}
-
+func (s *RelationalRepo) UpsertChatParticipant(ctx context.Context, userID, sellerId, listingID int64, brand, model string) (string, error) {
 	userQuery := fmt.Sprintf(`
 		INSERT INTO %s (user_id, listing_id, brand, model)
 		VALUES ($1, $2, $3, $4)
@@ -68,11 +58,7 @@ func (s *RelationalRepo) UpsertChatParticipant(ctx context.Context, userID, sell
 	return chatID, nil
 }
 
-func (s *RelationalRepo) UserCanAccessChat(ctx context.Context, userID, listingID string) (bool, error) {
-	if userID == "" || listingID == "" {
-		return false, fmt.Errorf("user_id and listing_id are required")
-	}
-
+func (s *RelationalRepo) UserCanAccessChat(ctx context.Context, userID int64, listingID string) (bool, error) {
 	q := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM %s WHERE user_id = $1 AND listing_id = $2);`, s.qualifiedTable())
 	var allowed bool
 	if err := s.pool.QueryRow(ctx, q, userID, listingID).Scan(&allowed); err != nil {
@@ -81,11 +67,7 @@ func (s *RelationalRepo) UserCanAccessChat(ctx context.Context, userID, listingI
 	return allowed, nil
 }
 
-func (s *RelationalRepo) ListUserChats(ctx context.Context, userID string) ([]repository.ChatSummary, error) {
-	if userID == "" {
-		return nil, fmt.Errorf("user_id is required")
-	}
-
+func (s *RelationalRepo) ListUserChats(ctx context.Context, userID int64) ([]repository.ChatSummary, error) {
 	q := fmt.Sprintf(`
 		SELECT chat_id, listing_id, brand, model
 		FROM %s
@@ -113,22 +95,6 @@ func (s *RelationalRepo) ListUserChats(ctx context.Context, userID string) ([]re
 	}
 
 	return chats, nil
-}
-
-func (db *RelationalRepo) NormalizePage(limitRaw, skipRaw int32) (int, int) {
-	limit := int(limitRaw)
-	if limit <= 0 {
-		limit = db.cfg.DefaultLimit
-	}
-	if limit > db.cfg.MaxLimit {
-		limit = db.cfg.MaxLimit
-	}
-
-	skip := int(skipRaw)
-	if skip < 0 {
-		skip = 0
-	}
-	return limit, skip
 }
 
 var identRx = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)

@@ -31,9 +31,6 @@ func NewFirestoreMessageRepo(ctx context.Context, projectID, collection string) 
 }
 
 func (s *MessageRepo) SaveMessage(ctx context.Context, msg repository.ChatMessage) error {
-	if msg.ID == "" || msg.ChatID == "" || msg.UserID == "" || msg.Message == "" {
-		return fmt.Errorf("invalid message payload: id, chat_id, user_id, and message are required")
-	}
 	if msg.Time.IsZero() {
 		msg.Time = time.Now().UTC()
 	}
@@ -53,23 +50,13 @@ func (s *MessageRepo) SaveMessage(ctx context.Context, msg repository.ChatMessag
 	return nil
 }
 
-func (s *MessageRepo) ListChatMessages(ctx context.Context, chatID string, limit, skip int) ([]repository.ChatMessage, error) {
-	if chatID == "" {
-		return nil, fmt.Errorf("chat id is required")
-	}
-	if limit <= 0 {
-		limit = 50
-	}
-	if skip < 0 {
-		skip = 0
-	}
-
+func (s *MessageRepo) ListChatMessages(ctx context.Context, chatID string, limit, skip int32) ([]repository.ChatMessage, error) {
 	iter := s.client.
 		Collection("chats").Doc(chatID).
 		Collection(s.collection).
 		OrderBy("time", firestore.Asc).
-		Offset(skip).
-		Limit(limit).
+		Offset(int(skip)).
+		Limit(int(limit)).
 		Documents(ctx)
 	defer iter.Stop()
 
@@ -81,7 +68,7 @@ func (s *MessageRepo) ListChatMessages(ctx context.Context, chatID string, limit
 	messages := make([]repository.ChatMessage, 0, len(docs))
 	for _, d := range docs {
 		var row struct {
-			UserID  string    `firestore:"user_id"`
+			UserID  int64     `firestore:"user_id"`
 			Message string    `firestore:"message"`
 			Time    time.Time `firestore:"time"`
 		}

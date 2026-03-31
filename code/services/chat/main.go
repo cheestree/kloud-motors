@@ -45,11 +45,9 @@ func main() {
 	defer messageRepo.Close()
 
 	repoConfig := repository.DBConfig{
-		Host:         getenv("POSTGRES_DSN", ""),
-		Schema:       getenv("POSTGRES_SCHEMA", "chat-db"),
-		Table:        getenv("POSTGRES_TABLE", "chat"),
-		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
-		MaxLimit:     getenvInt("MAX_LIMIT", 100),
+		Host:   getenv("POSTGRES_DSN", ""),
+		Schema: getenv("POSTGRES_SCHEMA", "chat-db"),
+		Table:  getenv("POSTGRES_TABLE", "chat"),
 	}
 	relationalRepo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
 
@@ -89,11 +87,11 @@ func main() {
 
 	grpcSrv := grpc.NewServer()
 	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{
-		messageStore: messageRepo,
-		indexStore:   relationalRepo,
-		historyLimit: getenvInt("CHAT_HISTORY_LIMIT", 50),
+		messageStore:  messageRepo,
+		indexStore:    relationalRepo,
+		historyLimit:  getenvInt32("CHAT_HISTORY_LIMIT", int32(50)),
 		listingClient: listingClient,
-		seller:        sellerClient,
+		sellerClient:  sellerClient,
 	})
 
 	go func() {
@@ -136,18 +134,18 @@ func getenvBool(key string, fallback bool) bool {
 	return b
 }
 
-func getenvInt(key string, fallback int) int {
+func getenvInt32(key string, fallback int32) int32 {
 	v := os.Getenv(key)
 	if v == "" {
 		return fallback
 	}
 
-	n, err := strconv.Atoi(v)
+	n, err := strconv.ParseInt(v, 10, 32)
 	if err != nil {
 		return fallback
 	}
 
-	return n
+	return int32(n)
 }
 
 func localNodeID() string {

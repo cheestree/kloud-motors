@@ -4,8 +4,6 @@ import (
 	proto "chat/proto"
 	"chat/repository"
 	"context"
-	"crypto/sha1"
-	"encoding/hex"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,15 +13,15 @@ type grpcServer struct {
 	proto.ChatServiceServer
 	messageStore repository.MessageRepo
 	indexStore   repository.ChatIndexRepo
-	historyLimit int
+	historyLimit int32
 
 	listingClient proto.ListingServiceClient
 	sellerClient  proto.SellerServiceClient
 }
 
 func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveChatsRequest) (*proto.GetActiveChatsResponse, error) {
-	if req.GetUserId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	if req.GetUserId() < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}
 
 	if s.indexStore == nil {
@@ -52,6 +50,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 	if req.GetUserId() < 0 || req.GetSellerId() < 0 || req.GetListingId() < 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id, seller_id and listing_id are required")
 	}
+
 	sellerId := req.GetSellerId()
 	isSeller, err := s.sellerClient.VerifySellerProfile(ctx, &proto.VerifySellerRequest{SellerId: sellerId})
 
@@ -65,12 +64,22 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 
 	listingID := req.GetListingId()
 	isListingFromSeller, err := s.listingClient.CheckListingOwnership(ctx,
-		&proto.CheckListingOwnershipRequest{ListingId: listingID, DealerId: sellerId}
-	)
+		&proto.CheckListingOwnershipRequest{ListingId: listingID, DealerId: sellerId})
 
-	if
-	brand := "Unknown" // TODO: Get from listing service
-	model := "Unknown" // TODO: Get from listing service
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check listing ownership: %v", err)
+	}
+	if !isListingFromSeller.IsOwner {
+		return nil, status.Error(codes.InvalidArgument, "seller not allowed")
+	}
+
+	listing, err := s.listingClient.GetListingSummary(ctx, &proto.ListingDetailsRequest{Id: listingID})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get listing details: %v", err)
+	}
+
+	brand := listing.Maker
+	model := listing.Model
 
 	var chatID string
 	if s.indexStore != nil {
@@ -79,17 +88,16 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to index chat participants: %v", err)
 		}
-	} else {
-		// TODO: Check if it is the correct way to do
-		chatID = buildChatID(listingID, req.GetUserId(), req.GetSellerId())
-	}
 
-	return &proto.OpenChatResponse{ChatId: chatID}, nil
+		return &proto.OpenChatResponse{ChatId: chatID}, nil
+	} else {
+		return nil, status.Errorf(codes.Internal, "failed to index chat participants")
+	}
 }
 
 func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHistoryRequest) (*proto.GetChatHistoryResponse, error) {
-	if req.GetChatId() == "" || req.GetUserId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "chat_id and user_id are required")
+	if req.GetChatId() == "" || req.GetUserId() < 0 {
+		return nil, status.Error(codes.InvalidArgument, "chat_id and user_id are required and be a valid value")
 	}
 
 	if s.indexStore != nil {
@@ -107,12 +115,15 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 		return &proto.GetChatHistoryResponse{Messages: []*proto.ChatMessage{}}, nil
 	}
 
-	limit := s.historyLimit
-	if limit <= 0 {
-		limit = 50
+	if req.GetLimit() <= 0 || req.GetLimit() > s.historyLimit {
+		return nil, status.Error(codes.InvalidArgument, "invalid limit")
 	}
 
-	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), limit, 0)
+	if req.GetSkip() < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid limit")
+	}
+
+	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), req.GetLimit(), req.GetSkip())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to load chat history: %v", err)
 	}
@@ -127,9 +138,4 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 	}
 
 	return &proto.GetChatHistoryResponse{Messages: protoMessages}, nil
-}
-
-func buildChatID(listingID, userID, sellerID string) string {
-	h := sha1.Sum([]byte(listingID + ":" + userID + ":" + sellerID))
-	return "chat_" + hex.EncodeToString(h[:10])
 }

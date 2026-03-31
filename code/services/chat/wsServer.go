@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,7 +29,7 @@ type InboundMessage struct {
 type OutboundMessage struct {
 	ID       string    `json:"id"`
 	ChatID   string    `json:"chat_id"`
-	SenderID string    `json:"sender_id"`
+	SenderID int64    `json:"sender_id"`
 	Content  string    `json:"content"`
 	SentAt   time.Time `json:"sent_at"`
 }
@@ -49,7 +50,7 @@ func (s *wsServer) ServeWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, err := s.userIDFromGateway(r)
-	if err != nil {
+	if err != nil || userID == 0 {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -63,7 +64,7 @@ func (s *wsServer) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 		allowed, err := s.indexStore.UserCanAccessChat(r.Context(), userID, listingID)
 		if err != nil {
-			log.Printf("chat access check error user=%s listing=%s err=%v", userID, listingID, err)
+			log.Printf("chat access check error user=%d listing=%s err=%v", userID, listingID, err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -86,7 +87,7 @@ func (s *wsServer) ServeWS(w http.ResponseWriter, r *http.Request) {
 	client.ReadPump(s.hub, s.onMessage)
 }
 
-func (s *wsServer) onMessage(chatID, userID string, raw []byte) {
+func (s *wsServer) onMessage(chatID string, userID int64, raw []byte) {
 	var in InboundMessage
 	if err := json.Unmarshal(raw, &in); err != nil || in.Content == "" {
 		return
@@ -109,7 +110,7 @@ func (s *wsServer) onMessage(chatID, userID string, raw []byte) {
 			Time:    out.SentAt,
 		})
 		if err != nil {
-			log.Printf("save message error chat=%s user=%s err=%v", chatID, userID, err)
+			log.Printf("save message error chat=%s user=%d err=%v", chatID, userID, err)
 			return
 		}
 	}
@@ -124,12 +125,16 @@ func (s *wsServer) onMessage(chatID, userID string, raw []byte) {
 	}
 }
 
-func (s *wsServer) userIDFromGateway(r *http.Request) (string, error) {
+func (s *wsServer) userIDFromGateway(r *http.Request) (int64, error) {
 	for _, header := range []string{"X-User-ID", "X-User-Id", "X-Authenticated-User-Id", "X-Forwarded-User"} {
 		if userID := strings.TrimSpace(r.Header.Get(header)); userID != "" {
-			return userID, nil
+			int64UserID, err := strconv.ParseInt(userID, 10, 64)
+			if err != nil {
+				return 0, err
+			}
+			return int64UserID, nil
 		}
 	}
 
-	return "", errors.New("missing gateway user id")
+	return 0, errors.New("missing gateway user id")
 }

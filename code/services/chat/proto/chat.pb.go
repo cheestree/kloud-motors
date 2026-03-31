@@ -111,7 +111,7 @@ func (x *GetActiveChatsResponse) GetChats() []*ChatsSummary {
 
 type ChatsSummary struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ChatId        int64                  `protobuf:"varint,1,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
+	ChatId        string                 `protobuf:"bytes,1,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
 	ListingId     int64                  `protobuf:"varint,2,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
 	Brand         string                 `protobuf:"bytes,3,opt,name=brand,proto3" json:"brand,omitempty"`
 	Model         string                 `protobuf:"bytes,4,opt,name=model,proto3" json:"model,omitempty"`
@@ -149,11 +149,11 @@ func (*ChatsSummary) Descriptor() ([]byte, []int) {
 	return file_chat_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ChatsSummary) GetChatId() int64 {
+func (x *ChatsSummary) GetChatId() string {
 	if x != nil {
 		return x.ChatId
 	}
-	return 0
+	return ""
 }
 
 func (x *ChatsSummary) GetListingId() int64 {
@@ -239,7 +239,7 @@ func (x *OpenChatRequest) GetListingId() int64 {
 
 type OpenChatResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ChatId        int64                  `protobuf:"varint,2,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
+	ChatId        string                 `protobuf:"bytes,2,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -274,16 +274,16 @@ func (*OpenChatResponse) Descriptor() ([]byte, []int) {
 	return file_chat_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *OpenChatResponse) GetChatId() int64 {
+func (x *OpenChatResponse) GetChatId() string {
 	if x != nil {
 		return x.ChatId
 	}
-	return 0
+	return ""
 }
 
 type GetChatHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ChatId        int64                  `protobuf:"varint,1,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
+	ChatId        string                 `protobuf:"bytes,1,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
 	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	Skip          int32                  `protobuf:"varint,4,opt,name=skip,proto3" json:"skip,omitempty"`
@@ -321,11 +321,11 @@ func (*GetChatHistoryRequest) Descriptor() ([]byte, []int) {
 	return file_chat_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetChatHistoryRequest) GetChatId() int64 {
+func (x *GetChatHistoryRequest) GetChatId() string {
 	if x != nil {
 		return x.ChatId
 	}
-	return 0
+	return ""
 }
 
 func (x *GetChatHistoryRequest) GetUserId() int64 {
@@ -540,7 +540,7 @@ const file_chat_proto_rawDesc = "" +
 	"\x16GetActiveChatsResponse\x12(\n" +
 	"\x05chats\x18\x01 \x03(\v2\x12.chat.ChatsSummaryR\x05chats\"r\n" +
 	"\fChatsSummary\x12\x17\n" +
-	"\achat_id\x18\x01 \x01(\x03R\x06chatId\x12\x1d\n" +
+	"\achat_id\x18\x01 \x01(\tR\x06chatId\x12\x1d\n" +
 	"\n" +
 	"listing_id\x18\x02 \x01(\x03R\tlistingId\x12\x14\n" +
 	"\x05brand\x18\x03 \x01(\tR\x05brand\x12\x14\n" +
@@ -551,9 +551,9 @@ const file_chat_proto_rawDesc = "" +
 	"\n" +
 	"listing_id\x18\x03 \x01(\x03R\tlistingId\"+\n" +
 	"\x10OpenChatResponse\x12\x17\n" +
-	"\achat_id\x18\x02 \x01(\x03R\x06chatId\"s\n" +
+	"\achat_id\x18\x02 \x01(\tR\x06chatId\"s\n" +
 	"\x15GetChatHistoryRequest\x12\x17\n" +
-	"\achat_id\x18\x01 \x01(\x03R\x06chatId\x12\x17\n" +
+	"\achat_id\x18\x01 \x01(\tR\x06chatId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x12\n" +
 	"\x04skip\x18\x04 \x01(\x05R\x04skip\"y\n" +
