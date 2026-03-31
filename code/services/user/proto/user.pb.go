@@ -135,7 +135,7 @@ func (x *LoginUserRequest) GetPassword() string {
 
 type AuthResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Token         string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -171,11 +171,11 @@ func (*AuthResponse) Descriptor() ([]byte, []int) {
 	return file_user_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *AuthResponse) GetUserId() string {
+func (x *AuthResponse) GetUserId() int64 {
 	if x != nil {
 		return x.UserId
 	}
-	return ""
+	return 0
 }
 
 func (x *AuthResponse) GetToken() string {
@@ -187,7 +187,7 @@ func (x *AuthResponse) GetToken() string {
 
 type GetFavoritesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -222,16 +222,16 @@ func (*GetFavoritesRequest) Descriptor() ([]byte, []int) {
 	return file_user_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetFavoritesRequest) GetUserId() string {
+func (x *GetFavoritesRequest) GetUserId() int64 {
 	if x != nil {
 		return x.UserId
 	}
-	return ""
+	return 0
 }
 
 type FavoritesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Favorites     []string               `protobuf:"bytes,1,rep,name=favorites,proto3" json:"favorites,omitempty"`
+	Favorites     []int64                `protobuf:"varint,1,rep,packed,name=favorites,proto3" json:"favorites,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -266,7 +266,7 @@ func (*FavoritesResponse) Descriptor() ([]byte, []int) {
 	return file_user_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *FavoritesResponse) GetFavorites() []string {
+func (x *FavoritesResponse) GetFavorites() []int64 {
 	if x != nil {
 		return x.Favorites
 	}
@@ -275,8 +275,8 @@ func (x *FavoritesResponse) GetFavorites() []string {
 
 type AddFavoriteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ListingId     string                 `protobuf:"bytes,2,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ListingId     int64                  `protobuf:"varint,2,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -311,24 +311,24 @@ func (*AddFavoriteRequest) Descriptor() ([]byte, []int) {
 	return file_user_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *AddFavoriteRequest) GetUserId() string {
+func (x *AddFavoriteRequest) GetUserId() int64 {
 	if x != nil {
 		return x.UserId
 	}
-	return ""
+	return 0
 }
 
-func (x *AddFavoriteRequest) GetListingId() string {
+func (x *AddFavoriteRequest) GetListingId() int64 {
 	if x != nil {
 		return x.ListingId
 	}
-	return ""
+	return 0
 }
 
 type RemoveFavoriteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ListingId     string                 `protobuf:"bytes,2,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ListingId     int64                  `protobuf:"varint,2,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -363,18 +363,18 @@ func (*RemoveFavoriteRequest) Descriptor() ([]byte, []int) {
 	return file_user_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *RemoveFavoriteRequest) GetUserId() string {
+func (x *RemoveFavoriteRequest) GetUserId() int64 {
 	if x != nil {
 		return x.UserId
 	}
-	return ""
+	return 0
 }
 
-func (x *RemoveFavoriteRequest) GetListingId() string {
+func (x *RemoveFavoriteRequest) GetListingId() int64 {
 	if x != nil {
 		return x.ListingId
 	}
-	return ""
+	return 0
 }
 
 type FavoriteMutationResponse struct {
@@ -531,20 +531,20 @@ const file_user_proto_rawDesc = "" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"=\n" +
 	"\fAuthResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05token\x18\x02 \x01(\tR\x05token\".\n" +
 	"\x13GetFavoritesRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"1\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"1\n" +
 	"\x11FavoritesResponse\x12\x1c\n" +
-	"\tfavorites\x18\x01 \x03(\tR\tfavorites\"L\n" +
+	"\tfavorites\x18\x01 \x03(\x03R\tfavorites\"L\n" +
 	"\x12AddFavoriteRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1d\n" +
 	"\n" +
-	"listing_id\x18\x02 \x01(\tR\tlistingId\"O\n" +
+	"listing_id\x18\x02 \x01(\x03R\tlistingId\"O\n" +
 	"\x15RemoveFavoriteRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1d\n" +
 	"\n" +
-	"listing_id\x18\x02 \x01(\tR\tlistingId\"N\n" +
+	"listing_id\x18\x02 \x01(\x03R\tlistingId\"N\n" +
 	"\x18FavoriteMutationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\".\n" +

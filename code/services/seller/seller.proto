@@ -11,18 +11,18 @@ service SellerService {
 }
 
 message GetSellerProfileRequest {
-    string seller_id = 1;
+    int64 seller_id = 1;
 }
 
 message CreateSellerRequest {
-    string seller_id = 1;
+    int64 seller_id = 1;
     string name = 2;
     string seller_type = 3;
     string contact_info = 4;
 }
 
 message SellerProfileResponse {
-    string seller_id = 1;
+    int64 seller_id = 1;
     string name = 2;
     string seller_type = 3;
     string contact_info = 4;
@@ -30,7 +30,7 @@ message SellerProfileResponse {
 }
 
 message VerifySellerRequest {
-    string seller_id = 1;
+    int64 seller_id = 1;
 }
 
 message VerifySellerResponse {
