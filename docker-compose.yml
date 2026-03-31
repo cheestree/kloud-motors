@@ -21,6 +21,7 @@ services:
       - "50051:50051"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+
   listing:
     container_name: listing-service
     build:
@@ -30,17 +31,6 @@ services:
       - "50052:50052"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
-  listing-db:
-    container_name: listing-db
-    image: postgres:16
-    environment:
-      POSTGRES_USER: ${LISTING_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${LISTING_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${LISTING_POSTGRES_DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - listing_postgres_data:/var/lib/postgresql/data
 
   user:
     container_name: user-service
@@ -63,7 +53,7 @@ services:
       LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
       - seller-db
-      - postgres
+      - listing-db
 
   user-db:
     container_name: user-db
@@ -76,6 +66,18 @@ services:
       - "5433:5432"
     volumes:
       - user_postgres_data:/var/lib/postgresql/data
+
+  listing-db:
+    container_name: listing-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${LISTING_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${LISTING_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${LISTING_POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - listing_postgres_data:/var/lib/postgresql/data
 
   seller-db:
     container_name: seller-db
