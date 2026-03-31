@@ -1,12 +1,12 @@
 package main
 
 import (
-	"chat/proto"
-	pubsub2 "chat/pubsub"
-	"chat/repository"
-	"chat/repository/firestore"
-	"chat/repository/postgres"
-	ws2 "chat/ws"
+	"services/chat/proto"
+	pubsub2 "services/chat/pubsub"
+	"services/chat/repository"
+	"services/chat/repository/firestore"
+	"services/chat/repository/postgres"
+	ws2 "services/chat/ws"
 	"context"
 	"log"
 	"net"

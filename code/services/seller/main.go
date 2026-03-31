@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	. "seller/models"
-	proto "seller/proto"
+	. "services/seller/models"
+	proto "services/seller/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"geographic-maket-insights/repository"
+	"services/geographic-maket-insights/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

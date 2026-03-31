@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"chat/repository"
+	"services/chat/repository"
 	"context"
 	"fmt"
 	"regexp"

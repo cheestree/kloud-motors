@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	. "user/models"
-	proto "user/proto"
+	. "services/user/models"
+	proto "services/user/proto"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"

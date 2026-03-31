@@ -1,8 +1,8 @@
 package main
 
 import (
-	"chat/repository"
-	"chat/ws"
+	"services/chat/repository"
+	"services/chat/ws"
 	"context"
 	"encoding/json"
 	"errors"

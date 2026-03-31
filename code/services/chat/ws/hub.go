@@ -1,7 +1,7 @@
 package ws
 
 import (
-	pubsub2 "chat/pubsub"
+	pubsub2 "services/chat/pubsub"
 	"context"
 	"sync"
 )

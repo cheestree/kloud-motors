@@ -7,8 +7,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"geographic-maket-insights/proto"
-	"geographic-maket-insights/repository"
+	"services/geographic-maket-insights/proto"
+	"services/geographic-maket-insights/repository"
 )
 
 type geoServer struct {

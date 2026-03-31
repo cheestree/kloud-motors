@@ -1,7 +1,7 @@
 package firestore
 
 import (
-	"chat/repository"
+	"services/chat/repository"
 	"context"
 	"fmt"
 	"time"

@@ -9,9 +9,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"geographic-maket-insights/proto"
-	"geographic-maket-insights/repository"
-	"geographic-maket-insights/repository/postgres"
+	"services/geographic-maket-insights/proto"
+	"services/geographic-maket-insights/repository"
+	"services/geographic-maket-insights/repository/postgres"
 )
 
 func main() {

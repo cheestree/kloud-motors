@@ -1,8 +1,8 @@
 package main
 
 import (
-	proto "chat/proto"
-	"chat/repository"
+	proto "services/chat/proto"
+	"services/chat/repository"
 	"context"
 
 	"google.golang.org/grpc/codes"

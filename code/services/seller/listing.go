@@ -7,8 +7,8 @@ import (
     "os"
     "time"
 
-    . "seller/models"
-    proto "seller/proto"
+    . "services/seller/models"
+    proto "services/seller/proto"
 
     "gorm.io/driver/postgres"
     "gorm.io/gorm"
