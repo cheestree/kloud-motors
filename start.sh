@@ -6,4 +6,7 @@ if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
+echo "Generating protobuf files..."
+bash code/services/gen_proto.sh
+
 docker compose up listing listing-db search

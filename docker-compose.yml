@@ -25,9 +25,7 @@ services:
         condition: service_healthy
   listing-db:
     container_name: listing-db
-    build:
-      context: .
-      dockerfile: code/setup/listing-db/Dockerfile
+    image: postgres:16
     environment:
       POSTGRES_USER: ${LISTING_POSTGRES_USER}
       POSTGRES_PASSWORD: ${LISTING_POSTGRES_PASSWORD}

@@ -132,9 +132,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Rename columns, deduplicate VINs, and export a prepared CSV."
     )
-    parser.add_argument("--dataset", default="dataset.csv")
+    parser.add_argument("--dataset", default="CIS_Automotive_Kaggle_Sample.csv")
     parser.add_argument("--output", default="dataset_prepared.csv")
-    parser.add_argument("--rows", type=int, default=None, help="Max output rows after dedup.")
+    parser.add_argument("--rows", type=int, default=50000, help="Max output rows after dedup.")
     parser.add_argument("--vin-column", default="vin", help="Source VIN column name.")
     parser.add_argument("--dedupe-keep", choices=["first", "last"], default="last")
     parser.add_argument("--selection", choices=["head", "random"], default="head")
@@ -297,3 +297,6 @@ def main() -> int:
             else:
                 pd.DataFrame(columns=OUTPUT_COLUMNS).to_csv(output_path, index=False)
                 header_written = True
+
+if __name__ == "__main__":
+    main()

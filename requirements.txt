@@ -1,2 +1,4 @@
 pandas
 sqlalchemy
+pandas
+faker
