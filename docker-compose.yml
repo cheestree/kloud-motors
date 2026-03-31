@@ -47,8 +47,10 @@ services:
       - "50054:50054"
     environment:
       DATABASE_URL: ${SELLER_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
       - seller-db
+      - postgres
 
   user-db:
     container_name: user-db

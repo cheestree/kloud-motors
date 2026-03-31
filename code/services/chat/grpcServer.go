@@ -16,6 +16,9 @@ type grpcServer struct {
 	messageStore repository.MessageRepo
 	indexStore   repository.ChatIndexRepo
 	historyLimit int
+
+	listingClient proto.ListingServiceClient
+	sellerClient  proto.SellerServiceClient
 }
 
 func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveChatsRequest) (*proto.GetActiveChatsResponse, error) {
@@ -46,25 +49,35 @@ func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveCha
 }
 
 func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (*proto.OpenChatResponse, error) {
-	if req.GetUserId() == "" || req.GetSellerId() == "" || req.GetListingId() == "" {
+	if req.GetUserId() < 0 || req.GetSellerId() < 0 || req.GetListingId() < 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id, seller_id and listing_id are required")
+	}
+	sellerId := req.GetSellerId()
+	isSeller, err := s.sellerClient.VerifySellerProfile(ctx, &proto.VerifySellerRequest{SellerId: sellerId})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to verify seller profile: %v", err)
+	}
+
+	if !isSeller.IsSeller {
+		return nil, status.Error(codes.InvalidArgument, "seller not allowed")
 	}
 
 	listingID := req.GetListingId()
+	isListingFromSeller, err := s.listingClient.CheckListingOwnership(ctx,
+		&proto.CheckListingOwnershipRequest{ListingId: listingID, DealerId: sellerId}
+	)
+
+	if
 	brand := "Unknown" // TODO: Get from listing service
 	model := "Unknown" // TODO: Get from listing service
 
 	var chatID string
 	if s.indexStore != nil {
 		var err error
-		chatID, err = s.indexStore.UpsertChatParticipant(ctx, req.GetUserId(), listingID, brand, model)
+		chatID, err = s.indexStore.UpsertChatParticipant(ctx, req.GetUserId(), req.GetSellerId(), listingID, brand, model)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to index chat participant: %v", err)
-		}
-
-		_, err = s.indexStore.UpsertChatParticipant(ctx, req.GetSellerId(), listingID, brand, model)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to index seller participant: %v", err)
+			return nil, status.Errorf(codes.Internal, "failed to index chat participants: %v", err)
 		}
 	} else {
 		// TODO: Check if it is the correct way to do

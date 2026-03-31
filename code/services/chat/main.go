@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -65,11 +66,34 @@ func main() {
 		log.Fatalf("grpc listen: %v", err)
 	}
 
+	listingConn, err := grpc.NewClient(
+		getenv("LISTING_SERVICE_ADDR", "localhost:50052"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("failed to connect to listing service: %v", err)
+	}
+	defer listingConn.Close()
+
+	sellerConn, err := grpc.NewClient(
+		getenv("SELLER_SERVICE_ADDR", "localhost:50053"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("failed to connect to seller service: %v", err)
+	}
+	defer sellerConn.Close()
+
+	listingClient := proto.NewListingServiceClient(listingConn)
+	sellerClient := proto.NewSellerServiceClient(sellerConn)
+
 	grpcSrv := grpc.NewServer()
 	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{
 		messageStore: messageRepo,
 		indexStore:   relationalRepo,
 		historyLimit: getenvInt("CHAT_HISTORY_LIMIT", 50),
+		listingClient: listingClient,
+		seller:        sellerClient,
 	})
 
 	go func() {

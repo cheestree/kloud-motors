@@ -35,7 +35,7 @@ type MessageRepo interface {
 }
 
 type ChatIndexRepo interface {
-	UpsertChatParticipant(ctx context.Context, userID, listingID, brand, model string) (string, error)
+	UpsertChatParticipant(ctx context.Context, userID, sellerID, listingID, brand, model string) (string, error)
 	ListUserChats(ctx context.Context, userID string) ([]ChatSummary, error)
 	UserCanAccessChat(ctx context.Context, userID, listingID string) (bool, error)
 	Close() error
