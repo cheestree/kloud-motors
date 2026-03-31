@@ -1,17 +1,46 @@
 # computacao-nuvem-2025
 
-## Run User and Seller Services
+To run this branch, you need to have Docker installed on your machine. Follow the instructions below to set up and run the project:
 
-- Populate `.env` (rename from `.env.example`)
+1. Clone the repository:
 
-Start the user and seller containers:
+   ```bash
+   git clone
+    ```
 
-```bash
-docker compose up -d --build user seller user-db seller-db
-```
+2. Navigate to the project directory:
 
-Run the setup script with Python:
+   ```bash
+   cd computacao-nuvem-2025
+   ```
 
-```bash
-./venv/bin/python code/setup/setup_auth_db.py
-```
+3. Download the dataset and place it in the `setup` directory. You can download the dataset from [this link](https://www.kaggle.com/datasets/cisautomotiveapi/large-car-dataset).
+
+4. Run the following command to prepare the dataset:
+
+    ```bash
+    ./prepare.sh
+    ```
+
+5. When the dataset is prepared, you can start the services with the following command:
+
+    ```bash
+    ./start.sh
+    ```
+
+6. Subsequently, the database will be populated with:
+
+    ```bash
+    ./seed.sh
+    ```
+
+The services will be available at the following gRPC endpoints (doesn't include the gateway):
+
+- Searching: `localhost:50051`
+- Listing: `localhost:50052`
+
+Or, via the gateway at `localhost:8080/api` for RESTful API access:
+
+- Search: `http://localhost:8080/api/listings/search`
+- List: `http://localhost:8080/api/listings`
+- Compare: `http://localhost:8080/api/listings/compare`

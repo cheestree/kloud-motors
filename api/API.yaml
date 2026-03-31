@@ -68,13 +68,15 @@ paths:
     get:
       tags: [Chat]
       summary: Get chat history
-      description: Retrieves message history for a specific chat session.
+      description: Retrieves message history for a specific chat session with pagination.
       operationId: getChatHistory
       security:
         - bearerAuth: []
         - cookieAuth: []
       parameters:
         - $ref: '#/components/parameters/ChatIdPath'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/SkipQuery'
       responses:
         '200':
           description: Chat history retrieved successfully
@@ -133,6 +135,8 @@ paths:
         - $ref: '#/components/parameters/YearFromQuery'
         - $ref: '#/components/parameters/YearToQuery'
         - $ref: '#/components/parameters/FuelTypeQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/SkipQuery'
       responses:
         '200':
           description: Aggregated market insights retrieved successfully
@@ -164,6 +168,7 @@ paths:
         - $ref: '#/components/parameters/SortByQuery'
         - $ref: '#/components/parameters/OrderQuery'
         - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/SkipQuery'
       responses:
         '200':
           description: Price comparison retrieved successfully
@@ -838,6 +843,15 @@ components:
         minimum: 1
       description: Maximum number of groups to return
 
+    SkipQuery:
+      name: skip
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: Number of groups to skip for pagination
+
     MetricsQuery:
       name: metrics
       in: query
@@ -857,7 +871,7 @@ components:
       required: true
       schema:
         type: string
-        enum: [location, district, city, country]
+        enum: [district, city, country]
       description: Grouping field for aggregation
 
     AuctionStatusQuery:
@@ -1024,12 +1038,14 @@ components:
 
     ChatHistoryResponse:
       type: object
-      required: [messages]
+      required: [messages, pagination]
       properties:
         messages:
           type: array
           items:
             $ref: '#/components/schemas/Message'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
 
     GeoInsight:
       type: object
@@ -1046,12 +1062,14 @@ components:
 
     GeoInsightsResponse:
       type: object
-      required: [insights]
+      required: [insights, pagination]
       properties:
         insights:
           type: array
           items:
             $ref: '#/components/schemas/GeoInsight'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
 
     PriceComparison:
       type: object
@@ -1067,12 +1085,14 @@ components:
 
     PriceComparisonResponse:
       type: object
-      required: [comparisons]
+      required: [comparisons, pagination]
       properties:
         comparisons:
           type: array
           items:
             $ref: '#/components/schemas/PriceComparison'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
 
     ListingsAggregateItem:
       type: object
@@ -1091,16 +1111,18 @@ components:
         count:
           type: integer
           nullable: true
-      additionalProperties: true
+      additionalProperties: false
 
     ListingsAggregateResponse:
       type: object
-      required: [aggregates]
+      required: [aggregates, pagination]
       properties:
         aggregates:
           type: array
           items:
             $ref: '#/components/schemas/ListingsAggregateItem'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
 
     ListingStats:
       type: object
@@ -1125,6 +1147,27 @@ components:
       properties:
         stats:
           $ref: '#/components/schemas/ListingStats'
+
+    PaginationMetadata:
+      type: object
+      required: [limit, skip, has_next]
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          description: Maximum number of items requested for this page.
+        skip:
+          type: integer
+          minimum: 0
+          description: Number of items skipped before this page.
+        has_next:
+          type: boolean
+          description: Indicates whether there is a next page.
+        next_skip:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Skip value to request the next page, or null when there is no next page.
 
     AveragePriceResponse:
       type: object

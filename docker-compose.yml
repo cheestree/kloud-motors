@@ -1,4 +1,17 @@
 services:
+  gateway:
+    container_name: gateway-service
+    build:
+      context: ./code/services
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - LISTING_GRPC_ADDR=${LISTING_GRPC_ADDR}
+      - SEARCH_GRPC_ADDR=${SEARCH_GRPC_ADDR}
+    depends_on:
+      - listing
+      - search
   search:
     container_name: search-service
     build:
