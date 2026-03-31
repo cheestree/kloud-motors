@@ -297,6 +297,222 @@ func (x *VerifySellerResponse) GetIsSeller() bool {
 	return false
 }
 
+type CreateListingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Vin           string                 `protobuf:"bytes,1,opt,name=vin,proto3" json:"vin,omitempty"`
+	Make          string                 `protobuf:"bytes,2,opt,name=make,proto3" json:"make,omitempty"`
+	Model         string                 `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	Year          int32                  `protobuf:"varint,4,opt,name=year,proto3" json:"year,omitempty"`
+	Price         float64                `protobuf:"fixed64,5,opt,name=price,proto3" json:"price,omitempty"`
+	Mileage       int32                  `protobuf:"varint,6,opt,name=mileage,proto3" json:"mileage,omitempty"`
+	City          string                 `protobuf:"bytes,7,opt,name=city,proto3" json:"city,omitempty"`
+	District      string                 `protobuf:"bytes,8,opt,name=district,proto3" json:"district,omitempty"`
+	State         string                 `protobuf:"bytes,9,opt,name=state,proto3" json:"state,omitempty"`
+	Country       string                 `protobuf:"bytes,10,opt,name=country,proto3" json:"country,omitempty"`
+	FuelType      string                 `protobuf:"bytes,11,opt,name=fuel_type,json=fuelType,proto3" json:"fuel_type,omitempty"`
+	Transmission  string                 `protobuf:"bytes,12,opt,name=transmission,proto3" json:"transmission,omitempty"`
+	Trim          string                 `protobuf:"bytes,13,opt,name=trim,proto3" json:"trim,omitempty"`
+	Color         string                 `protobuf:"bytes,14,opt,name=color,proto3" json:"color,omitempty"`
+	DealerId      int64                  `protobuf:"varint,15,opt,name=dealer_id,json=dealerId,proto3" json:"dealer_id,omitempty"`
+	IsNew         bool                   `protobuf:"varint,16,opt,name=is_new,json=isNew,proto3" json:"is_new,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateListingRequest) Reset() {
+	*x = CreateListingRequest{}
+	mi := &file_seller_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateListingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateListingRequest) ProtoMessage() {}
+
+func (x *CreateListingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_seller_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateListingRequest.ProtoReflect.Descriptor instead.
+func (*CreateListingRequest) Descriptor() ([]byte, []int) {
+	return file_seller_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CreateListingRequest) GetVin() string {
+	if x != nil {
+		return x.Vin
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetMake() string {
+	if x != nil {
+		return x.Make
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetYear() int32 {
+	if x != nil {
+		return x.Year
+	}
+	return 0
+}
+
+func (x *CreateListingRequest) GetPrice() float64 {
+	if x != nil {
+		return x.Price
+	}
+	return 0
+}
+
+func (x *CreateListingRequest) GetMileage() int32 {
+	if x != nil {
+		return x.Mileage
+	}
+	return 0
+}
+
+func (x *CreateListingRequest) GetCity() string {
+	if x != nil {
+		return x.City
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetDistrict() string {
+	if x != nil {
+		return x.District
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetCountry() string {
+	if x != nil {
+		return x.Country
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetFuelType() string {
+	if x != nil {
+		return x.FuelType
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetTransmission() string {
+	if x != nil {
+		return x.Transmission
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetTrim() string {
+	if x != nil {
+		return x.Trim
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetColor() string {
+	if x != nil {
+		return x.Color
+	}
+	return ""
+}
+
+func (x *CreateListingRequest) GetDealerId() int64 {
+	if x != nil {
+		return x.DealerId
+	}
+	return 0
+}
+
+func (x *CreateListingRequest) GetIsNew() bool {
+	if x != nil {
+		return x.IsNew
+	}
+	return false
+}
+
+type CreateListingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ListedAt      string                 `protobuf:"bytes,2,opt,name=listed_at,json=listedAt,proto3" json:"listed_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateListingResponse) Reset() {
+	*x = CreateListingResponse{}
+	mi := &file_seller_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateListingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateListingResponse) ProtoMessage() {}
+
+func (x *CreateListingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_seller_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateListingResponse.ProtoReflect.Descriptor instead.
+func (*CreateListingResponse) Descriptor() ([]byte, []int) {
+	return file_seller_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CreateListingResponse) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *CreateListingResponse) GetListedAt() string {
+	if x != nil {
+		return x.ListedAt
+	}
+	return ""
+}
+
 var File_seller_proto protoreflect.FileDescriptor
 
 const file_seller_proto_rawDesc = "" +
@@ -320,11 +536,33 @@ const file_seller_proto_rawDesc = "" +
 	"\x13VerifySellerRequest\x12\x1b\n" +
 	"\tseller_id\x18\x01 \x01(\tR\bsellerId\"3\n" +
 	"\x14VerifySellerResponse\x12\x1b\n" +
-	"\tis_seller\x18\x01 \x01(\bR\bisSeller2\x81\x02\n" +
+	"\tis_seller\x18\x01 \x01(\bR\bisSeller\"\x95\x03\n" +
+	"\x14CreateListingRequest\x12\x10\n" +
+	"\x03vin\x18\x01 \x01(\tR\x03vin\x12\x12\n" +
+	"\x04make\x18\x02 \x01(\tR\x04make\x12\x14\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model\x12\x12\n" +
+	"\x04year\x18\x04 \x01(\x05R\x04year\x12\x14\n" +
+	"\x05price\x18\x05 \x01(\x01R\x05price\x12\x18\n" +
+	"\amileage\x18\x06 \x01(\x05R\amileage\x12\x12\n" +
+	"\x04city\x18\a \x01(\tR\x04city\x12\x1a\n" +
+	"\bdistrict\x18\b \x01(\tR\bdistrict\x12\x14\n" +
+	"\x05state\x18\t \x01(\tR\x05state\x12\x18\n" +
+	"\acountry\x18\n" +
+	" \x01(\tR\acountry\x12\x1b\n" +
+	"\tfuel_type\x18\v \x01(\tR\bfuelType\x12\"\n" +
+	"\ftransmission\x18\f \x01(\tR\ftransmission\x12\x12\n" +
+	"\x04trim\x18\r \x01(\tR\x04trim\x12\x14\n" +
+	"\x05color\x18\x0e \x01(\tR\x05color\x12\x1b\n" +
+	"\tdealer_id\x18\x0f \x01(\x03R\bdealerId\x12\x15\n" +
+	"\x06is_new\x18\x10 \x01(\bR\x05isNew\"D\n" +
+	"\x15CreateListingResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
+	"\tlisted_at\x18\x02 \x01(\tR\blistedAt2\xcf\x02\n" +
 	"\rSellerService\x12R\n" +
-	"\x10GetSellerProfile\x12\x1f.seller.GetSellerProfileRequest\x1a\x1d.seller.SellerProfileResponse\x12P\n" +
-	"\x13VerifySellerProfile\x12\x1b.seller.VerifySellerRequest\x1a\x1c.seller.VerifySellerResponse\x12J\n" +
-	"\fCreateSeller\x12\x1b.seller.CreateSellerRequest\x1a\x1d.seller.SellerProfileResponseB\tZ\a./protob\x06proto3"
+	"\x10GetSellerProfile\x12\x1f.seller.GetSellerProfileRequest\x1a\x1d.seller.SellerProfileResponse\x12J\n" +
+	"\fCreateSeller\x12\x1b.seller.CreateSellerRequest\x1a\x1d.seller.SellerProfileResponse\x12P\n" +
+	"\x13VerifySellerProfile\x12\x1b.seller.VerifySellerRequest\x1a\x1c.seller.VerifySellerResponse\x12L\n" +
+	"\rCreateListing\x12\x1c.seller.CreateListingRequest\x1a\x1d.seller.CreateListingResponseB\tZ\a./protob\x06proto3"
 
 var (
 	file_seller_proto_rawDescOnce sync.Once
@@ -338,23 +576,27 @@ func file_seller_proto_rawDescGZIP() []byte {
 	return file_seller_proto_rawDescData
 }
 
-var file_seller_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_seller_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_seller_proto_goTypes = []any{
 	(*GetSellerProfileRequest)(nil), // 0: seller.GetSellerProfileRequest
 	(*CreateSellerRequest)(nil),     // 1: seller.CreateSellerRequest
 	(*SellerProfileResponse)(nil),   // 2: seller.SellerProfileResponse
 	(*VerifySellerRequest)(nil),     // 3: seller.VerifySellerRequest
 	(*VerifySellerResponse)(nil),    // 4: seller.VerifySellerResponse
+	(*CreateListingRequest)(nil),    // 5: seller.CreateListingRequest
+	(*CreateListingResponse)(nil),   // 6: seller.CreateListingResponse
 }
 var file_seller_proto_depIdxs = []int32{
 	0, // 0: seller.SellerService.GetSellerProfile:input_type -> seller.GetSellerProfileRequest
-	3, // 1: seller.SellerService.VerifySellerProfile:input_type -> seller.VerifySellerRequest
-	1, // 2: seller.SellerService.CreateSeller:input_type -> seller.CreateSellerRequest
-	2, // 3: seller.SellerService.GetSellerProfile:output_type -> seller.SellerProfileResponse
-	4, // 4: seller.SellerService.VerifySellerProfile:output_type -> seller.VerifySellerResponse
+	1, // 1: seller.SellerService.CreateSeller:input_type -> seller.CreateSellerRequest
+	3, // 2: seller.SellerService.VerifySellerProfile:input_type -> seller.VerifySellerRequest
+	5, // 3: seller.SellerService.CreateListing:input_type -> seller.CreateListingRequest
+	2, // 4: seller.SellerService.GetSellerProfile:output_type -> seller.SellerProfileResponse
 	2, // 5: seller.SellerService.CreateSeller:output_type -> seller.SellerProfileResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	4, // 6: seller.SellerService.VerifySellerProfile:output_type -> seller.VerifySellerResponse
+	6, // 7: seller.SellerService.CreateListing:output_type -> seller.CreateListingResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -371,7 +613,7 @@ func file_seller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_seller_proto_rawDesc), len(file_seller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

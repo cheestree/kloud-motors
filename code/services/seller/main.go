@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	. "seller/models"
 	proto "seller/proto"
@@ -18,6 +19,7 @@ import (
 )
 
 var db *gorm.DB
+var listingDb *gorm.DB
 
 type server struct {
 	proto.UnimplementedSellerServiceServer
@@ -57,6 +59,39 @@ func (s *server) CreateSeller(ctx context.Context, req *proto.CreateSellerReques
 		SellerType:  seller.SellerType,
 		ContactInfo: seller.ContactInfo,
 		Rating:      seller.Rating,
+	}, nil
+}
+
+func (s *server) CreateListing(ctx context.Context, req *proto.CreateListingRequest) (*proto.CreateListingResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "listing details are required")
+	}
+	if req.Vin == "" {
+		return nil, status.Error(codes.InvalidArgument, "vin is required")
+	}
+	if req.Make == "" || req.Model == "" {
+		return nil, status.Error(codes.InvalidArgument, "make and model are required")
+	}
+	if req.DealerId <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "dealer_id must be a positive integer")
+	}
+	if listingDb == nil {
+		return nil, status.Error(codes.Internal, "listing database is not configured")
+	}
+
+	listingID, listedAt, err := createListing(ctx, req)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create listing: %v", err)
+	}
+
+	listedAtText := ""
+	if !listedAt.IsZero() {
+		listedAtText = listedAt.UTC().Format(time.RFC3339)
+	}
+
+	return &proto.CreateListingResponse{
+		Id:       listingID,
+		ListedAt: listedAtText,
 	}, nil
 }
 
@@ -115,6 +150,7 @@ func initDB() {
 
 func main() {
 	initDB()
+	initListingDB()
 
 	lis, err := net.Listen("tcp", ":50054")
 	if err != nil {

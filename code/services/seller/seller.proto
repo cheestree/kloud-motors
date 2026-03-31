@@ -7,6 +7,7 @@ service SellerService {
     rpc GetSellerProfile (GetSellerProfileRequest) returns (SellerProfileResponse);
     rpc CreateSeller (CreateSellerRequest) returns (SellerProfileResponse);
     rpc VerifySellerProfile (VerifySellerRequest) returns (VerifySellerResponse);
+    rpc CreateListing (CreateListingRequest) returns (CreateListingResponse);
 }
 
 message GetSellerProfileRequest {
@@ -34,4 +35,28 @@ message VerifySellerRequest {
 
 message VerifySellerResponse {
     bool is_seller = 1;
+}
+
+message CreateListingRequest {
+    string vin = 1;
+    string make = 2;
+    string model = 3;
+    int32 year = 4;
+    double price = 5;
+    int32 mileage = 6;
+    string city = 7;
+    string district = 8;
+    string state = 9;
+    string country = 10;
+    string fuel_type = 11;
+    string transmission = 12;
+    string trim = 13;
+    string color = 14;
+    int64 dealer_id = 15;
+    bool is_new = 16;
+}
+
+message CreateListingResponse {
+    int64 id = 1;
+    string listed_at = 2;
 }

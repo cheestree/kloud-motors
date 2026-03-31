@@ -20,8 +20,9 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	SellerService_GetSellerProfile_FullMethodName    = "/seller.SellerService/GetSellerProfile"
-	SellerService_VerifySellerProfile_FullMethodName = "/seller.SellerService/VerifySellerProfile"
 	SellerService_CreateSeller_FullMethodName        = "/seller.SellerService/CreateSeller"
+	SellerService_VerifySellerProfile_FullMethodName = "/seller.SellerService/VerifySellerProfile"
+	SellerService_CreateListing_FullMethodName       = "/seller.SellerService/CreateListing"
 )
 
 // SellerServiceClient is the client API for SellerService service.
@@ -29,8 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SellerServiceClient interface {
 	GetSellerProfile(ctx context.Context, in *GetSellerProfileRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error)
-	VerifySellerProfile(ctx context.Context, in *VerifySellerRequest, opts ...grpc.CallOption) (*VerifySellerResponse, error)
 	CreateSeller(ctx context.Context, in *CreateSellerRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error)
+	VerifySellerProfile(ctx context.Context, in *VerifySellerRequest, opts ...grpc.CallOption) (*VerifySellerResponse, error)
+	CreateListing(ctx context.Context, in *CreateListingRequest, opts ...grpc.CallOption) (*CreateListingResponse, error)
 }
 
 type sellerServiceClient struct {
@@ -51,6 +53,16 @@ func (c *sellerServiceClient) GetSellerProfile(ctx context.Context, in *GetSelle
 	return out, nil
 }
 
+func (c *sellerServiceClient) CreateSeller(ctx context.Context, in *CreateSellerRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SellerProfileResponse)
+	err := c.cc.Invoke(ctx, SellerService_CreateSeller_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *sellerServiceClient) VerifySellerProfile(ctx context.Context, in *VerifySellerRequest, opts ...grpc.CallOption) (*VerifySellerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(VerifySellerResponse)
@@ -61,10 +73,10 @@ func (c *sellerServiceClient) VerifySellerProfile(ctx context.Context, in *Verif
 	return out, nil
 }
 
-func (c *sellerServiceClient) CreateSeller(ctx context.Context, in *CreateSellerRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error) {
+func (c *sellerServiceClient) CreateListing(ctx context.Context, in *CreateListingRequest, opts ...grpc.CallOption) (*CreateListingResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SellerProfileResponse)
-	err := c.cc.Invoke(ctx, SellerService_CreateSeller_FullMethodName, in, out, cOpts...)
+	out := new(CreateListingResponse)
+	err := c.cc.Invoke(ctx, SellerService_CreateListing_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +88,9 @@ func (c *sellerServiceClient) CreateSeller(ctx context.Context, in *CreateSeller
 // for forward compatibility.
 type SellerServiceServer interface {
 	GetSellerProfile(context.Context, *GetSellerProfileRequest) (*SellerProfileResponse, error)
-	VerifySellerProfile(context.Context, *VerifySellerRequest) (*VerifySellerResponse, error)
 	CreateSeller(context.Context, *CreateSellerRequest) (*SellerProfileResponse, error)
+	VerifySellerProfile(context.Context, *VerifySellerRequest) (*VerifySellerResponse, error)
+	CreateListing(context.Context, *CreateListingRequest) (*CreateListingResponse, error)
 	mustEmbedUnimplementedSellerServiceServer()
 }
 
@@ -91,11 +104,14 @@ type UnimplementedSellerServiceServer struct{}
 func (UnimplementedSellerServiceServer) GetSellerProfile(context.Context, *GetSellerProfileRequest) (*SellerProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSellerProfile not implemented")
 }
+func (UnimplementedSellerServiceServer) CreateSeller(context.Context, *CreateSellerRequest) (*SellerProfileResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateSeller not implemented")
+}
 func (UnimplementedSellerServiceServer) VerifySellerProfile(context.Context, *VerifySellerRequest) (*VerifySellerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifySellerProfile not implemented")
 }
-func (UnimplementedSellerServiceServer) CreateSeller(context.Context, *CreateSellerRequest) (*SellerProfileResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateSeller not implemented")
+func (UnimplementedSellerServiceServer) CreateListing(context.Context, *CreateListingRequest) (*CreateListingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateListing not implemented")
 }
 func (UnimplementedSellerServiceServer) mustEmbedUnimplementedSellerServiceServer() {}
 func (UnimplementedSellerServiceServer) testEmbeddedByValue()                       {}
@@ -136,24 +152,6 @@ func _SellerService_GetSellerProfile_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SellerService_VerifySellerProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifySellerRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SellerServiceServer).VerifySellerProfile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SellerService_VerifySellerProfile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SellerServiceServer).VerifySellerProfile(ctx, req.(*VerifySellerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SellerService_CreateSeller_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateSellerRequest)
 	if err := dec(in); err != nil {
@@ -172,6 +170,42 @@ func _SellerService_CreateSeller_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SellerService_VerifySellerProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifySellerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SellerServiceServer).VerifySellerProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SellerService_VerifySellerProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SellerServiceServer).VerifySellerProfile(ctx, req.(*VerifySellerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SellerService_CreateListing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateListingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SellerServiceServer).CreateListing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SellerService_CreateListing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SellerServiceServer).CreateListing(ctx, req.(*CreateListingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SellerService_ServiceDesc is the grpc.ServiceDesc for SellerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -184,12 +218,16 @@ var SellerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SellerService_GetSellerProfile_Handler,
 		},
 		{
+			MethodName: "CreateSeller",
+			Handler:    _SellerService_CreateSeller_Handler,
+		},
+		{
 			MethodName: "VerifySellerProfile",
 			Handler:    _SellerService_VerifySellerProfile_Handler,
 		},
 		{
-			MethodName: "CreateSeller",
-			Handler:    _SellerService_CreateSeller_Handler,
+			MethodName: "CreateListing",
+			Handler:    _SellerService_CreateListing_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
