@@ -25,9 +25,8 @@ type AveragePriceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Brand         string                 `protobuf:"bytes,1,opt,name=brand,proto3" json:"brand,omitempty"`
 	Model         string                 `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
-	Location      string                 `protobuf:"bytes,3,opt,name=location,proto3" json:"location,omitempty"`
-	YearFrom      int32                  `protobuf:"varint,4,opt,name=year_from,json=yearFrom,proto3" json:"year_from,omitempty"`
-	YearTo        int32                  `protobuf:"varint,5,opt,name=year_to,json=yearTo,proto3" json:"year_to,omitempty"`
+	YearFrom      int32                  `protobuf:"varint,3,opt,name=year_from,json=yearFrom,proto3" json:"year_from,omitempty"`
+	YearTo        int32                  `protobuf:"varint,4,opt,name=year_to,json=yearTo,proto3" json:"year_to,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -76,13 +75,6 @@ func (x *AveragePriceRequest) GetModel() string {
 	return ""
 }
 
-func (x *AveragePriceRequest) GetLocation() string {
-	if x != nil {
-		return x.Location
-	}
-	return ""
-}
-
 func (x *AveragePriceRequest) GetYearFrom() int32 {
 	if x != nil {
 		return x.YearFrom
@@ -101,11 +93,10 @@ type AveragePriceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Brand         string                 `protobuf:"bytes,1,opt,name=brand,proto3" json:"brand,omitempty"`
 	Model         string                 `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
-	Location      string                 `protobuf:"bytes,3,opt,name=location,proto3" json:"location,omitempty"`
-	AveragePrice  float64                `protobuf:"fixed64,4,opt,name=average_price,json=averagePrice,proto3" json:"average_price,omitempty"`
-	MinPrice      float64                `protobuf:"fixed64,5,opt,name=min_price,json=minPrice,proto3" json:"min_price,omitempty"`
-	MaxPrice      float64                `protobuf:"fixed64,6,opt,name=max_price,json=maxPrice,proto3" json:"max_price,omitempty"`
-	ListingCount  int32                  `protobuf:"varint,7,opt,name=listing_count,json=listingCount,proto3" json:"listing_count,omitempty"`
+	AveragePrice  float64                `protobuf:"fixed64,3,opt,name=average_price,json=averagePrice,proto3" json:"average_price,omitempty"`
+	MinPrice      float64                `protobuf:"fixed64,4,opt,name=min_price,json=minPrice,proto3" json:"min_price,omitempty"`
+	MaxPrice      float64                `protobuf:"fixed64,5,opt,name=max_price,json=maxPrice,proto3" json:"max_price,omitempty"`
+	ListingCount  int32                  `protobuf:"varint,6,opt,name=listing_count,json=listingCount,proto3" json:"listing_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -154,13 +145,6 @@ func (x *AveragePriceResponse) GetModel() string {
 	return ""
 }
 
-func (x *AveragePriceResponse) GetLocation() string {
-	if x != nil {
-		return x.Location
-	}
-	return ""
-}
-
 func (x *AveragePriceResponse) GetAveragePrice() float64 {
 	if x != nil {
 		return x.AveragePrice
@@ -193,21 +177,19 @@ var File_marketprice_proto protoreflect.FileDescriptor
 
 const file_marketprice_proto_rawDesc = "" +
 	"\n" +
-	"\x11marketprice.proto\x12\vmarketprice\"\x93\x01\n" +
+	"\x11marketprice.proto\x12\vmarketprice\"w\n" +
 	"\x13AveragePriceRequest\x12\x14\n" +
 	"\x05brand\x18\x01 \x01(\tR\x05brand\x12\x14\n" +
-	"\x05model\x18\x02 \x01(\tR\x05model\x12\x1a\n" +
-	"\blocation\x18\x03 \x01(\tR\blocation\x12\x1b\n" +
-	"\tyear_from\x18\x04 \x01(\x05R\byearFrom\x12\x17\n" +
-	"\ayear_to\x18\x05 \x01(\x05R\x06yearTo\"\xe2\x01\n" +
+	"\x05model\x18\x02 \x01(\tR\x05model\x12\x1b\n" +
+	"\tyear_from\x18\x03 \x01(\x05R\byearFrom\x12\x17\n" +
+	"\ayear_to\x18\x04 \x01(\x05R\x06yearTo\"\xc6\x01\n" +
 	"\x14AveragePriceResponse\x12\x14\n" +
 	"\x05brand\x18\x01 \x01(\tR\x05brand\x12\x14\n" +
-	"\x05model\x18\x02 \x01(\tR\x05model\x12\x1a\n" +
-	"\blocation\x18\x03 \x01(\tR\blocation\x12#\n" +
-	"\raverage_price\x18\x04 \x01(\x01R\faveragePrice\x12\x1b\n" +
-	"\tmin_price\x18\x05 \x01(\x01R\bminPrice\x12\x1b\n" +
-	"\tmax_price\x18\x06 \x01(\x01R\bmaxPrice\x12#\n" +
-	"\rlisting_count\x18\a \x01(\x05R\flistingCount2r\n" +
+	"\x05model\x18\x02 \x01(\tR\x05model\x12#\n" +
+	"\raverage_price\x18\x03 \x01(\x01R\faveragePrice\x12\x1b\n" +
+	"\tmin_price\x18\x04 \x01(\x01R\bminPrice\x12\x1b\n" +
+	"\tmax_price\x18\x05 \x01(\x01R\bmaxPrice\x12#\n" +
+	"\rlisting_count\x18\x06 \x01(\x05R\flistingCount2r\n" +
 	"\x12MarketPriceService\x12\\\n" +
 	"\x15GetAverageMarketPrice\x12 .marketprice.AveragePriceRequest\x1a!.marketprice.AveragePriceResponseB\tZ\a./protob\x06proto3"
 

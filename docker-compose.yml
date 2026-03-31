@@ -2,28 +2,65 @@ services:
   search:
     container_name: search-service
     build: ./code/services/search
+    restart: on-failure
     ports:
       - "50051:50051"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      - postgres
+
   listing:
     container_name: listing-service
     build: ./code/services/listing
+    restart: on-failure
     ports:
       - "50052:50052"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      - postgres
+
+  user:
+    container_name: user-service
+    build: ./code/services/user
+    restart: on-failure
+    ports:
+      - "50053:50053"
+    environment:
+      DATABASE_URL: ${USER_DATABASE_URL}
+      JWT_SECRET: ${AUTH_JWT_SECRET}
+    depends_on:
+      - user-db
+
+  seller:
+    container_name: seller-service
+    build: ./code/services/seller
+    restart: on-failure
+    ports:
+      - "50054:50054"
+    environment:
+      DATABASE_URL: ${AUTH_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      - user-db
+      - postgres
+
   marketprice:
     container_name: marketprice-service
     build: ./code/services/marketprice
+    restart: on-failure
     ports:
       - "50055:50055"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      - postgres
 
   auction:
     container_name: auction-service
     build: ./code/services/auction
+    restart: on-failure
     ports:
       - "50056:50056"
       - "8080:8080"
@@ -31,7 +68,8 @@ services:
       AUCTION_DATABASE_URL: ${AUCTION_DATABASE_URL}
     depends_on:
       - auction-db
-  listing-db:
+
+  postgres:
     container_name: listing-db
     image: postgres:16
     environment:
@@ -43,28 +81,7 @@ services:
     volumes:
       - listing_postgres_data:/var/lib/postgresql/data
 
-  user:
-    container_name: user-service
-    build: ./code/services/user
-    ports:
-      - "50053:50053"
-    environment:
-      DATABASE_URL: ${AUTH_DATABASE_URL}
-      JWT_SECRET: ${AUTH_JWT_SECRET}
-    depends_on:
-      - auth-db
-
-  seller:
-    container_name: seller-service
-    build: ./code/services/seller
-    ports:
-      - "50054:50054"
-    environment:
-      DATABASE_URL: ${AUTH_DATABASE_URL}
-    depends_on:
-      - auth-db
-
-  auth-db:
+  user-db:
     container_name: auth-db
     image: postgres:16
     environment:

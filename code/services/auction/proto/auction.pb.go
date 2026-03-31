@@ -24,8 +24,8 @@ const (
 type Auction struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AuctionId     string                 `protobuf:"bytes,1,opt,name=auction_id,json=auctionId,proto3" json:"auction_id,omitempty"`
-	ListingId     string                 `protobuf:"bytes,2,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
-	SellerId      string                 `protobuf:"bytes,3,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	ListingId     int64                  `protobuf:"varint,2,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
+	SellerId      int64                  `protobuf:"varint,3,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
 	StartingPrice float64                `protobuf:"fixed64,4,opt,name=starting_price,json=startingPrice,proto3" json:"starting_price,omitempty"`
 	CurrentPrice  *float64               `protobuf:"fixed64,5,opt,name=current_price,json=currentPrice,proto3,oneof" json:"current_price,omitempty"`
 	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
@@ -75,18 +75,18 @@ func (x *Auction) GetAuctionId() string {
 	return ""
 }
 
-func (x *Auction) GetListingId() string {
+func (x *Auction) GetListingId() int64 {
 	if x != nil {
 		return x.ListingId
 	}
-	return ""
+	return 0
 }
 
-func (x *Auction) GetSellerId() string {
+func (x *Auction) GetSellerId() int64 {
 	if x != nil {
 		return x.SellerId
 	}
-	return ""
+	return 0
 }
 
 func (x *Auction) GetStartingPrice() float64 {
@@ -224,11 +224,8 @@ func (x *Bid) GetTimestamp() string {
 type ListAuctionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Brand         string                 `protobuf:"bytes,2,opt,name=brand,proto3" json:"brand,omitempty"`
-	Model         string                 `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
-	Location      string                 `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`
-	Page          int32                  `protobuf:"varint,5,opt,name=page,proto3" json:"page,omitempty"`
-	Limit         int32                  `protobuf:"varint,6,opt,name=limit,proto3" json:"limit,omitempty"`
+	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -270,27 +267,6 @@ func (x *ListAuctionsRequest) GetStatus() string {
 	return ""
 }
 
-func (x *ListAuctionsRequest) GetBrand() string {
-	if x != nil {
-		return x.Brand
-	}
-	return ""
-}
-
-func (x *ListAuctionsRequest) GetModel() string {
-	if x != nil {
-		return x.Model
-	}
-	return ""
-}
-
-func (x *ListAuctionsRequest) GetLocation() string {
-	if x != nil {
-		return x.Location
-	}
-	return ""
-}
-
 func (x *ListAuctionsRequest) GetPage() int32 {
 	if x != nil {
 		return x.Page
@@ -308,9 +284,9 @@ func (x *ListAuctionsRequest) GetLimit() int32 {
 type ListAuctionsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Auctions      []*Auction             `protobuf:"bytes,1,rep,name=auctions,proto3" json:"auctions,omitempty"`
-	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`                       // alterado para "total" para coincidir estritamente
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`                         // adicionado
-	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // adicionado
+	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -375,8 +351,8 @@ func (x *ListAuctionsResponse) GetPageSize() int32 {
 
 type CreateAuctionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ListingId     string                 `protobuf:"bytes,1,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
-	SellerId      string                 `protobuf:"bytes,2,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	ListingId     int64                  `protobuf:"varint,1,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
+	SellerId      int64                  `protobuf:"varint,2,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
 	StartingPrice float64                `protobuf:"fixed64,3,opt,name=starting_price,json=startingPrice,proto3" json:"starting_price,omitempty"`
 	EndTime       string                 `protobuf:"bytes,4,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	ReservePrice  *float64               `protobuf:"fixed64,5,opt,name=reserve_price,json=reservePrice,proto3,oneof" json:"reserve_price,omitempty"`
@@ -414,18 +390,18 @@ func (*CreateAuctionRequest) Descriptor() ([]byte, []int) {
 	return file_auction_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *CreateAuctionRequest) GetListingId() string {
+func (x *CreateAuctionRequest) GetListingId() int64 {
 	if x != nil {
 		return x.ListingId
 	}
-	return ""
+	return 0
 }
 
-func (x *CreateAuctionRequest) GetSellerId() string {
+func (x *CreateAuctionRequest) GetSellerId() int64 {
 	if x != nil {
 		return x.SellerId
 	}
-	return ""
+	return 0
 }
 
 func (x *CreateAuctionRequest) GetStartingPrice() float64 {
@@ -918,8 +894,8 @@ const file_auction_proto_rawDesc = "" +
 	"\n" +
 	"auction_id\x18\x01 \x01(\tR\tauctionId\x12\x1d\n" +
 	"\n" +
-	"listing_id\x18\x02 \x01(\tR\tlistingId\x12\x1b\n" +
-	"\tseller_id\x18\x03 \x01(\tR\bsellerId\x12%\n" +
+	"listing_id\x18\x02 \x01(\x03R\tlistingId\x12\x1b\n" +
+	"\tseller_id\x18\x03 \x01(\x03R\bsellerId\x12%\n" +
 	"\x0estarting_price\x18\x04 \x01(\x01R\rstartingPrice\x12(\n" +
 	"\rcurrent_price\x18\x05 \x01(\x01H\x00R\fcurrentPrice\x88\x01\x01\x12\x16\n" +
 	"\x06status\x18\x06 \x01(\tR\x06status\x12\x19\n" +
@@ -941,14 +917,11 @@ const file_auction_proto_rawDesc = "" +
 	"\tbidder_id\x18\x03 \x01(\tR\bbidderId\x12\x1d\n" +
 	"\n" +
 	"bid_amount\x18\x04 \x01(\x01R\tbidAmount\x12\x1c\n" +
-	"\ttimestamp\x18\x05 \x01(\tR\ttimestamp\"\x9f\x01\n" +
+	"\ttimestamp\x18\x05 \x01(\tR\ttimestamp\"W\n" +
 	"\x13ListAuctionsRequest\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12\x14\n" +
-	"\x05brand\x18\x02 \x01(\tR\x05brand\x12\x14\n" +
-	"\x05model\x18\x03 \x01(\tR\x05model\x12\x1a\n" +
-	"\blocation\x18\x04 \x01(\tR\blocation\x12\x12\n" +
-	"\x04page\x18\x05 \x01(\x05R\x04page\x12\x14\n" +
-	"\x05limit\x18\x06 \x01(\x05R\x05limit\"\x8b\x01\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\x8b\x01\n" +
 	"\x14ListAuctionsResponse\x12,\n" +
 	"\bauctions\x18\x01 \x03(\v2\x10.auction.AuctionR\bauctions\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x12\x12\n" +
@@ -956,8 +929,8 @@ const file_auction_proto_rawDesc = "" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\xd0\x01\n" +
 	"\x14CreateAuctionRequest\x12\x1d\n" +
 	"\n" +
-	"listing_id\x18\x01 \x01(\tR\tlistingId\x12\x1b\n" +
-	"\tseller_id\x18\x02 \x01(\tR\bsellerId\x12%\n" +
+	"listing_id\x18\x01 \x01(\x03R\tlistingId\x12\x1b\n" +
+	"\tseller_id\x18\x02 \x01(\x03R\bsellerId\x12%\n" +
 	"\x0estarting_price\x18\x03 \x01(\x01R\rstartingPrice\x12\x19\n" +
 	"\bend_time\x18\x04 \x01(\tR\aendTime\x12(\n" +
 	"\rreserve_price\x18\x05 \x01(\x01H\x00R\freservePrice\x88\x01\x01B\x10\n" +

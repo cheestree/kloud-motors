@@ -9,12 +9,14 @@ import (
 	"time"
 
 	proto "auction/proto"
+	listingproto "auction/proto/listing"
 	ws2 "auction/ws"
 )
 
 type server struct {
 	proto.UnimplementedAuctionServiceServer
 	hub *ws2.Hub
+	listingClient listingproto.ListingServiceClient
 }
 
 func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsRequest) (*proto.ListAuctionsResponse, error) {
@@ -31,8 +33,6 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 		args = append(args, req.Status)
 		argId++
 	}
-
-	// TODO: Do calls to listing service to filter by brand, model and location
 
 	limit := int(req.Limit)
 	if limit <= 0 {
@@ -64,7 +64,8 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 	var protoAuctions []*proto.Auction
 	for rows.Next() {
 		var (
-			id, listingId, sellerId, status string
+			id, status string
+			listingId, sellerId int64
 			startingPrice                   float64
 			currentPrice                    sql.NullFloat64
 			endTime                         time.Time
@@ -120,10 +121,29 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 }
 
 func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequest) (*proto.CreateAuctionResponse, error) {
-	// 1. Make a gRPC call to the Listing Service to get listing details
-	// 2. Verify if the listing belongs to the seller (user requesting the creation)
-	
-	// 3. Verify if the listing is available
+
+	ownerResp, err := s.listingClient.CheckListingOwnership(ctx, &listingproto.CheckListingOwnershipRequest{
+		ListingId: req.ListingId,
+		DealerId:  req.SellerId,
+	})
+	if err != nil {
+		log.Printf("Error checking listing ownership: %v", err)
+		return nil, fmt.Errorf("failed to verify listing ownership")
+	}
+	if !ownerResp.IsOwner {
+		return nil, fmt.Errorf("seller does not own listing %v", req.ListingId)
+	}
+
+	openResp, err := s.listingClient.CheckListingOpen(ctx, &listingproto.CheckListingOpenRequest{
+		ListingId: req.ListingId,
+	})
+	if err != nil {
+		log.Printf("Error checking listing status: %v", err)
+		return nil, fmt.Errorf("failed to verify listing status")
+	}
+	if !openResp.IsOpen {
+		return nil, fmt.Errorf("listing %v is not available for auction", req.ListingId)
+	}
 
 	// 4. Create the auction in auction-db
 	endTime, err := time.Parse(time.RFC3339, req.EndTime)
@@ -174,7 +194,8 @@ func (s *server) GetAuctionDetails(ctx context.Context, req *proto.GetAuctionReq
 	          FROM auctions WHERE id = $1`
 
 	var (
-		id, listingId, sellerId, status string
+		id, status string
+		listingId, sellerId int64
 		startingPrice                   float64
 		currentPrice                    sql.NullFloat64
 		endTime                         time.Time

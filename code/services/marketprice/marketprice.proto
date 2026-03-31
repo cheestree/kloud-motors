@@ -9,17 +9,15 @@ service MarketPriceService {
 message AveragePriceRequest {
     string brand = 1;
     string model = 2;
-    string location = 3;
-    int32 year_from = 4;
-    int32 year_to = 5;
+    int32 year_from = 3;
+    int32 year_to = 4;
 }
 
 message AveragePriceResponse {
     string brand = 1;
     string model = 2;
-    string location = 3;
-    double average_price = 4;
-    double min_price = 5;
-    double max_price = 6;
-    int32 listing_count = 7;
+    double average_price = 3;
+    double min_price = 4;
+    double max_price = 5;
+    int32 listing_count = 6;
 }

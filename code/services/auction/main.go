@@ -13,6 +13,8 @@ import (
 	proto "auction/proto"
 	auctionpubsub "auction/pubsub"
 	ws2 "auction/ws"
+	listingproto "auction/proto/listing"
+    "google.golang.org/grpc/credentials/insecure"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -45,6 +47,14 @@ func initDB() {
 func main() {
 	initDB()
 
+	listingConn, err := grpc.Dial("listing:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+    if err != nil {
+        log.Fatalf("Failed to connect to listing service: %v", err)
+    }
+    defer listingConn.Close()
+    listingClient := listingproto.NewListingServiceClient(listingConn)
+
+
 	nodeID := getenv("POD_ID", localNodeID())
 	ps, err := auctionpubsub.NewGCPPubSub(context.Background(), auctionpubsub.GCPPubSubConfig{
 		ProjectID:       getenv("GCP_PROJECT_ID", ""),
@@ -71,7 +81,10 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterAuctionServiceServer(grpcServer, &server{hub: hub})
+	proto.RegisterAuctionServiceServer(grpcServer, &server{
+		hub: hub,
+		listingClient: listingClient,
+	})
 
 	go func() {
 		log.Println("Auction gRPC server is running on " + lis.Addr().String() + "...")

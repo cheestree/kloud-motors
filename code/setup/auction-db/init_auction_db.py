@@ -4,10 +4,10 @@
 import os
 import sys
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, String, Float, Integer, DateTime, Boolean, ForeignKey, MetaData, Table, func
+from sqlalchemy import create_engine, Column, String, Float, Integer, DateTime, Boolean, ForeignKey, MetaData, Table, func, BigInteger, text
 
 # Load environment variables from .env file
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 dotenv_path = os.path.join(base_dir, ".env")
 load_dotenv(dotenv_path)
 
@@ -24,9 +24,9 @@ def main():
     auctions = Table(
         "auctions",
         metadata,
-        Column("id", String, primary_key=True),
-        Column("listing_id", String, nullable=False, index=True),
-        Column("seller_id", String, nullable=False, index=True),
+        Column("id", String, primary_key=True, server_default=text("gen_random_uuid()")),
+        Column("listing_id", BigInteger, nullable=False, index=True),
+        Column("seller_id", BigInteger, nullable=False, index=True),
         Column("starting_price", Float, nullable=False),
         Column("current_price", Float, nullable=True),
         Column("reserve_price", Float, nullable=True),

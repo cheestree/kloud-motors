@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	proto "marketprice/proto"
@@ -23,32 +24,35 @@ type server struct {
 
 func (s *server) GetAverageMarketPrice(ctx context.Context, req *proto.AveragePriceRequest) (*proto.AveragePriceResponse, error) {
 	query := `SELECT 
-		COALESCE(AVG("askPrice"), 0), 
-		COALESCE(MIN("askPrice"), 0), 
-		COALESCE(MAX("askPrice"), 0), 
-		COUNT("askPrice") 
-		FROM listings WHERE 1=1`
+		COALESCE(AVG(ad.ask_price), 0), 
+		COALESCE(MIN(ad.ask_price), 0), 
+		COALESCE(MAX(ad.ask_price), 0), 
+		COUNT(ad.ask_price) 
+		FROM automotive_data ad
+		JOIN brand b ON ad.brand_id = b.id
+		JOIN model m ON ad.model_id = m.id
+		WHERE 1=1`
 
 	var args []interface{}
 	argId := 1
 
 	if req.Brand != "" {
-		query += fmt.Sprintf(` AND "brandName" = $%d`, argId)
-		args = append(args, req.Brand)
+		query += fmt.Sprintf(` AND b.name = $%d`, argId)
+		args = append(args, strings.ToUpper(req.Brand))
 		argId++
 	}
 	if req.Model != "" {
-		query += fmt.Sprintf(` AND "modelName" = $%d`, argId)
+		query += fmt.Sprintf(` AND m.name = $%d`, argId)
 		args = append(args, req.Model)
 		argId++
 	}
 	if req.YearFrom != 0 {
-		query += fmt.Sprintf(` AND "vf_ModelYear" >= $%d`, argId)
+		query += fmt.Sprintf(` AND ad.model_year >= $%d`, argId)
 		args = append(args, req.YearFrom)
 		argId++
 	}
 	if req.YearTo != 0 {
-		query += fmt.Sprintf(` AND "vf_ModelYear" <= $%d`, argId)
+		query += fmt.Sprintf(` AND ad.model_year <= $%d`, argId)
 		args = append(args, req.YearTo)
 		argId++
 	}
@@ -65,7 +69,6 @@ func (s *server) GetAverageMarketPrice(ctx context.Context, req *proto.AveragePr
 	return &proto.AveragePriceResponse{
 		Brand:        req.Brand,
 		Model:        req.Model,
-		Location:     req.Location,
 		AveragePrice: avgPrice,
 		MinPrice:     minPrice,
 		MaxPrice:     maxPrice,
