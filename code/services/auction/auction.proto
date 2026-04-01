@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package auction;
+
+option go_package = "./proto";
+
+service AuctionService {
+  rpc ListAuctions(ListAuctionsRequest) returns (ListAuctionsResponse);
+  rpc CreateAuction(CreateAuctionRequest) returns (CreateAuctionResponse);
+  rpc GetAuctionDetails(GetAuctionRequest) returns (GetAuctionResponse);
+  rpc DeleteAuction(DeleteAuctionRequest) returns (DeleteAuctionResponse);
+  rpc PlaceBid(PlaceBidRequest) returns (PlaceBidResponse);
+  rpc GetAuctionBids(GetAuctionBidsRequest) returns (GetAuctionBidsResponse);
+}
+
+message Auction {
+  string auction_id = 1;
+  int64 listing_id = 2;
+  int64 seller_id = 3;
+  double starting_price = 4;
+  optional double current_price = 5; 
+  string status = 6;
+  string end_time = 7;
+  optional string winner_user_id = 8; 
+  string created_at = 9;
+  bool reserve_met = 10; 
+  int32 total_bids = 11; 
+}
+
+message Bid {
+  string bid_id = 1;
+  string auction_id = 2;
+  string bidder_id = 3;
+  double bid_amount = 4; 
+  string timestamp = 5;  
+}
+
+message ListAuctionsRequest {
+  string status = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message ListAuctionsResponse {
+  repeated Auction auctions = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message CreateAuctionRequest {
+  int64 listing_id = 1;
+  int64 seller_id = 2; 
+  double starting_price = 3;
+  string end_time = 4;
+  optional double reserve_price = 5; 
+}
+
+message CreateAuctionResponse {
+  Auction auction = 1;
+}
+
+message GetAuctionRequest {
+  string auction_id = 1;
+}
+
+message GetAuctionResponse {
+  Auction auction = 1;
+}
+
+message DeleteAuctionRequest {
+  string auction_id = 1;
+  string user_id = 2;
+}
+
+message DeleteAuctionResponse {
+  bool success = 1;
+}
+
+message PlaceBidRequest {
+  string auction_id = 1;
+  string bidder_id = 2; 
+  double bid_amount = 3; 
+}
+
+message PlaceBidResponse {
+  Bid bid = 1;
+}
+
+message GetAuctionBidsRequest {
+  string auction_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetAuctionBidsResponse {
+  repeated Bid bids = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
