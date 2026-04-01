@@ -13,6 +13,8 @@ service ListingService {
     rpc CompareListings (CompareListingsRequest) returns (CompareListingsResponse);
     // Checks if a listing with the given ID exists and belongs to a seller.
     rpc CheckListingOwnership (CheckListingOwnershipRequest) returns (CheckListingOwnershipResponse);
+    // Checks if a listing with the given ID is currently open for bidding.
+    rpc CheckListingOpen (CheckListingOpenRequest) returns (CheckListingOpenResponse);
 }
 
 message ListingDetailsRequest {
@@ -55,4 +57,12 @@ message CheckListingOwnershipRequest {
 
 message CheckListingOwnershipResponse {
     bool is_owner = 1;
+}
+
+message CheckListingOpenRequest {
+    int64 listing_id = 1;
+}
+
+message CheckListingOpenResponse {
+    bool is_open = 1;
 }

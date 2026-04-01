@@ -80,4 +80,18 @@ func (s *ListingService) GetListingSummary(ctx context.Context, id int64) (*shar
 	return summary, nil
 }
 
+func (s *ListingService) CheckListingOpen(ctx context.Context, id int64) (bool, error) {
+	if id <= 0 {
+		return false, fmt.Errorf("invalid ID: must be a positive integer")
+	}
+	open, err := s.repository.CheckListingOpen(ctx, id)
+	if err != nil {
+		return false, err
+	}
+	if !open {
+		return false, ErrListingNotFound
+	}
+	return open, nil
+}
+
 var ErrListingNotFound = fmt.Errorf("listing not found")

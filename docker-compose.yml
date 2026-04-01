@@ -9,6 +9,11 @@ services:
     environment:
       - LISTING_GRPC_ADDR=${LISTING_GRPC_ADDR}
       - SEARCH_GRPC_ADDR=${SEARCH_GRPC_ADDR}
+      - USER_GRPC_ADDR=${USER_GRPC_ADDR}
+      - SELLER_GRPC_ADDR=${SELLER_GRPC_ADDR}
+      - CHAT_GRPC_ADDR=${CHAT_GRPC_ADDR}
+      - GEO_GRPC_ADDR=${GEO_GRPC_ADDR}
+      - AUCTION_GRPC_ADDR=${AUCTION_GRPC_ADDR}
     depends_on:
       - listing
       - search
@@ -22,7 +27,7 @@ services:
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      - postgres
+      - listing-db
 
   listing:
     container_name: listing-service
@@ -34,7 +39,7 @@ services:
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      - postgres
+      - listing-db
 
   marketprice:
     container_name: marketprice-service
@@ -45,21 +50,26 @@ services:
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      - postgres
+      - listing-db
 
   auction:
     container_name: auction-service
-    build: ./code/services/auction
+    build:
+      context: ./code/services
+      dockerfile: auction/Dockerfile
     restart: on-failure
     ports:
-      - "50056:50056"
-      - "8080:8080"
+      - "${AUCTION_GRPC_PORT}:${AUCTION_GRPC_PORT}"
+      - "${AUCTION_WS_PORT}:${AUCTION_WS_PORT}"
     environment:
       AUCTION_DATABASE_URL: ${AUCTION_DATABASE_URL}
+      LISTING_GRPC_ADDR: ${LISTING_GRPC_ADDR}
+      AUCTION_GRPC_PORT: ${AUCTION_GRPC_PORT}
+      AUCTION_WS_PORT: ${AUCTION_WS_PORT}
     depends_on:
       - auction-db
 
-  postgres:
+  listing-db:
     container_name: listing-db
     image: postgres:16
     environment:

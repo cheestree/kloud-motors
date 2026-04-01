@@ -10,11 +10,12 @@ import (
 	"strconv"
 	"time"
 
-	proto "auction/proto"
-	auctionpubsub "auction/pubsub"
-	ws2 "auction/ws"
-	listingproto "auction/proto/listing"
-    "google.golang.org/grpc/credentials/insecure"
+	proto "services/auction/proto"
+	auctionpubsub "services/auction/pubsub"
+	ws2 "services/auction/ws"
+	listingproto "services/listing/proto"
+
+	"google.golang.org/grpc/credentials/insecure"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -46,14 +47,15 @@ func initDB() {
 
 func main() {
 	initDB()
+	listingAddr := getenv("LISTING_GRPC_ADDR", "listing:50052")
+	auctionGRPCPort := getenv("AUCTION_GRPC_PORT", "50056")
 
-	listingConn, err := grpc.Dial("listing:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
-    if err != nil {
-        log.Fatalf("Failed to connect to listing service: %v", err)
-    }
-    defer listingConn.Close()
-    listingClient := listingproto.NewListingServiceClient(listingConn)
-
+	listingConn, err := grpc.NewClient(listingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to listing service: %v", err)
+	}
+	defer listingConn.Close()
+	listingClient := listingproto.NewListingServiceClient(listingConn)
 
 	nodeID := getenv("POD_ID", localNodeID())
 	ps, err := auctionpubsub.NewGCPPubSub(context.Background(), auctionpubsub.GCPPubSubConfig{
@@ -75,14 +77,14 @@ func main() {
 		hub = ws2.NewHub(nil)
 	}
 
-	lis, err := net.Listen("tcp", ":50056")
+	lis, err := net.Listen("tcp", ":"+auctionGRPCPort)
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterAuctionServiceServer(grpcServer, &server{
-		hub: hub,
+		hub:           hub,
 		listingClient: listingClient,
 	})
 
@@ -96,9 +98,10 @@ func main() {
 	wsSrv := &wsServer{hub: hub}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/auction/{auctionID}", wsSrv.ServeWS)
+	wsPort := getenv("AUCTION_WS_PORT", "8080")
 
-	log.Println("Auction WS server is running on :8080...")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	log.Printf("Auction WS server is running on :%s...", wsPort)
+	if err := http.ListenAndServe(":"+wsPort, mux); err != nil {
 		log.Fatalf("http serve: %v", err)
 	}
 }

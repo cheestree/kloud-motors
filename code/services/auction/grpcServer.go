@@ -8,9 +8,9 @@ import (
 	"log"
 	"time"
 
-	proto "auction/proto"
-	listingproto "auction/proto/listing"
-	ws2 "auction/ws"
+	proto "services/auction/proto"
+	listingproto "services/listing/proto"
+	ws2 "services/auction/ws"
 )
 
 type server struct {

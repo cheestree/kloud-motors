@@ -100,6 +100,19 @@ func (s *server) GetListingSummary(ctx context.Context, req *proto.ListingDetail
 	}, nil
 }
 
+func (s *server) CheckListingOpen(ctx context.Context, req *proto.CheckListingOpenRequest) (*proto.CheckListingOpenResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "listing id is required")
+	}
+
+	open, err := s.service.CheckListingOpen(ctx, req.ListingId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check listing open: %v", err)
+	}
+
+	return &proto.CheckListingOpenResponse{IsOpen: open}, nil
+}
+
 func toListingDetailsResponse(listing *shared.ListingDetails) *proto.ListingDetailsResponse {
 	if listing == nil {
 		return nil

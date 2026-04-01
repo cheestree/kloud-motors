@@ -12,6 +12,7 @@ docker cp proto-gen-container:/workspace/chat/proto/. "$SERVICES_ROOT/chat/proto
 docker cp proto-gen-container:/workspace/seller/proto/. "$SERVICES_ROOT/seller/proto/"
 docker cp proto-gen-container:/workspace/user/proto/. "$SERVICES_ROOT/user/proto/"
 docker cp proto-gen-container:/workspace/geographic-maket-insights/proto/. "$SERVICES_ROOT/geographic-maket-insights/proto/"
+docker cp proto-gen-container:/workspace/auction/proto/. "$SERVICES_ROOT/auction/proto/"
 docker rm proto-gen-container
 
 echo "Protobuf generation complete."

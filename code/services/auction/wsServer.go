@@ -1,10 +1,10 @@
 package main
 
 import (
-	"auction/ws"
 	"errors"
 	"log"
 	"net/http"
+	"services/auction/ws"
 	"strings"
 
 	"github.com/gorilla/websocket"

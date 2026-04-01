@@ -311,7 +311,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    database_url = "postgresql://user:password@localhost:5432/listing_db"
+    database_url = os.getenv("LISTING_PYTHON_DATABASE_URL")
+    if not database_url:
+        database_url = "postgresql://listing_user:listing_password@localhost:5432/listing_db"
     if not database_url:
         print("LISTING_PYTHON_DATABASE_URL is not set.", file=sys.stderr)
         return 1

@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	auctionpb "services/auction/proto"
 	chatpb "services/chat/proto"
 	geopb "services/geographic-maket-insights/proto"
 	listingpb "services/listing/proto"
@@ -27,6 +28,7 @@ var (
 	sellerClient  sellerpb.SellerServiceClient
 	chatClient    chatpb.ChatServiceClient
 	geoClient     geopb.GeoMarketInsightsServiceClient
+	auctionClient auctionpb.AuctionServiceClient
 )
 
 func main() {
@@ -63,14 +65,21 @@ func main() {
 		log.Fatalf("Failed to connect to chat service: %v", err)
 	}
 	defer chatConn.Close()
+	chatClient = chatpb.NewChatServiceClient(chatConn)
 
 	geoConn, err := grpc.NewClient(os.Getenv("GEO_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	geoClient = geopb.NewGeoMarketInsightsServiceClient(geoConn)
 	if err != nil {
 		log.Fatalf("Failed to connect to geo-market-insights service: %v", err)
 	}
 	defer geoConn.Close()
 	geoClient = geopb.NewGeoMarketInsightsServiceClient(geoConn)
+
+	auctionConn, err := grpc.NewClient(os.Getenv("AUCTION_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to auction service: %v", err)
+	}
+	defer auctionConn.Close()
+	auctionClient = auctionpb.NewAuctionServiceClient(auctionConn)
 
 	http.HandleFunc("/api/listings/search", handleSearch)
 	http.HandleFunc("/api/listings/compare", handleCompare)
@@ -81,7 +90,8 @@ func main() {
 	http.HandleFunc("/api/market/price-comparison", handleMarketPriceComparison)
 	http.HandleFunc("/api/listings/stats/by-location", handleStatsByLocation)
 	http.HandleFunc("/api/market/average-price", handleAveragePrice)
-	// Missing auction endpoints
+	http.HandleFunc("/api/auctions", handleAuctions)
+	http.HandleFunc("/api/auctions/", handleAuctionByIDRoutes)
 	http.HandleFunc("/api/auth/register", handleRegisterUser)
 	http.HandleFunc("/api/auth/login", handleLoginUser)
 	http.HandleFunc("/api/users/me/favorites", handleGetFavorites)
@@ -90,6 +100,149 @@ func main() {
 
 	log.Println("Gateway listening on :8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+// --- Auction ---
+func handleAuctions(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	switch r.Method {
+	case http.MethodGet:
+		q := r.URL.Query()
+		req := &auctionpb.ListAuctionsRequest{
+			Status: q.Get("status"),
+			Page:   parseInt32WithDefault(q.Get("page"), 1),
+			Limit:  parseInt32WithDefault(q.Get("page_size"), 20),
+		}
+		resp, err := auctionClient.ListAuctions(ctx, req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	case http.MethodPost:
+		var req auctionpb.CreateAuctionRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.SellerId == 0 {
+			if userID := userIDFromHeaders(r); userID != "" {
+				req.SellerId = parseInt64(userID)
+			}
+		}
+
+		resp, err := auctionClient.CreateAuction(ctx, &req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(resp)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func handleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	// /api/auctions/{auction_id}
+	if len(parts) < 4 || parts[3] == "" {
+		http.Error(w, "Missing auction id", http.StatusBadRequest)
+		return
+	}
+
+	auctionID := parts[3]
+	ctx := context.Background()
+
+	if len(parts) == 4 {
+		switch r.Method {
+		case http.MethodGet:
+			resp, err := auctionClient.GetAuctionDetails(ctx, &auctionpb.GetAuctionRequest{AuctionId: auctionID})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(resp)
+		case http.MethodDelete:
+			userID := userIDFromHeaders(r)
+			resp, err := auctionClient.DeleteAuction(ctx, &auctionpb.DeleteAuctionRequest{AuctionId: auctionID, UserId: userID})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if resp.GetSuccess() {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			http.Error(w, "failed to delete auction", http.StatusInternalServerError)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
+	// /api/auctions/{auction_id}/bid OR /api/auctions/{auction_id}/bids
+	if len(parts) == 5 {
+		switch parts[4] {
+		case "bid":
+			if r.Method != http.MethodPost {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
+			var req auctionpb.PlaceBidRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+			req.AuctionId = auctionID
+			if req.BidderId == "" {
+				req.BidderId = userIDFromHeaders(r)
+			}
+			resp, err := auctionClient.PlaceBid(ctx, &req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(resp)
+		case "bids":
+			if r.Method != http.MethodGet {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
+			q := r.URL.Query()
+			req := &auctionpb.GetAuctionBidsRequest{
+				AuctionId: auctionID,
+				Page:      parseInt32WithDefault(q.Get("page"), 1),
+				Limit:     parseInt32WithDefault(q.Get("page_size"), 20),
+			}
+			resp, err := auctionClient.GetAuctionBids(ctx, req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(resp)
+		default:
+			http.Error(w, "Not found", http.StatusNotFound)
+		}
+		return
+	}
+
+	http.Error(w, "Not found", http.StatusNotFound)
+}
+
+func userIDFromHeaders(r *http.Request) string {
+	for _, h := range []string{"X-User-ID", "X-User-Id", "X-Authenticated-User-Id", "X-Forwarded-User"} {
+		if v := strings.TrimSpace(r.Header.Get(h)); v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 // --- Chat ---

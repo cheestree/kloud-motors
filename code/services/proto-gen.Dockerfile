@@ -24,4 +24,9 @@ RUN protoc \
     --go-grpc_opt=paths=source_relative \
     shared/shared.proto \
     listing/proto/listing.proto \
-    search/proto/search.proto
+    search/proto/search.proto \
+    chat/proto/chat.proto \
+    seller/proto/seller.proto \
+    user/proto/user.proto \
+    geographic-maket-insights/proto/geo-market-insights.proto \
+    auction/proto/auction.proto

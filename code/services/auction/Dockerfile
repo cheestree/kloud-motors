@@ -1,17 +1,19 @@
 FROM golang:1.25-alpine AS builder
-
 WORKDIR /app
-COPY . .
 
-# Download dependencies
-RUN go mod tidy
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Build the app
+COPY ./shared ./shared
+COPY ./auction ./auction
+COPY ./listing ./listing
+
+WORKDIR /app/auction
 RUN go build -o auction-service .
 
 FROM alpine:latest
 WORKDIR /app
-COPY --from=builder /app/auction-service .
+COPY --from=builder /app/auction/auction-service .
 
 EXPOSE 50056
 EXPOSE 8080

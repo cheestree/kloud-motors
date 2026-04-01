@@ -1,8 +1,8 @@
 package ws
 
 import (
-	"auction/pubsub"
 	"context"
+	"services/auction/pubsub"
 	"sync"
 )
 
