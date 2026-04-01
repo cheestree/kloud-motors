@@ -9,4 +9,4 @@ fi
 echo "Generating protobuf files..."
 bash code/services/gen_proto.sh
 
-docker compose up gateway listing listing-db search
+docker compose up --build

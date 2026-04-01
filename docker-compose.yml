@@ -44,7 +44,9 @@ services:
 
   user:
     container_name: user-service
-    build: ./code/services/user
+    build:
+      context: ./code/services
+      dockerfile: user/Dockerfile
     ports:
       - "50053:50053"
     environment:
@@ -55,7 +57,9 @@ services:
 
   seller:
     container_name: seller-service
-    build: ./code/services/seller
+    build:
+      context: ./code/services
+      dockerfile: seller/Dockerfile
     ports:
       - "50054:50054"
     environment:
@@ -63,7 +67,7 @@ services:
       LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
       - seller-db
-      - postgres
+      - listing-db
 
   user-db:
     container_name: user-db

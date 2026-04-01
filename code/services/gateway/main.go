@@ -63,9 +63,9 @@ func main() {
 		log.Fatalf("Failed to connect to chat service: %v", err)
 	}
 	defer chatConn.Close()
-	chatClient = chatpb.NewChatServiceClient(chatConn)
 
 	geoConn, err := grpc.NewClient(os.Getenv("GEO_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	geoClient = geopb.NewGeoMarketInsightsServiceClient(geoConn)
 	if err != nil {
 		log.Fatalf("Failed to connect to geo-market-insights service: %v", err)
 	}
@@ -144,17 +144,73 @@ func handleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	ctx := context.Background()
+	// Parse metrics
+	var metrics []geopb.MetricType
+	for _, m := range q["metrics"] {
+		switch strings.ToLower(m) {
+		case "avg_price":
+			metrics = append(metrics, geopb.MetricType_METRIC_TYPE_AVG_PRICE)
+		case "median_price":
+			metrics = append(metrics, geopb.MetricType_METRIC_TYPE_MEDIAN_PRICE)
+		case "count":
+			metrics = append(metrics, geopb.MetricType_METRIC_TYPE_COUNT)
+		}
+	}
+
+	// Parse group_by
+	var groupBy geopb.GroupBy
+	switch strings.ToLower(q.Get("group_by")) {
+	case "district":
+		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
+	case "city":
+		groupBy = geopb.GroupBy_GROUP_BY_CITY
+	case "country":
+		groupBy = geopb.GroupBy_GROUP_BY_COUNTRY
+	default:
+		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
+	}
+
+	// Parse locations
+	var locations *geopb.Locations
+	if locs := q["locations"]; len(locs) > 0 {
+		locations = &geopb.Locations{Location: locs}
+	}
+
+	// Optional fields as pointers
+	var yearFrom, yearTo, limit, skip *int32
+	if s := q.Get("year_from"); s != "" {
+		v := parseInt32(s)
+		yearFrom = &v
+	}
+	if s := q.Get("year_to"); s != "" {
+		v := parseInt32(s)
+		yearTo = &v
+	}
+	if s := q.Get("limit"); s != "" {
+		v := parseInt32(s)
+		limit = &v
+	}
+	if s := q.Get("skip"); s != "" {
+		v := parseInt32(s)
+		skip = &v
+	}
+
+	var fuelType *string
+	if s := q.Get("fuel_type"); s != "" {
+		fuelType = &s
+	}
+
 	req := &geopb.AggregatesRequest{
 		Brand:     q.Get("brand"),
 		Model:     q.Get("model"),
-		Metrics:   q["metrics"],
-		GroupBy:   q.Get("group_by"),
-		Locations: q["locations"],
-		YearFrom:  parseInt32(q.Get("year_from")),
-		YearTo:    parseInt32(q.Get("year_to")),
-		FuelType:  q.Get("fuel_type"),
-		Limit:     parseInt32(q.Get("limit")),
-		Skip:      parseInt32(q.Get("skip")),
+		Metrics:   metrics,
+		GroupBy:   groupBy,
+		Locations: locations,
+		YearFrom:  yearFrom,
+		YearTo:    yearTo,
+		FuelType:  fuelType,
+		Limit:     limit,
+		Skip:      skip,
 	}
 	resp, err := geoClient.Aggregates(ctx, req)
 	if err != nil {
@@ -172,14 +228,56 @@ func handleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	ctx := context.Background()
+	// Parse group_by
+	var groupBy geopb.GroupBy
+	switch strings.ToLower(q.Get("group_by")) {
+	case "district":
+		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
+	case "city":
+		groupBy = geopb.GroupBy_GROUP_BY_CITY
+	case "country":
+		groupBy = geopb.GroupBy_GROUP_BY_COUNTRY
+	default:
+		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
+	}
+	// Parse sort_by
+	var sortBy *geopb.SortBy
+	switch strings.ToLower(q.Get("sort_by")) {
+	case "avg_price":
+		v := geopb.SortBy_SORT_BY_AVG_PRICE
+		sortBy = &v
+	case "count":
+		v := geopb.SortBy_SORT_BY_COUNT
+		sortBy = &v
+	}
+	// Parse order
+	var order *geopb.Order
+	switch strings.ToLower(q.Get("order")) {
+	case "asc":
+		v := geopb.Order_ORDER_ASC
+		order = &v
+	case "desc":
+		v := geopb.Order_ORDER_DESC
+		order = &v
+	}
+	// Optional fields as pointers
+	var limit, skip *int32
+	if s := q.Get("limit"); s != "" {
+		v := parseInt32(s)
+		limit = &v
+	}
+	if s := q.Get("skip"); s != "" {
+		v := parseInt32(s)
+		skip = &v
+	}
 	req := &geopb.PriceComparisonRequest{
 		Brand:   q.Get("brand"),
 		Model:   q.Get("model"),
-		GroupBy: q.Get("group_by"),
-		SortBy:  q.Get("sort_by"),
-		Order:   q.Get("order"),
-		Limit:   parseInt32(q.Get("limit")),
-		Skip:    parseInt32(q.Get("skip")),
+		GroupBy: groupBy,
+		SortBy:  sortBy,
+		Order:   order,
+		Limit:   limit,
+		Skip:    skip,
 	}
 	resp, err := geoClient.PriceComparison(ctx, req)
 	if err != nil {
@@ -197,13 +295,30 @@ func handleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	ctx := context.Background()
+	var location *string
+	if s := q.Get("location"); s != "" {
+		location = &s
+	}
+	var yearFrom, yearTo *int32
+	if s := q.Get("year_from"); s != "" {
+		v := parseInt32(s)
+		yearFrom = &v
+	}
+	if s := q.Get("year_to"); s != "" {
+		v := parseInt32(s)
+		yearTo = &v
+	}
+	var fuelType *string
+	if s := q.Get("fuel_type"); s != "" {
+		fuelType = &s
+	}
 	req := &geopb.ByLocationRequest{
 		Brand:    q.Get("brand"),
 		Model:    q.Get("model"),
-		Location: q.Get("location"),
-		YearFrom: parseInt32(q.Get("year_from")),
-		YearTo:   parseInt32(q.Get("year_to")),
-		FuelType: q.Get("fuel_type"),
+		Location: location,
+		YearFrom: yearFrom,
+		YearTo:   yearTo,
+		FuelType: fuelType,
 	}
 	resp, err := geoClient.ByLocation(ctx, req)
 	if err != nil {
@@ -221,13 +336,35 @@ func handleAveragePrice(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	ctx := context.Background()
+	// Parse group_by from "location" param
+	var groupBy geopb.GroupBy
+	switch strings.ToLower(q.Get("location")) {
+	case "district":
+		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
+	case "city":
+		groupBy = geopb.GroupBy_GROUP_BY_CITY
+	case "country":
+		groupBy = geopb.GroupBy_GROUP_BY_COUNTRY
+	default:
+		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
+	}
+	var yearFrom, yearTo *int32
+	if s := q.Get("year_from"); s != "" {
+		v := parseInt32(s)
+		yearFrom = &v
+	}
+	if s := q.Get("year_to"); s != "" {
+		v := parseInt32(s)
+		yearTo = &v
+	}
+	metrics := []geopb.MetricType{geopb.MetricType_METRIC_TYPE_AVG_PRICE}
 	req := &geopb.AggregatesRequest{
 		Brand:    q.Get("brand"),
 		Model:    q.Get("model"),
-		GroupBy:  q.Get("location"),
-		YearFrom: parseInt32(q.Get("year_from")),
-		YearTo:   parseInt32(q.Get("year_to")),
-		Metrics:  []string{"avg_price"},
+		GroupBy:  groupBy,
+		YearFrom: yearFrom,
+		YearTo:   yearTo,
+		Metrics:  metrics,
 	}
 	resp, err := geoClient.Aggregates(ctx, req)
 	if err != nil {
@@ -302,7 +439,7 @@ func handleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing listing id", http.StatusBadRequest)
 		return
 	}
-	listingID := parts[5]
+	listingID := parseInt64(parts[5])
 	ctx := context.Background()
 	switch r.Method {
 	case http.MethodPost:
@@ -342,7 +479,7 @@ func handleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	sellerID := parts[3]
 	ctx := context.Background()
-	req := &sellerpb.GetSellerProfileRequest{SellerId: sellerID}
+	req := &sellerpb.GetSellerProfileRequest{SellerId: parseInt64(sellerID)}
 	resp, err := sellerClient.GetSellerProfile(ctx, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
