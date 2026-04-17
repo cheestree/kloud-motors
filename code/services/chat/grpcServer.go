@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	proto "services/chat/proto"
 	"services/chat/repository"
-	"context"
+	listingproto "services/listing/proto"
+	sellerproto "services/seller/proto"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,8 +17,8 @@ type grpcServer struct {
 	indexStore   repository.ChatIndexRepo
 	historyLimit int32
 
-	listingClient proto.ListingServiceClient
-	sellerClient  proto.SellerServiceClient
+	listingClient listingproto.ListingServiceClient
+	sellerClient  sellerproto.SellerServiceClient
 }
 
 func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveChatsRequest) (*proto.GetActiveChatsResponse, error) {
@@ -52,7 +54,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 	}
 
 	sellerId := req.GetSellerId()
-	isSeller, err := s.sellerClient.VerifySellerProfile(ctx, &proto.VerifySellerRequest{SellerId: sellerId})
+	isSeller, err := s.sellerClient.VerifySellerProfile(ctx, &sellerproto.VerifySellerRequest{SellerId: sellerId})
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to verify seller profile: %v", err)
@@ -64,7 +66,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 
 	listingID := req.GetListingId()
 	isListingFromSeller, err := s.listingClient.CheckListingOwnership(ctx,
-		&proto.CheckListingOwnershipRequest{ListingId: listingID, DealerId: sellerId})
+		&listingproto.CheckListingOwnershipRequest{ListingId: listingID, DealerId: sellerId})
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to check listing ownership: %v", err)
@@ -73,12 +75,12 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 		return nil, status.Error(codes.InvalidArgument, "seller not allowed")
 	}
 
-	listing, err := s.listingClient.GetListingSummary(ctx, &proto.ListingDetailsRequest{Id: listingID})
+	listing, err := s.listingClient.GetListingSummary(ctx, &listingproto.ListingDetailsRequest{Id: listingID})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get listing details: %v", err)
 	}
 
-	brand := listing.Maker
+	brand := listing.Make
 	model := listing.Model
 
 	var chatID string
