@@ -145,7 +145,16 @@ func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequ
 		return nil, fmt.Errorf("listing %v is not available for auction", req.ListingId)
 	}
 
-	// 4. Create the auction in auction-db
+	var auctionExists bool
+	err = db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM auctions WHERE listing_id = $1 AND (status = 'ACTIVE' OR status = 'COMPLETED'))", req.ListingId).Scan(&auctionExists)
+	if err != nil {
+		log.Printf("Error checking for existing auction: %v", err)
+		return nil, fmt.Errorf("failed to check for existing auction")
+	}
+	if auctionExists {
+		return nil, fmt.Errorf("an active or completed auction already exists for listing %v", req.ListingId)
+	}
+
 	endTime, err := time.Parse(time.RFC3339, req.EndTime)
 	if err != nil {
 		log.Printf("Error parsing end_time: %v", err)

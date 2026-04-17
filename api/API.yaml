@@ -253,9 +253,6 @@ paths:
       operationId: listAuctions
       parameters:
         - $ref: '#/components/parameters/AuctionStatusQuery'
-        - $ref: '#/components/parameters/BrandQueryOptional'
-        - $ref: '#/components/parameters/ModelQueryOptional'
-        - $ref: '#/components/parameters/LocationQuery'
         - $ref: '#/components/parameters/PageQuery'
         - $ref: '#/components/parameters/PageSizeQuery'
       responses:
@@ -382,6 +379,8 @@ paths:
       operationId: getAuctionBids
       parameters:
         - $ref: '#/components/parameters/AuctionIdPath'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
       responses:
         '200':
           description: List of bids
@@ -880,7 +879,7 @@ components:
       required: false
       schema:
         type: string
-        enum: [active, completed, cancelled]
+        enum: [ACTIVE, COMPLETED, CANCELLED]
       description: Filter by auction status
 
     PageQuery:
@@ -1200,8 +1199,13 @@ components:
       required: [listing_id, starting_price, end_time]
       properties:
         listing_id:
-          type: string
+          type: integer
+          format: int64
           description: ID of the existing car listing to auction
+        seller_id:
+          type: integer
+          format: int64
+          description: Optional seller ID (calculated from auth if omitted)
         starting_price:
           type: number
           format: float
@@ -1231,18 +1235,27 @@ components:
         auctions:
           type: array
           items:
-            $ref: '#/components/schemas/AuctionResponse'
+            $ref: '#/components/schemas/Auction'
 
     AuctionResponse:
       type: object
-      required: [auction_id, listing_id, seller_id, starting_price, current_price, status, end_time]
+      required: [auction]
+      properties:
+        auction:
+          $ref: '#/components/schemas/Auction'
+
+    Auction:
+      type: object
+      required: [auction_id, listing_id, seller_id, starting_price, status, end_time, created_at, reserve_met, total_bids]
       properties:
         auction_id:
           type: string
         listing_id:
-          type: string
+          type: integer
+          format: int64
         seller_id:
-          type: string
+          type: integer
+          format: int64
         starting_price:
           type: number
           format: float
@@ -1258,7 +1271,7 @@ components:
           type: integer
         status:
           type: string
-          enum: [active, completed, cancelled]
+          enum: [ACTIVE, COMPLETED, CANCELLED]
         end_time:
           type: string
           format: date-time
@@ -1266,11 +1279,17 @@ components:
           type: string
           nullable: true
           description: Winning bidder user ID, populated only after auction ends
+        created_at:
+          type: string
+          format: date-time
 
     BidRequest:
       type: object
       required: [bid_amount]
       properties:
+        bidder_id:
+          type: string
+          description: Optional bidder ID (calculated from auth if omitted)
         bid_amount:
           type: number
           format: float
@@ -1279,15 +1298,24 @@ components:
 
     BidResponse:
       type: object
-      required: [bid_id, bid_amount, bidder_id, timestamp]
+      required: [bid]
+      properties:
+        bid:
+          $ref: '#/components/schemas/Bid'
+
+    Bid:
+      type: object
+      required: [bid_id, auction_id, bidder_id, bid_amount, timestamp]
       properties:
         bid_id:
+          type: string
+        auction_id:
+          type: string
+        bidder_id:
           type: string
         bid_amount:
           type: number
           format: float
-        bidder_id:
-          type: string
         timestamp:
           type: string
           format: date-time
@@ -1305,7 +1333,7 @@ components:
         bids:
           type: array
           items:
-            $ref: '#/components/schemas/BidResponse'
+            $ref: '#/components/schemas/Bid'
 
     CarSummary:
       type: object
