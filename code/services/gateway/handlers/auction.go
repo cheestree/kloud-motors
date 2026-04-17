@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	auctionpb "services/auction/proto"
 )
 
-func handleAuctions(w http.ResponseWriter, r *http.Request) {
+func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	switch r.Method {
 	case http.MethodGet:
@@ -51,7 +51,7 @@ func handleAuctions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
+func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 || parts[3] == "" {
 		http.Error(w, "Missing auction id", http.StatusBadRequest)

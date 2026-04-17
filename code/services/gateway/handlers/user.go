@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	userpb "services/user/proto"
 )
 
-func handleRegisterUser(w http.ResponseWriter, r *http.Request) {
+func HandleRegisterUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -28,7 +28,7 @@ func handleRegisterUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleLoginUser(w http.ResponseWriter, r *http.Request) {
+func HandleLoginUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -47,7 +47,7 @@ func handleLoginUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleGetFavorites(w http.ResponseWriter, r *http.Request) {
+func HandleGetFavorites(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -67,7 +67,7 @@ func handleGetFavorites(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleFavoriteListing(w http.ResponseWriter, r *http.Request) {
+func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 6 || parts[5] == "" {
 		http.Error(w, "Missing listing id", http.StatusBadRequest)

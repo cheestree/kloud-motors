@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	searchpb "services/search/proto"
 )
 
-func handleSearch(w http.ResponseWriter, r *http.Request) {
+func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -34,7 +34,7 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleCompare(w http.ResponseWriter, r *http.Request) {
+func HandleCompare(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -57,7 +57,7 @@ func handleCompare(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleGetListing(w http.ResponseWriter, r *http.Request) {
+func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return

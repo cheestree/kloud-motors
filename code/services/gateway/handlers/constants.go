@@ -1,23 +1,4 @@
-package main
-
-const (
-	routeListingsSearch          = "/api/listings/search"
-	routeListingsCompare         = "/api/listings/compare"
-	routeListingsByID            = "/api/listings/"
-	routeChatOpen                = "/api/chat/open"
-	routeChatByID                = "/api/chat/"
-	routeMarketAggregates        = "/api/market/insights/aggregates"
-	routeMarketPriceComparison   = "/api/market/price-comparison"
-	routeListingsStatsByLocation = "/api/listings/stats/by-location"
-	routeMarketAveragePrice      = "/api/market/average-price"
-	routeAuctions                = "/api/auctions"
-	routeAuctionByID             = "/api/auctions/"
-	routeAuthRegister            = "/api/auth/register"
-	routeAuthLogin               = "/api/auth/login"
-	routeFavorites               = "/api/users/me/favorites"
-	routeFavoriteByListingID     = "/api/users/me/favorites/"
-	routeSellerByID              = "/api/sellers/"
-)
+package handlers
 
 const (
 	headerContentType = "Content-Type"

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	chatpb "services/chat/proto"
 )
 
-func handleChatOpen(w http.ResponseWriter, r *http.Request) {
+func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -28,7 +28,7 @@ func handleChatOpen(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleChatHistory(w http.ResponseWriter, r *http.Request) {
+func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return

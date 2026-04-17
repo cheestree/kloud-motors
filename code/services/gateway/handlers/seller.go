@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	sellerpb "services/seller/proto"
 )
 
-func handleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
+func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return

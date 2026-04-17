@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	geopb "services/geographic-maket-insights/proto"
 )
 
-func handleMarketAggregates(w http.ResponseWriter, r *http.Request) {
+func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -88,7 +88,7 @@ func handleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
+func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -154,7 +154,7 @@ func handleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleStatsByLocation(w http.ResponseWriter, r *http.Request) {
+func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -194,7 +194,7 @@ func handleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func handleAveragePrice(w http.ResponseWriter, r *http.Request) {
+func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
