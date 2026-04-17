@@ -1,2 +1,16 @@
 .DS_Store
+code/setup/data/*.csv
+venv/
+.env
 *.csv
+
+# Go Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go workspace files
+go.work
+go.work.sum

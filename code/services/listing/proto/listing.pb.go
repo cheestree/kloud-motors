@@ -430,6 +430,94 @@ func (x *CheckListingOwnershipResponse) GetIsOwner() bool {
 	return false
 }
 
+type CheckListingOpenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ListingId     int64                  `protobuf:"varint,1,opt,name=listing_id,json=listingId,proto3" json:"listing_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckListingOpenRequest) Reset() {
+	*x = CheckListingOpenRequest{}
+	mi := &file_listing_proto_listing_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckListingOpenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckListingOpenRequest) ProtoMessage() {}
+
+func (x *CheckListingOpenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_listing_proto_listing_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckListingOpenRequest.ProtoReflect.Descriptor instead.
+func (*CheckListingOpenRequest) Descriptor() ([]byte, []int) {
+	return file_listing_proto_listing_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CheckListingOpenRequest) GetListingId() int64 {
+	if x != nil {
+		return x.ListingId
+	}
+	return 0
+}
+
+type CheckListingOpenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IsOpen        bool                   `protobuf:"varint,1,opt,name=is_open,json=isOpen,proto3" json:"is_open,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckListingOpenResponse) Reset() {
+	*x = CheckListingOpenResponse{}
+	mi := &file_listing_proto_listing_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckListingOpenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckListingOpenResponse) ProtoMessage() {}
+
+func (x *CheckListingOpenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_listing_proto_listing_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckListingOpenResponse.ProtoReflect.Descriptor instead.
+func (*CheckListingOpenResponse) Descriptor() ([]byte, []int) {
+	return file_listing_proto_listing_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CheckListingOpenResponse) GetIsOpen() bool {
+	if x != nil {
+		return x.IsOpen
+	}
+	return false
+}
+
 var File_listing_proto_listing_proto protoreflect.FileDescriptor
 
 const file_listing_proto_listing_proto_rawDesc = "" +
@@ -467,12 +555,18 @@ const file_listing_proto_listing_proto_rawDesc = "" +
 	"listing_id\x18\x01 \x01(\x03R\tlistingId\x12\x1b\n" +
 	"\tdealer_id\x18\x02 \x01(\x03R\bdealerId\":\n" +
 	"\x1dCheckListingOwnershipResponse\x12\x19\n" +
-	"\bis_owner\x18\x01 \x01(\bR\aisOwner2\xf1\x02\n" +
+	"\bis_owner\x18\x01 \x01(\bR\aisOwner\"8\n" +
+	"\x17CheckListingOpenRequest\x12\x1d\n" +
+	"\n" +
+	"listing_id\x18\x01 \x01(\x03R\tlistingId\"3\n" +
+	"\x18CheckListingOpenResponse\x12\x17\n" +
+	"\ais_open\x18\x01 \x01(\bR\x06isOpen2\xca\x03\n" +
 	"\x0eListingService\x12T\n" +
 	"\x11GetListingDetails\x12\x1e.listing.ListingDetailsRequest\x1a\x1f.listing.ListingDetailsResponse\x12K\n" +
 	"\x11GetListingSummary\x12\x1e.listing.ListingDetailsRequest\x1a\x16.shared.ListingSummary\x12T\n" +
 	"\x0fCompareListings\x12\x1f.listing.CompareListingsRequest\x1a .listing.CompareListingsResponse\x12f\n" +
-	"\x15CheckListingOwnership\x12%.listing.CheckListingOwnershipRequest\x1a&.listing.CheckListingOwnershipResponseB\x18Z\x16services/listing/protob\x06proto3"
+	"\x15CheckListingOwnership\x12%.listing.CheckListingOwnershipRequest\x1a&.listing.CheckListingOwnershipResponse\x12W\n" +
+	"\x10CheckListingOpen\x12 .listing.CheckListingOpenRequest\x1a!.listing.CheckListingOpenResponseB\x18Z\x16services/listing/protob\x06proto3"
 
 var (
 	file_listing_proto_listing_proto_rawDescOnce sync.Once
@@ -486,7 +580,7 @@ func file_listing_proto_listing_proto_rawDescGZIP() []byte {
 	return file_listing_proto_listing_proto_rawDescData
 }
 
-var file_listing_proto_listing_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_listing_proto_listing_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_listing_proto_listing_proto_goTypes = []any{
 	(*ListingDetailsRequest)(nil),         // 0: listing.ListingDetailsRequest
 	(*ListingDetailsResponse)(nil),        // 1: listing.ListingDetailsResponse
@@ -494,7 +588,9 @@ var file_listing_proto_listing_proto_goTypes = []any{
 	(*CompareListingsResponse)(nil),       // 3: listing.CompareListingsResponse
 	(*CheckListingOwnershipRequest)(nil),  // 4: listing.CheckListingOwnershipRequest
 	(*CheckListingOwnershipResponse)(nil), // 5: listing.CheckListingOwnershipResponse
-	(*shared.ListingSummary)(nil),         // 6: shared.ListingSummary
+	(*CheckListingOpenRequest)(nil),       // 6: listing.CheckListingOpenRequest
+	(*CheckListingOpenResponse)(nil),      // 7: listing.CheckListingOpenResponse
+	(*shared.ListingSummary)(nil),         // 8: shared.ListingSummary
 }
 var file_listing_proto_listing_proto_depIdxs = []int32{
 	1, // 0: listing.CompareListingsResponse.listings:type_name -> listing.ListingDetailsResponse
@@ -502,12 +598,14 @@ var file_listing_proto_listing_proto_depIdxs = []int32{
 	0, // 2: listing.ListingService.GetListingSummary:input_type -> listing.ListingDetailsRequest
 	2, // 3: listing.ListingService.CompareListings:input_type -> listing.CompareListingsRequest
 	4, // 4: listing.ListingService.CheckListingOwnership:input_type -> listing.CheckListingOwnershipRequest
-	1, // 5: listing.ListingService.GetListingDetails:output_type -> listing.ListingDetailsResponse
-	6, // 6: listing.ListingService.GetListingSummary:output_type -> shared.ListingSummary
-	3, // 7: listing.ListingService.CompareListings:output_type -> listing.CompareListingsResponse
-	5, // 8: listing.ListingService.CheckListingOwnership:output_type -> listing.CheckListingOwnershipResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
+	6, // 5: listing.ListingService.CheckListingOpen:input_type -> listing.CheckListingOpenRequest
+	1, // 6: listing.ListingService.GetListingDetails:output_type -> listing.ListingDetailsResponse
+	8, // 7: listing.ListingService.GetListingSummary:output_type -> shared.ListingSummary
+	3, // 8: listing.ListingService.CompareListings:output_type -> listing.CompareListingsResponse
+	5, // 9: listing.ListingService.CheckListingOwnership:output_type -> listing.CheckListingOwnershipResponse
+	7, // 10: listing.ListingService.CheckListingOpen:output_type -> listing.CheckListingOpenResponse
+	6, // [6:11] is the sub-list for method output_type
+	1, // [1:6] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -524,7 +622,7 @@ func file_listing_proto_listing_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_listing_proto_listing_proto_rawDesc), len(file_listing_proto_listing_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

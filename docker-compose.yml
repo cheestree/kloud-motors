@@ -9,6 +9,11 @@ services:
     environment:
       - LISTING_GRPC_ADDR=${LISTING_GRPC_ADDR}
       - SEARCH_GRPC_ADDR=${SEARCH_GRPC_ADDR}
+      - USER_GRPC_ADDR=${USER_GRPC_ADDR}
+      - SELLER_GRPC_ADDR=${SELLER_GRPC_ADDR}
+      - CHAT_GRPC_ADDR=${CHAT_GRPC_ADDR}
+      - GEO_GRPC_ADDR=${GEO_GRPC_ADDR}
+      - AUCTION_GRPC_ADDR=${AUCTION_GRPC_ADDR}
     depends_on:
       - listing
       - search
@@ -22,8 +27,8 @@ services:
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      listing-db:
-        condition: service_healthy
+      - listing-db
+
   listing:
     container_name: listing-service
     build:
@@ -34,8 +39,36 @@ services:
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      listing-db:
-        condition: service_healthy
+      - listing-db
+
+  marketprice:
+    container_name: marketprice-service
+    build: ./code/services/marketprice
+    restart: on-failure
+    ports:
+      - "50055:50055"
+    environment:
+      DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      - listing-db
+
+  auction:
+    container_name: auction-service
+    build:
+      context: ./code/services
+      dockerfile: auction/Dockerfile
+    restart: on-failure
+    ports:
+      - "${AUCTION_GRPC_PORT}:${AUCTION_GRPC_PORT}"
+      - "${AUCTION_WS_PORT}:${AUCTION_WS_PORT}"
+    environment:
+      AUCTION_DATABASE_URL: ${AUCTION_DATABASE_URL}
+      LISTING_GRPC_ADDR: ${LISTING_GRPC_ADDR}
+      AUCTION_GRPC_PORT: ${AUCTION_GRPC_PORT}
+      AUCTION_WS_PORT: ${AUCTION_WS_PORT}
+    depends_on:
+      - auction-db
+
   listing-db:
     container_name: listing-db
     image: postgres:16
@@ -47,36 +80,57 @@ services:
       - "5432:5432"
     volumes:
       - listing_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${LISTING_POSTGRES_USER} -d ${LISTING_POSTGRES_DB}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-  auth-db:
-    container_name: auth-db
+  user:
+    container_name: user-service
+    build:
+      context: ./code/services
+      dockerfile: user/Dockerfile
+    ports:
+      - "50053:50053"
+    environment:
+      DATABASE_URL: ${USER_DATABASE_URL}
+      JWT_SECRET: ${AUTH_JWT_SECRET}
+    depends_on:
+      - user-db
+
+  seller:
+    container_name: seller-service
+    build:
+      context: ./code/services
+      dockerfile: seller/Dockerfile
+    ports:
+      - "50054:50054"
+    environment:
+      DATABASE_URL: ${SELLER_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+    depends_on:
+      - seller-db
+      - listing-db
+
+  user-db:
+    container_name: user-db
     image: postgres:16
     environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      POSTGRES_USER: ${USER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${USER_POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
-      - auth_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - user_postgres_data:/var/lib/postgresql/data
+
+  seller-db:
+    container_name: seller-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${SELLER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${SELLER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${SELLER_POSTGRES_DB}
+    ports:
+      - "5437:5432"
+    volumes:
+      - seller_postgres_data:/var/lib/postgresql/data
 
   chat-db:
     container_name: chat-db
@@ -89,15 +143,6 @@ services:
       - "5434:5432"
     volumes:
       - chat_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${CHAT_POSTGRES_USER} -d ${CHAT_POSTGRES_DB}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   geo-db:
     container_name: geo-db
@@ -110,15 +155,6 @@ services:
       - "5435:5432"
     volumes:
       - geo_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${GEO_POSTGRES_USER} -d ${GEO_POSTGRES_DB}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   auction-db:
     container_name: auction-db
@@ -131,19 +167,11 @@ services:
       - "5436:5432"
     volumes:
       - auction_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${AUCTION_POSTGRES_USER} -d ${AUCTION_POSTGRES_DB}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 volumes:
   listing_postgres_data:
-  auth_postgres_data:
+  user_postgres_data:
+  seller_postgres_data:
   chat_postgres_data:
   geo_postgres_data:
   auction_postgres_data:

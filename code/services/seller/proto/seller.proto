@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package seller;
+option go_package = "./proto";
+
+service SellerService {
+    rpc GetSellerProfile (GetSellerProfileRequest) returns (SellerProfileResponse);
+    rpc CreateSeller (CreateSellerRequest) returns (SellerProfileResponse);
+    rpc VerifySellerProfile (VerifySellerRequest) returns (VerifySellerResponse);
+    rpc CreateListing (CreateListingRequest) returns (CreateListingResponse);
+}
+
+message GetSellerProfileRequest {
+    int64 seller_id = 1;
+}
+
+message CreateSellerRequest {
+    int64 seller_id = 1;
+    string name = 2;
+    string seller_type = 3;
+    string contact_info = 4;
+}
+
+message SellerProfileResponse {
+    int64 seller_id = 1;
+    string name = 2;
+    string seller_type = 3;
+    string contact_info = 4;
+    double rating = 5;
+}
+
+message VerifySellerRequest {
+    int64 seller_id = 1;
+}
+
+message VerifySellerResponse {
+    bool is_seller = 1;
+}
+
+message CreateListingRequest {
+    string vin = 1;
+    string make = 2;
+    string model = 3;
+    int32 year = 4;
+    double price = 5;
+    int32 mileage = 6;
+    string city = 7;
+    string district = 8;
+    string state = 9;
+    string country = 10;
+    string fuel_type = 11;
+    string transmission = 12;
+    string trim = 13;
+    string color = 14;
+    int64 dealer_id = 15;
+    bool is_new = 16;
+}
+
+message CreateListingResponse {
+    int64 id = 1;
+    string listed_at = 2;
+}

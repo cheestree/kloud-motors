@@ -1,46 +1,70 @@
 # computacao-nuvem-2025
 
-To run this branch, you need to have Docker installed on your machine. Follow the instructions below to set up and run the project:
+This project uses Go microservices with PostgreSQL databases and a REST gateway.
 
-1. Clone the repository:
+## Setup
 
-   ```bash
-   git clone
-    ```
+1. Clone the repository and enter it.
+2. Download the dataset from Kaggle ([this link](https://www.kaggle.com/datasets/cisautomotiveapi/large-car-dataset)) and place it under code/setup. You can download the dataset from .
 
-2. Navigate to the project directory:
+## Run
 
-   ```bash
-   cd computacao-nuvem-2025
-   ```
+1. Prepare dataset artifacts:
 
-3. Download the dataset and place it in the `setup` directory. You can download the dataset from [this link](https://www.kaggle.com/datasets/cisautomotiveapi/large-car-dataset).
+```bash
+./prepare.sh
+```
 
-4. Run the following command to prepare the dataset:
+1. Start services and databases:
 
-    ```bash
-    ./prepare.sh
-    ```
+```bash
+./start.sh
+```
 
-5. When the dataset is prepared, you can start the services with the following command:
+1. Seed listing data:
 
-    ```bash
-    ./start.sh
-    ```
+```bash
+./seed.sh
+```
 
-6. Subsequently, the database will be populated with:
+## Gateway REST Endpoints
 
-    ```bash
-    ./seed.sh
-    ```
+Base URL: `http://localhost:8080`
 
-The services will be available at the following gRPC endpoints (doesn't include the gateway):
+- `GET /api/listings/search`
+- `GET /api/listings/compare`
+- `GET /api/listings/{id}`
+- `POST /api/chat/open`
+- `GET /api/chat/{chat_id}`
+- `GET /api/market/insights/aggregates`
+- `GET /api/market/price-comparison`
+- `GET /api/listings/stats/by-location`
+- `GET /api/market/average-price`
+- `GET /api/auctions`
+- `POST /api/auctions`
+- `GET /api/auctions/{auction_id}`
+- `DELETE /api/auctions/{auction_id}`
+- `POST /api/auctions/{auction_id}/bid`
+- `GET /api/auctions/{auction_id}/bids`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/users/me/favorites`
+- `POST /api/users/me/favorites/{listing_id}`
+- `DELETE /api/users/me/favorites/{listing_id}`
+- `GET /api/sellers/{seller_id}`
 
-- Searching: `localhost:50051`
+## gRPC Endpoints
+
+- Search: `localhost:50051`
 - Listing: `localhost:50052`
+- User: `localhost:50053`
+- Seller: `localhost:50054`
+- MarketPrice: `localhost:50055`
+- Auction: `localhost:50056`
 
-Or, via the gateway at `localhost:8080/api` for RESTful API access:
+## WebSocket Endpoints
 
-- Search: `http://localhost:8080/api/listings/search`
-- List: `http://localhost:8080/api/listings`
-- Compare: `http://localhost:8080/api/listings/compare`
+- Auction WS: `ws://localhost:8081/ws/auction/{auctionID}`
+- Chat WS route (service route): `/ws/chat/{chatID}`
+
+See full contract in `api/API.yaml`.

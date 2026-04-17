@@ -1,4 +1,6 @@
 pandas
 sqlalchemy
-pandas
 faker
+psycopg2-binary
+dotenv
+

@@ -5,10 +5,15 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY ./shared ./shared
-COPY ./listing/proto ./listing/proto
-COPY ./search/proto  ./search/proto
-COPY ./gateway       ./gateway
+COPY ./shared                        ./shared
+COPY ./listing/proto                 ./listing/proto
+COPY ./search/proto                  ./search/proto
+COPY ./seller/proto                  ./seller/proto
+COPY ./user/proto                    ./user/proto
+COPY ./chat/proto                    ./chat/proto
+COPY ./geographic-maket-insights/proto ./geographic-maket-insights/proto
+COPY ./auction/proto                 ./auction/proto
+COPY ./gateway                       ./gateway
 
 RUN go build -o gateway/gateway ./gateway
 

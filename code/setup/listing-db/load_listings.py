@@ -313,6 +313,8 @@ def main() -> int:
 
     database_url = os.getenv("LISTING_PYTHON_DATABASE_URL")
     if not database_url:
+        database_url = "postgresql://listing_user:listing_password@localhost:5432/listing_db"
+    if not database_url:
         print("LISTING_PYTHON_DATABASE_URL is not set.", file=sys.stderr)
         return 1
 
