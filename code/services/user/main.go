@@ -154,7 +154,7 @@ func initDB() {
 func main() {
 	initDB()
 
-	lis, err := net.Listen("tcp", ":50053")
+	lis, err := net.Listen("tcp", ":50058")
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}

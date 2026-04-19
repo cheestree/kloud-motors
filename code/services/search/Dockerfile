@@ -14,5 +14,5 @@ RUN go build -o search-service main.go
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/search/search-service .
-EXPOSE 50051
+EXPOSE 50056
 CMD ["./search-service"]
