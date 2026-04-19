@@ -22,24 +22,28 @@ services:
     build:
       context: ./code/services
       dockerfile: search/Dockerfile
+    restart: on-failure
     ports:
-      - "50051:50051"
+      - "${SEARCH_HOST_PORT:-50056}:50056"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      - listing-db
+      listing-db:
+        condition: service_healthy
 
   listing:
     container_name: listing-service
     build:
       context: ./code/services
       dockerfile: listing/Dockerfile
+    restart: on-failure
     ports:
-      - "50052:50052"
+      - "50054:50054"
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      - listing-db
+      listing-db:
+        condition: service_healthy
 
   marketprice:
     container_name: marketprice-service
@@ -50,7 +54,8 @@ services:
     environment:
       DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      - listing-db
+      listing-db:
+        condition: service_healthy
 
   auction:
     container_name: auction-service
@@ -67,7 +72,8 @@ services:
       AUCTION_GRPC_PORT: ${AUCTION_GRPC_PORT}
       AUCTION_WS_PORT: ${AUCTION_WS_PORT}
     depends_on:
-      - auction-db
+      auction-db:
+        condition: service_healthy
 
   listing-db:
     container_name: listing-db
@@ -78,6 +84,12 @@ services:
       POSTGRES_DB: ${LISTING_POSTGRES_DB}
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     volumes:
       - listing_postgres_data:/var/lib/postgresql/data
 
@@ -86,27 +98,32 @@ services:
     build:
       context: ./code/services
       dockerfile: user/Dockerfile
+    restart: on-failure
     ports:
-      - "50053:50053"
+      - "50058:50058"
     environment:
       DATABASE_URL: ${USER_DATABASE_URL}
       JWT_SECRET: ${AUTH_JWT_SECRET}
     depends_on:
-      - user-db
+      user-db:
+        condition: service_healthy
 
   seller:
     container_name: seller-service
     build:
       context: ./code/services
       dockerfile: seller/Dockerfile
+    restart: on-failure
     ports:
-      - "50054:50054"
+      - "50057:50057"
     environment:
       DATABASE_URL: ${SELLER_DATABASE_URL}
       LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
     depends_on:
-      - seller-db
-      - listing-db
+      seller-db:
+        condition: service_healthy
+      listing-db:
+        condition: service_healthy
 
   user-db:
     container_name: user-db
@@ -117,6 +134,12 @@ services:
       POSTGRES_DB: ${USER_POSTGRES_DB}
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     volumes:
       - user_postgres_data:/var/lib/postgresql/data
 
@@ -129,6 +152,12 @@ services:
       POSTGRES_DB: ${SELLER_POSTGRES_DB}
     ports:
       - "5437:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     volumes:
       - seller_postgres_data:/var/lib/postgresql/data
 
@@ -141,6 +170,12 @@ services:
       POSTGRES_DB: ${CHAT_POSTGRES_DB}
     ports:
       - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     volumes:
       - chat_postgres_data:/var/lib/postgresql/data
 
@@ -153,6 +188,12 @@ services:
       POSTGRES_DB: ${GEO_POSTGRES_DB}
     ports:
       - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     volumes:
       - geo_postgres_data:/var/lib/postgresql/data
 
@@ -165,6 +206,12 @@ services:
       POSTGRES_DB: ${AUCTION_POSTGRES_DB}
     ports:
       - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
     volumes:
       - auction_postgres_data:/var/lib/postgresql/data
 

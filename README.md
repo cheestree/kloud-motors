@@ -55,12 +55,12 @@ Base URL: `http://localhost:8080`
 
 ## gRPC Endpoints
 
-- Search: `localhost:50051`
-- Listing: `localhost:50052`
-- User: `localhost:50053`
-- Seller: `localhost:50054`
+- Search: `localhost:50056` (or `localhost:50156` if `50056` is busy and `./start.sh` applies fallback)
+- Listing: `localhost:50054`
+- User: `localhost:50058`
+- Seller: `localhost:50057`
 - MarketPrice: `localhost:50055`
-- Auction: `localhost:50056`
+- Auction: `localhost:50051`
 
 ## WebSocket Endpoints
 
