@@ -28,11 +28,20 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
 	}
+
+	userID, err := authenticatedUserIDFromRequest(r)
+	if err != nil {
+		http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
 	var req chatpb.OpenChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}
+	req.UserId = userID
+
 	ctx := context.Background()
 	resp, err := chatClient.OpenChat(ctx, &req)
 	if err != nil {
@@ -42,11 +51,42 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+func HandleGetActiveChats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, err := authenticatedUserIDFromRequest(r)
+	if err != nil {
+		http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	ctx := context.Background()
+	req := &chatpb.GetActiveChatsRequest{UserId: userID}
+	resp, err := chatClient.GetActiveChats(ctx, req)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
 	}
+
+	userID, err := authenticatedUserIDFromRequest(r)
+	if err != nil {
+		http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 || parts[3] == "" {
 		http.Error(w, "Missing chat id", http.StatusBadRequest)
@@ -54,7 +94,7 @@ func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	chatID := parts[3]
 	ctx := context.Background()
-	req := &chatpb.GetChatHistoryRequest{ChatId: chatID}
+	req := &chatpb.GetChatHistoryRequest{ChatId: chatID, UserId: userID}
 	resp, err := chatClient.GetChatHistory(ctx, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -147,4 +187,3 @@ func proxyWebSocket(src, dst *websocket.Conn, errCh chan<- error) {
 		}
 	}
 }
-
