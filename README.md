@@ -57,6 +57,7 @@ Base URL: `http://localhost:8080`
 
 - Search: `localhost:50056` (or `localhost:50156` if `50056` is busy and `./start.sh` applies fallback)
 - Listing: `localhost:50054`
+- Auth: `localhost:50053`
 - User: `localhost:50058`
 - Seller: `localhost:50057`
 - MarketPrice: `localhost:50055`

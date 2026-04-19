@@ -111,8 +111,6 @@ func (s *server) RemoveFavorite(ctx context.Context, req *proto.RemoveFavoriteRe
 	}, nil
 }
 
-
-
 func (s *server) GetUsersPreview(ctx context.Context, req *proto.UsersPreviewRequest) (*proto.UsersPreviewResponse, error) {
 	if len(req.UserIds) == 0 {
 		return &proto.UsersPreviewResponse{Users: []*proto.UserPreview{}}, nil
