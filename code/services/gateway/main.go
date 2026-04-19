@@ -38,8 +38,8 @@ func registerListingRoutes() {
 func registerChatRoutes() {
 	http.HandleFunc(routeGetActiveChats, handlers.HandleGetActiveChats)
 	http.HandleFunc(routeChatOpen, handlers.HandleChatOpen)
-	http.HandleFunc(routeChatWS, handlers.HandleChatWebSocket)
 	http.HandleFunc(routeChatByID, handlers.HandleChatHistory)
+	http.HandleFunc(routeChatWS, handlers.HandleChatWebSocket)
 }
 
 func registerMarketRoutes() {
@@ -126,7 +126,9 @@ func main() {
 		geoClient,
 		auctionClient,
 	)
-	handlers.SetChatWSUpstream(os.Getenv("CHAT_WS_UPSTREAM"))
+
+	// Endereço HTTP/WS do chat service (para proxy de WebSocket)
+	handlers.SetChatWSUpstream(os.Getenv("CHAT_WS_ADDR"))
 
 	registerRoutes()
 
