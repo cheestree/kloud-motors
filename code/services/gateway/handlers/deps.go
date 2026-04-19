@@ -18,6 +18,7 @@ var (
 	chatClient    chatpb.ChatServiceClient
 	geoClient     geopb.GeoMarketInsightsServiceClient
 	auctionClient auctionpb.AuctionServiceClient
+	chatWSUpstream string
 )
 
 // SetClients wires service clients from main into the handlers package
@@ -38,3 +39,8 @@ func SetClients(
 	geoClient = geo
 	auctionClient = auction
 }
+
+func SetChatWSUpstream(upstream string) {
+	chatWSUpstream = upstream
+}
+

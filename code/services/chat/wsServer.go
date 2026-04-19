@@ -1,14 +1,14 @@
 package main
 
 import (
-	"services/chat/repository"
-	"services/chat/ws"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"services/chat/repository"
+	"services/chat/ws"
 	"strconv"
 	"strings"
 	"time"
@@ -29,7 +29,7 @@ type InboundMessage struct {
 type OutboundMessage struct {
 	ID       string    `json:"id"`
 	ChatID   string    `json:"chat_id"`
-	SenderID int64    `json:"sender_id"`
+	SenderID int64     `json:"sender_id"`
 	Content  string    `json:"content"`
 	SentAt   time.Time `json:"sent_at"`
 }
@@ -126,15 +126,15 @@ func (s *wsServer) onMessage(chatID string, userID int64, raw []byte) {
 }
 
 func (s *wsServer) userIDFromGateway(r *http.Request) (int64, error) {
-	for _, header := range []string{"X-User-ID", "X-User-Id", "X-Authenticated-User-Id", "X-Forwarded-User"} {
-		if userID := strings.TrimSpace(r.Header.Get(header)); userID != "" {
-			int64UserID, err := strconv.ParseInt(userID, 10, 64)
-			if err != nil {
-				return 0, err
-			}
-			return int64UserID, nil
-		}
+	userID := strings.TrimSpace(r.Header.Get("X-User-ID"))
+	if userID == "" {
+		return 0, errors.New("missing gateway user id")
 	}
 
-	return 0, errors.New("missing gateway user id")
+	int64UserID, err := strconv.ParseInt(userID, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64UserID, nil
 }

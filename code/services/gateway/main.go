@@ -37,6 +37,7 @@ func registerListingRoutes() {
 
 func registerChatRoutes() {
 	http.HandleFunc(routeChatOpen, handlers.HandleChatOpen)
+	http.HandleFunc(routeChatWS, handlers.HandleChatWebSocket)
 	http.HandleFunc(routeChatByID, handlers.HandleChatHistory)
 }
 
@@ -124,6 +125,7 @@ func main() {
 		geoClient,
 		auctionClient,
 	)
+	handlers.SetChatWSUpstream(os.Getenv("CHAT_WS_UPSTREAM"))
 
 	registerRoutes()
 

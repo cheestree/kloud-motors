@@ -19,6 +19,7 @@ const (
 	routeListingsCompare         = routePrefixListings + "/compare"
 	routeListingsByID            = routePrefixListings + "/"
 	routeChatOpen                = routePrefixChat + "/open"
+	routeChatWS                  = routePrefixChat + "/ws/"
 	routeChatByID                = routePrefixChat + "/"
 	routeMarketAggregates        = routePrefixMarket + "/insights/aggregates"
 	routeMarketPriceComparison   = routePrefixMarket + "/price-comparison"
