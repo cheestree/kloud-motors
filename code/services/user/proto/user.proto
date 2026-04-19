@@ -10,6 +10,7 @@ service UserService {
     rpc AddFavorite (AddFavoriteRequest) returns (FavoriteMutationResponse);
     rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
     rpc CheckUserExists (CheckUserExistsRequest) returns (CheckUserExistsResponse);
+    rpc GetUsersPreview (UsersPreviewRequest) returns (UsersPreviewResponse);
 }
 
 message RegisterUserRequest {
@@ -57,4 +58,17 @@ message CheckUserExistsRequest {
 
 message CheckUserExistsResponse {
     bool exists = 1;
+}
+
+message UsersPreviewRequest {
+    repeated int64 user_ids = 1;
+}
+
+message UserPreview {
+    int64 id = 1;
+    string name = 2;
+}
+
+message UsersPreviewResponse {
+    repeated UserPreview users = 1;
 }

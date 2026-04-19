@@ -101,3 +101,22 @@ func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 	}
 }
+
+func HandleGetUsersPreview(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		return
+	}
+	var req userpb.UsersPreviewRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, msgInvalidBody, http.StatusBadRequest)
+		return
+	}
+	ctx := context.Background()
+	resp, err := userClient.GetUsersPreview(ctx, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}

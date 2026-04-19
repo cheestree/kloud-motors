@@ -517,6 +517,146 @@ func (x *CheckUserExistsResponse) GetExists() bool {
 	return false
 }
 
+type UsersPreviewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserIds       []int64                `protobuf:"varint,1,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UsersPreviewRequest) Reset() {
+	*x = UsersPreviewRequest{}
+	mi := &file_user_proto_user_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UsersPreviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UsersPreviewRequest) ProtoMessage() {}
+
+func (x *UsersPreviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_proto_user_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UsersPreviewRequest.ProtoReflect.Descriptor instead.
+func (*UsersPreviewRequest) Descriptor() ([]byte, []int) {
+	return file_user_proto_user_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *UsersPreviewRequest) GetUserIds() []int64 {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
+type UserPreview struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserPreview) Reset() {
+	*x = UserPreview{}
+	mi := &file_user_proto_user_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserPreview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserPreview) ProtoMessage() {}
+
+func (x *UserPreview) ProtoReflect() protoreflect.Message {
+	mi := &file_user_proto_user_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserPreview.ProtoReflect.Descriptor instead.
+func (*UserPreview) Descriptor() ([]byte, []int) {
+	return file_user_proto_user_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UserPreview) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UserPreview) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type UsersPreviewResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*UserPreview         `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UsersPreviewResponse) Reset() {
+	*x = UsersPreviewResponse{}
+	mi := &file_user_proto_user_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UsersPreviewResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UsersPreviewResponse) ProtoMessage() {}
+
+func (x *UsersPreviewResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_proto_user_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UsersPreviewResponse.ProtoReflect.Descriptor instead.
+func (*UsersPreviewResponse) Descriptor() ([]byte, []int) {
+	return file_user_proto_user_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *UsersPreviewResponse) GetUsers() []*UserPreview {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 var File_user_proto_user_proto protoreflect.FileDescriptor
 
 const file_user_proto_user_proto_rawDesc = "" +
@@ -550,14 +690,22 @@ const file_user_proto_user_proto_rawDesc = "" +
 	"\x16CheckUserExistsRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"1\n" +
 	"\x17CheckUserExistsResponse\x12\x16\n" +
-	"\x06exists\x18\x01 \x01(\bR\x06exists2\xb1\x03\n" +
+	"\x06exists\x18\x01 \x01(\bR\x06exists\"0\n" +
+	"\x13UsersPreviewRequest\x12\x19\n" +
+	"\buser_ids\x18\x01 \x03(\x03R\auserIds\"1\n" +
+	"\vUserPreview\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"?\n" +
+	"\x14UsersPreviewResponse\x12'\n" +
+	"\x05users\x18\x01 \x03(\v2\x11.user.UserPreviewR\x05users2\xfb\x03\n" +
 	"\vUserService\x12=\n" +
 	"\fRegisterUser\x12\x19.user.RegisterUserRequest\x1a\x12.user.AuthResponse\x127\n" +
 	"\tLoginUser\x12\x16.user.LoginUserRequest\x1a\x12.user.AuthResponse\x12B\n" +
 	"\fGetFavorites\x12\x19.user.GetFavoritesRequest\x1a\x17.user.FavoritesResponse\x12G\n" +
 	"\vAddFavorite\x12\x18.user.AddFavoriteRequest\x1a\x1e.user.FavoriteMutationResponse\x12M\n" +
 	"\x0eRemoveFavorite\x12\x1b.user.RemoveFavoriteRequest\x1a\x1e.user.FavoriteMutationResponse\x12N\n" +
-	"\x0fCheckUserExists\x12\x1c.user.CheckUserExistsRequest\x1a\x1d.user.CheckUserExistsResponseB\tZ\a./protob\x06proto3"
+	"\x0fCheckUserExists\x12\x1c.user.CheckUserExistsRequest\x1a\x1d.user.CheckUserExistsResponse\x12H\n" +
+	"\x0fGetUsersPreview\x12\x19.user.UsersPreviewRequest\x1a\x1a.user.UsersPreviewResponseB\tZ\a./protob\x06proto3"
 
 var (
 	file_user_proto_user_proto_rawDescOnce sync.Once
@@ -571,7 +719,7 @@ func file_user_proto_user_proto_rawDescGZIP() []byte {
 	return file_user_proto_user_proto_rawDescData
 }
 
-var file_user_proto_user_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_user_proto_user_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_user_proto_user_proto_goTypes = []any{
 	(*RegisterUserRequest)(nil),      // 0: user.RegisterUserRequest
 	(*LoginUserRequest)(nil),         // 1: user.LoginUserRequest
@@ -583,25 +731,31 @@ var file_user_proto_user_proto_goTypes = []any{
 	(*FavoriteMutationResponse)(nil), // 7: user.FavoriteMutationResponse
 	(*CheckUserExistsRequest)(nil),   // 8: user.CheckUserExistsRequest
 	(*CheckUserExistsResponse)(nil),  // 9: user.CheckUserExistsResponse
+	(*UsersPreviewRequest)(nil),      // 10: user.UsersPreviewRequest
+	(*UserPreview)(nil),              // 11: user.UserPreview
+	(*UsersPreviewResponse)(nil),     // 12: user.UsersPreviewResponse
 }
 var file_user_proto_user_proto_depIdxs = []int32{
-	0, // 0: user.UserService.RegisterUser:input_type -> user.RegisterUserRequest
-	1, // 1: user.UserService.LoginUser:input_type -> user.LoginUserRequest
-	3, // 2: user.UserService.GetFavorites:input_type -> user.GetFavoritesRequest
-	5, // 3: user.UserService.AddFavorite:input_type -> user.AddFavoriteRequest
-	6, // 4: user.UserService.RemoveFavorite:input_type -> user.RemoveFavoriteRequest
-	8, // 5: user.UserService.CheckUserExists:input_type -> user.CheckUserExistsRequest
-	2, // 6: user.UserService.RegisterUser:output_type -> user.AuthResponse
-	2, // 7: user.UserService.LoginUser:output_type -> user.AuthResponse
-	4, // 8: user.UserService.GetFavorites:output_type -> user.FavoritesResponse
-	7, // 9: user.UserService.AddFavorite:output_type -> user.FavoriteMutationResponse
-	7, // 10: user.UserService.RemoveFavorite:output_type -> user.FavoriteMutationResponse
-	9, // 11: user.UserService.CheckUserExists:output_type -> user.CheckUserExistsResponse
-	6, // [6:12] is the sub-list for method output_type
-	0, // [0:6] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	11, // 0: user.UsersPreviewResponse.users:type_name -> user.UserPreview
+	0,  // 1: user.UserService.RegisterUser:input_type -> user.RegisterUserRequest
+	1,  // 2: user.UserService.LoginUser:input_type -> user.LoginUserRequest
+	3,  // 3: user.UserService.GetFavorites:input_type -> user.GetFavoritesRequest
+	5,  // 4: user.UserService.AddFavorite:input_type -> user.AddFavoriteRequest
+	6,  // 5: user.UserService.RemoveFavorite:input_type -> user.RemoveFavoriteRequest
+	8,  // 6: user.UserService.CheckUserExists:input_type -> user.CheckUserExistsRequest
+	10, // 7: user.UserService.GetUsersPreview:input_type -> user.UsersPreviewRequest
+	2,  // 8: user.UserService.RegisterUser:output_type -> user.AuthResponse
+	2,  // 9: user.UserService.LoginUser:output_type -> user.AuthResponse
+	4,  // 10: user.UserService.GetFavorites:output_type -> user.FavoritesResponse
+	7,  // 11: user.UserService.AddFavorite:output_type -> user.FavoriteMutationResponse
+	7,  // 12: user.UserService.RemoveFavorite:output_type -> user.FavoriteMutationResponse
+	9,  // 13: user.UserService.CheckUserExists:output_type -> user.CheckUserExistsResponse
+	12, // 14: user.UserService.GetUsersPreview:output_type -> user.UsersPreviewResponse
+	8,  // [8:15] is the sub-list for method output_type
+	1,  // [1:8] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_user_proto_user_proto_init() }
@@ -615,7 +769,7 @@ func file_user_proto_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_proto_user_proto_rawDesc), len(file_user_proto_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

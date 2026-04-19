@@ -200,6 +200,29 @@ func (s *server) CheckUserExists(ctx context.Context, req *proto.CheckUserExists
 	return &proto.CheckUserExistsResponse{Exists: exists}, nil
 }
 
+func (s *server) GetUsersPreview(ctx context.Context, req *proto.UsersPreviewRequest) (*proto.UsersPreviewResponse, error) {
+	if len(req.UserIds) == 0 {
+		return &proto.UsersPreviewResponse{Users: []*proto.UserPreview{}}, nil
+	}
+
+	var users []User
+	if err := db.Where("id IN ?", req.UserIds).Find(&users).Error; err != nil {
+		return nil, status.Error(codes.Internal, "failed to get users preview")
+	}
+
+	previews := make([]*proto.UserPreview, 0, len(users))
+	for _, user := range users {
+		previews = append(previews, &proto.UserPreview{
+			Id:   user.ID,
+			Name: user.Name,
+		})
+	}
+
+	return &proto.UsersPreviewResponse{
+		Users: previews,
+	}, nil
+}
+
 func initDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {

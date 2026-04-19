@@ -25,6 +25,7 @@ const (
 	UserService_AddFavorite_FullMethodName     = "/user.UserService/AddFavorite"
 	UserService_RemoveFavorite_FullMethodName  = "/user.UserService/RemoveFavorite"
 	UserService_CheckUserExists_FullMethodName = "/user.UserService/CheckUserExists"
+	UserService_GetUsersPreview_FullMethodName = "/user.UserService/GetUsersPreview"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -37,6 +38,7 @@ type UserServiceClient interface {
 	AddFavorite(ctx context.Context, in *AddFavoriteRequest, opts ...grpc.CallOption) (*FavoriteMutationResponse, error)
 	RemoveFavorite(ctx context.Context, in *RemoveFavoriteRequest, opts ...grpc.CallOption) (*FavoriteMutationResponse, error)
 	CheckUserExists(ctx context.Context, in *CheckUserExistsRequest, opts ...grpc.CallOption) (*CheckUserExistsResponse, error)
+	GetUsersPreview(ctx context.Context, in *UsersPreviewRequest, opts ...grpc.CallOption) (*UsersPreviewResponse, error)
 }
 
 type userServiceClient struct {
@@ -107,6 +109,16 @@ func (c *userServiceClient) CheckUserExists(ctx context.Context, in *CheckUserEx
 	return out, nil
 }
 
+func (c *userServiceClient) GetUsersPreview(ctx context.Context, in *UsersPreviewRequest, opts ...grpc.CallOption) (*UsersPreviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UsersPreviewResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUsersPreview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -117,6 +129,7 @@ type UserServiceServer interface {
 	AddFavorite(context.Context, *AddFavoriteRequest) (*FavoriteMutationResponse, error)
 	RemoveFavorite(context.Context, *RemoveFavoriteRequest) (*FavoriteMutationResponse, error)
 	CheckUserExists(context.Context, *CheckUserExistsRequest) (*CheckUserExistsResponse, error)
+	GetUsersPreview(context.Context, *UsersPreviewRequest) (*UsersPreviewResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -144,6 +157,9 @@ func (UnimplementedUserServiceServer) RemoveFavorite(context.Context, *RemoveFav
 }
 func (UnimplementedUserServiceServer) CheckUserExists(context.Context, *CheckUserExistsRequest) (*CheckUserExistsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckUserExists not implemented")
+}
+func (UnimplementedUserServiceServer) GetUsersPreview(context.Context, *UsersPreviewRequest) (*UsersPreviewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUsersPreview not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -274,6 +290,24 @@ func _UserService_CheckUserExists_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUsersPreview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UsersPreviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUsersPreview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUsersPreview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUsersPreview(ctx, req.(*UsersPreviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -304,6 +338,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckUserExists",
 			Handler:    _UserService_CheckUserExists_Handler,
+		},
+		{
+			MethodName: "GetUsersPreview",
+			Handler:    _UserService_GetUsersPreview_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

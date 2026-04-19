@@ -59,10 +59,12 @@ func registerAuthRoutes() {
 func registerUserRoutes() {
 	http.HandleFunc(routeFavorites, handlers.HandleGetFavorites)
 	http.HandleFunc(routeFavoriteByListingID, handlers.HandleFavoriteListing)
+	http.HandleFunc(routeUsersPreview, handlers.HandleGetUsersPreview)
 }
 
 func registerSellerRoutes() {
 	http.HandleFunc(routeSellerByID, handlers.HandleGetSellerProfile)
+	http.HandleFunc(routeSellersPreview, handlers.HandleGetSellersPreview)
 }
 
 func main() {
