@@ -19,26 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_RegisterUser_FullMethodName    = "/user.UserService/RegisterUser"
-	UserService_LoginUser_FullMethodName       = "/user.UserService/LoginUser"
-	UserService_GetFavorites_FullMethodName    = "/user.UserService/GetFavorites"
-	UserService_AddFavorite_FullMethodName     = "/user.UserService/AddFavorite"
-	UserService_RemoveFavorite_FullMethodName  = "/user.UserService/RemoveFavorite"
-	UserService_CheckUserExists_FullMethodName = "/user.UserService/CheckUserExists"
-	UserService_GetUsersPreview_FullMethodName = "/user.UserService/GetUsersPreview"
+	UserService_GetFavorites_FullMethodName      = "/user.UserService/GetFavorites"
+	UserService_AddFavorite_FullMethodName       = "/user.UserService/AddFavorite"
+	UserService_RemoveFavorite_FullMethodName    = "/user.UserService/RemoveFavorite"
+	UserService_GetUsersPreview_FullMethodName   = "/user.UserService/GetUsersPreview"
+	UserService_CreateUserProfile_FullMethodName = "/user.UserService/CreateUserProfile"
 )
 
 // UserServiceClient is the client API for UserService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
-	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*AuthResponse, error)
-	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	GetFavorites(ctx context.Context, in *GetFavoritesRequest, opts ...grpc.CallOption) (*FavoritesResponse, error)
 	AddFavorite(ctx context.Context, in *AddFavoriteRequest, opts ...grpc.CallOption) (*FavoriteMutationResponse, error)
 	RemoveFavorite(ctx context.Context, in *RemoveFavoriteRequest, opts ...grpc.CallOption) (*FavoriteMutationResponse, error)
-	CheckUserExists(ctx context.Context, in *CheckUserExistsRequest, opts ...grpc.CallOption) (*CheckUserExistsResponse, error)
 	GetUsersPreview(ctx context.Context, in *UsersPreviewRequest, opts ...grpc.CallOption) (*UsersPreviewResponse, error)
+	CreateUserProfile(ctx context.Context, in *CreateUserProfileRequest, opts ...grpc.CallOption) (*CreateUserProfileResponse, error)
 }
 
 type userServiceClient struct {
@@ -47,26 +43,6 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
-}
-
-func (c *userServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AuthResponse)
-	err := c.cc.Invoke(ctx, UserService_RegisterUser_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AuthResponse)
-	err := c.cc.Invoke(ctx, UserService_LoginUser_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *userServiceClient) GetFavorites(ctx context.Context, in *GetFavoritesRequest, opts ...grpc.CallOption) (*FavoritesResponse, error) {
@@ -99,16 +75,6 @@ func (c *userServiceClient) RemoveFavorite(ctx context.Context, in *RemoveFavori
 	return out, nil
 }
 
-func (c *userServiceClient) CheckUserExists(ctx context.Context, in *CheckUserExistsRequest, opts ...grpc.CallOption) (*CheckUserExistsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CheckUserExistsResponse)
-	err := c.cc.Invoke(ctx, UserService_CheckUserExists_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *userServiceClient) GetUsersPreview(ctx context.Context, in *UsersPreviewRequest, opts ...grpc.CallOption) (*UsersPreviewResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UsersPreviewResponse)
@@ -119,17 +85,25 @@ func (c *userServiceClient) GetUsersPreview(ctx context.Context, in *UsersPrevie
 	return out, nil
 }
 
+func (c *userServiceClient) CreateUserProfile(ctx context.Context, in *CreateUserProfileRequest, opts ...grpc.CallOption) (*CreateUserProfileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateUserProfileResponse)
+	err := c.cc.Invoke(ctx, UserService_CreateUserProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
-	RegisterUser(context.Context, *RegisterUserRequest) (*AuthResponse, error)
-	LoginUser(context.Context, *LoginUserRequest) (*AuthResponse, error)
 	GetFavorites(context.Context, *GetFavoritesRequest) (*FavoritesResponse, error)
 	AddFavorite(context.Context, *AddFavoriteRequest) (*FavoriteMutationResponse, error)
 	RemoveFavorite(context.Context, *RemoveFavoriteRequest) (*FavoriteMutationResponse, error)
-	CheckUserExists(context.Context, *CheckUserExistsRequest) (*CheckUserExistsResponse, error)
 	GetUsersPreview(context.Context, *UsersPreviewRequest) (*UsersPreviewResponse, error)
+	CreateUserProfile(context.Context, *CreateUserProfileRequest) (*CreateUserProfileResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -140,12 +114,6 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
-func (UnimplementedUserServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*AuthResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RegisterUser not implemented")
-}
-func (UnimplementedUserServiceServer) LoginUser(context.Context, *LoginUserRequest) (*AuthResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method LoginUser not implemented")
-}
 func (UnimplementedUserServiceServer) GetFavorites(context.Context, *GetFavoritesRequest) (*FavoritesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetFavorites not implemented")
 }
@@ -155,11 +123,11 @@ func (UnimplementedUserServiceServer) AddFavorite(context.Context, *AddFavoriteR
 func (UnimplementedUserServiceServer) RemoveFavorite(context.Context, *RemoveFavoriteRequest) (*FavoriteMutationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveFavorite not implemented")
 }
-func (UnimplementedUserServiceServer) CheckUserExists(context.Context, *CheckUserExistsRequest) (*CheckUserExistsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CheckUserExists not implemented")
-}
 func (UnimplementedUserServiceServer) GetUsersPreview(context.Context, *UsersPreviewRequest) (*UsersPreviewResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUsersPreview not implemented")
+}
+func (UnimplementedUserServiceServer) CreateUserProfile(context.Context, *CreateUserProfileRequest) (*CreateUserProfileResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateUserProfile not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -180,42 +148,6 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&UserService_ServiceDesc, srv)
-}
-
-func _UserService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).RegisterUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_RegisterUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).RegisterUser(ctx, req.(*RegisterUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_LoginUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).LoginUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_LoginUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).LoginUser(ctx, req.(*LoginUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetFavorites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -272,24 +204,6 @@ func _UserService_RemoveFavorite_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_CheckUserExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckUserExistsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).CheckUserExists(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_CheckUserExists_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).CheckUserExists(ctx, req.(*CheckUserExistsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _UserService_GetUsersPreview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UsersPreviewRequest)
 	if err := dec(in); err != nil {
@@ -308,6 +222,24 @@ func _UserService_GetUsersPreview_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_CreateUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).CreateUserProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_CreateUserProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).CreateUserProfile(ctx, req.(*CreateUserProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -315,14 +247,6 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "user.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "RegisterUser",
-			Handler:    _UserService_RegisterUser_Handler,
-		},
-		{
-			MethodName: "LoginUser",
-			Handler:    _UserService_LoginUser_Handler,
-		},
 		{
 			MethodName: "GetFavorites",
 			Handler:    _UserService_GetFavorites_Handler,
@@ -336,12 +260,12 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_RemoveFavorite_Handler,
 		},
 		{
-			MethodName: "CheckUserExists",
-			Handler:    _UserService_CheckUserExists_Handler,
-		},
-		{
 			MethodName: "GetUsersPreview",
 			Handler:    _UserService_GetUsersPreview_Handler,
+		},
+		{
+			MethodName: "CreateUserProfile",
+			Handler:    _UserService_CreateUserProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
