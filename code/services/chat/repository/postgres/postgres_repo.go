@@ -1,10 +1,10 @@
 package postgres
 
 import (
-	"services/chat/repository"
 	"context"
 	"fmt"
 	"regexp"
+	"services/chat/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -95,6 +95,38 @@ func (s *RelationalRepo) ListUserChats(ctx context.Context, userID int64) ([]rep
 	}
 
 	return chats, nil
+}
+
+func (s *RelationalRepo) GetChatsFromListingSeller(ctx context.Context, listingID, sellerId int64) ([]string, error) {
+	q := fmt.Sprintf(`SELECT DISTINCT chat_id FROM %s WHERE listing_id = $1 AND user_id = $2;`, s.qualifiedTable())
+	rows, err := s.pool.Query(ctx, q, listingID, sellerId)
+	if err != nil {
+		return nil, fmt.Errorf("check if chat exists: %w", err)
+	}
+	defer rows.Close()
+
+	chatIDs := make([]string, 0)
+	for rows.Next() {
+		var chatID string
+		if err := rows.Scan(&chatID); err != nil {
+			return nil, fmt.Errorf("scan chat id: %w", err)
+		}
+		chatIDs = append(chatIDs, chatID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate chat ids: %w", err)
+	}
+
+	return chatIDs, nil
+}
+
+func (s *RelationalRepo) DeleteChat(ctx context.Context, chatID string) error {
+	q := fmt.Sprintf(`DELETE FROM %s WHERE chat_id = $1`, s.qualifiedTable())
+	if _, err := s.pool.Exec(ctx, q, chatID); err != nil {
+		return fmt.Errorf("delete chat: %w", err)
+	}
+	return nil
 }
 
 var identRx = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)

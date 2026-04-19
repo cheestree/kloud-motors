@@ -141,3 +141,23 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 
 	return &proto.GetChatHistoryResponse{Messages: protoMessages}, nil
 }
+
+func (s *grpcServer) DeleteChat(ctx context.Context, req *proto.DeleteChatRequest) (*proto.DeleteChatResponse, error) {
+	if req.GetListingId() < 0 || req.GetSellerId() < 0 {
+		return nil, status.Error(codes.InvalidArgument, "listing_id and user_id are required and be a valid value")
+	}
+
+	chatIDs, err := s.indexStore.GetChatsFromListingSeller(ctx, req.GetListingId(), req.GetSellerId())
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check chat exists: %v", err)
+	}
+
+	for _, chatID := range chatIDs {
+		if err := s.indexStore.DeleteChat(ctx, chatID); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to delete chat %s: %v", chatID, err)
+		}
+	}
+
+	return &proto.DeleteChatResponse{Success: true}, nil
+}
