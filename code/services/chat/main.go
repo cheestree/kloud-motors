@@ -7,6 +7,8 @@ import (
 	"services/chat/repository/firestore"
 	"services/chat/repository/postgres"
 	ws2 "services/chat/ws"
+	listingproto "services/listing/proto"
+	sellerproto "services/seller/proto"
 	"context"
 	"log"
 	"net"
@@ -82,8 +84,8 @@ func main() {
 	}
 	defer sellerConn.Close()
 
-	listingClient := proto.NewListingServiceClient(listingConn)
-	sellerClient := proto.NewSellerServiceClient(sellerConn)
+	listingClient := listingproto.NewListingServiceClient(listingConn)
+	sellerClient := sellerproto.NewSellerServiceClient(sellerConn)
 
 	grpcSrv := grpc.NewServer()
 	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{
