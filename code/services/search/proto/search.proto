@@ -25,6 +25,7 @@ message SearchRequest {
   google.protobuf.BoolValue is_new = 11;
   int32 page = 12;
   int32 page_size = 13;
+  google.protobuf.BoolValue include_sold = 14;
 }
 
 message SearchResponse {

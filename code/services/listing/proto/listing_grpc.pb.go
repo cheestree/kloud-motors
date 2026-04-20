@@ -22,6 +22,11 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ListingService_GetListingDetails_FullMethodName     = "/listing.ListingService/GetListingDetails"
 	ListingService_GetListingSummary_FullMethodName     = "/listing.ListingService/GetListingSummary"
+	ListingService_GetListingSummaries_FullMethodName   = "/listing.ListingService/GetListingSummaries"
+	ListingService_CreateListing_FullMethodName         = "/listing.ListingService/CreateListing"
+	ListingService_UpdateListing_FullMethodName         = "/listing.ListingService/UpdateListing"
+	ListingService_SetListingSoldStatus_FullMethodName  = "/listing.ListingService/SetListingSoldStatus"
+	ListingService_DeleteListing_FullMethodName         = "/listing.ListingService/DeleteListing"
 	ListingService_CompareListings_FullMethodName       = "/listing.ListingService/CompareListings"
 	ListingService_CheckListingOwnership_FullMethodName = "/listing.ListingService/CheckListingOwnership"
 	ListingService_CheckListingOpen_FullMethodName      = "/listing.ListingService/CheckListingOpen"
@@ -35,6 +40,16 @@ type ListingServiceClient interface {
 	GetListingDetails(ctx context.Context, in *ListingDetailsRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error)
 	// Get summarized information about a specific car listing by its ID, suitable for search results.
 	GetListingSummary(ctx context.Context, in *ListingDetailsRequest, opts ...grpc.CallOption) (*shared.ListingSummary, error)
+	// Get summarized information for multiple listings by their IDs.
+	GetListingSummaries(ctx context.Context, in *ListingSummariesRequest, opts ...grpc.CallOption) (*ListingSummariesResponse, error)
+	// Create a new listing.
+	CreateListing(ctx context.Context, in *CreateListingRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error)
+	// Update an existing listing (cannot update is_sold).
+	UpdateListing(ctx context.Context, in *UpdateListingRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error)
+	// Set the sold status of a listing (only updates is_sold).
+	SetListingSoldStatus(ctx context.Context, in *SetListingSoldStatusRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error)
+	// Delete an existing listing.
+	DeleteListing(ctx context.Context, in *DeleteListingRequest, opts ...grpc.CallOption) (*DeleteListingResponse, error)
 	// Compare multiple car listings by their IDs to see their details side by side.
 	CompareListings(ctx context.Context, in *CompareListingsRequest, opts ...grpc.CallOption) (*CompareListingsResponse, error)
 	// Checks if a listing with the given ID exists and belongs to a seller.
@@ -65,6 +80,56 @@ func (c *listingServiceClient) GetListingSummary(ctx context.Context, in *Listin
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(shared.ListingSummary)
 	err := c.cc.Invoke(ctx, ListingService_GetListingSummary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *listingServiceClient) GetListingSummaries(ctx context.Context, in *ListingSummariesRequest, opts ...grpc.CallOption) (*ListingSummariesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListingSummariesResponse)
+	err := c.cc.Invoke(ctx, ListingService_GetListingSummaries_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *listingServiceClient) CreateListing(ctx context.Context, in *CreateListingRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListingDetailsResponse)
+	err := c.cc.Invoke(ctx, ListingService_CreateListing_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *listingServiceClient) UpdateListing(ctx context.Context, in *UpdateListingRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListingDetailsResponse)
+	err := c.cc.Invoke(ctx, ListingService_UpdateListing_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *listingServiceClient) SetListingSoldStatus(ctx context.Context, in *SetListingSoldStatusRequest, opts ...grpc.CallOption) (*ListingDetailsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListingDetailsResponse)
+	err := c.cc.Invoke(ctx, ListingService_SetListingSoldStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *listingServiceClient) DeleteListing(ctx context.Context, in *DeleteListingRequest, opts ...grpc.CallOption) (*DeleteListingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteListingResponse)
+	err := c.cc.Invoke(ctx, ListingService_DeleteListing_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +174,16 @@ type ListingServiceServer interface {
 	GetListingDetails(context.Context, *ListingDetailsRequest) (*ListingDetailsResponse, error)
 	// Get summarized information about a specific car listing by its ID, suitable for search results.
 	GetListingSummary(context.Context, *ListingDetailsRequest) (*shared.ListingSummary, error)
+	// Get summarized information for multiple listings by their IDs.
+	GetListingSummaries(context.Context, *ListingSummariesRequest) (*ListingSummariesResponse, error)
+	// Create a new listing.
+	CreateListing(context.Context, *CreateListingRequest) (*ListingDetailsResponse, error)
+	// Update an existing listing (cannot update is_sold).
+	UpdateListing(context.Context, *UpdateListingRequest) (*ListingDetailsResponse, error)
+	// Set the sold status of a listing (only updates is_sold).
+	SetListingSoldStatus(context.Context, *SetListingSoldStatusRequest) (*ListingDetailsResponse, error)
+	// Delete an existing listing.
+	DeleteListing(context.Context, *DeleteListingRequest) (*DeleteListingResponse, error)
 	// Compare multiple car listings by their IDs to see their details side by side.
 	CompareListings(context.Context, *CompareListingsRequest) (*CompareListingsResponse, error)
 	// Checks if a listing with the given ID exists and belongs to a seller.
@@ -130,6 +205,21 @@ func (UnimplementedListingServiceServer) GetListingDetails(context.Context, *Lis
 }
 func (UnimplementedListingServiceServer) GetListingSummary(context.Context, *ListingDetailsRequest) (*shared.ListingSummary, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetListingSummary not implemented")
+}
+func (UnimplementedListingServiceServer) GetListingSummaries(context.Context, *ListingSummariesRequest) (*ListingSummariesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetListingSummaries not implemented")
+}
+func (UnimplementedListingServiceServer) CreateListing(context.Context, *CreateListingRequest) (*ListingDetailsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateListing not implemented")
+}
+func (UnimplementedListingServiceServer) UpdateListing(context.Context, *UpdateListingRequest) (*ListingDetailsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateListing not implemented")
+}
+func (UnimplementedListingServiceServer) SetListingSoldStatus(context.Context, *SetListingSoldStatusRequest) (*ListingDetailsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetListingSoldStatus not implemented")
+}
+func (UnimplementedListingServiceServer) DeleteListing(context.Context, *DeleteListingRequest) (*DeleteListingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteListing not implemented")
 }
 func (UnimplementedListingServiceServer) CompareListings(context.Context, *CompareListingsRequest) (*CompareListingsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CompareListings not implemented")
@@ -193,6 +283,96 @@ func _ListingService_GetListingSummary_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ListingServiceServer).GetListingSummary(ctx, req.(*ListingDetailsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ListingService_GetListingSummaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListingSummariesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ListingServiceServer).GetListingSummaries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ListingService_GetListingSummaries_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ListingServiceServer).GetListingSummaries(ctx, req.(*ListingSummariesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ListingService_CreateListing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateListingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ListingServiceServer).CreateListing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ListingService_CreateListing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ListingServiceServer).CreateListing(ctx, req.(*CreateListingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ListingService_UpdateListing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateListingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ListingServiceServer).UpdateListing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ListingService_UpdateListing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ListingServiceServer).UpdateListing(ctx, req.(*UpdateListingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ListingService_SetListingSoldStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetListingSoldStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ListingServiceServer).SetListingSoldStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ListingService_SetListingSoldStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ListingServiceServer).SetListingSoldStatus(ctx, req.(*SetListingSoldStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ListingService_DeleteListing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteListingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ListingServiceServer).DeleteListing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ListingService_DeleteListing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ListingServiceServer).DeleteListing(ctx, req.(*DeleteListingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -265,6 +445,26 @@ var ListingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetListingSummary",
 			Handler:    _ListingService_GetListingSummary_Handler,
+		},
+		{
+			MethodName: "GetListingSummaries",
+			Handler:    _ListingService_GetListingSummaries_Handler,
+		},
+		{
+			MethodName: "CreateListing",
+			Handler:    _ListingService_CreateListing_Handler,
+		},
+		{
+			MethodName: "UpdateListing",
+			Handler:    _ListingService_UpdateListing_Handler,
+		},
+		{
+			MethodName: "SetListingSoldStatus",
+			Handler:    _ListingService_SetListingSoldStatus_Handler,
+		},
+		{
+			MethodName: "DeleteListing",
+			Handler:    _ListingService_DeleteListing_Handler,
 		},
 		{
 			MethodName: "CompareListings",

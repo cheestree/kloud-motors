@@ -699,16 +699,12 @@ const file_seller_proto_seller_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tlisted_at\x18\x02 \x01(\tR\blistedAt\"6\n" +
 	"\x15SellersPreviewRequest\x12\x1d\n" +
-	"\n" +
 	"seller_ids\x18\x01 \x03(\x03R\tsellerIds\"3\n" +
 	"\rSellerPreview\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"I\n" +
 	"\x16SellersPreviewResponse\x12/\n" +
 	"\asellers\x18\x01 \x03(\v2\x15.seller.SellerPreviewR\asellers2\xa3\x03\n" +
-	"\rSellerService\x12R\n" +
-	"\x10GetSellerProfile\x12\x1f.seller.GetSellerProfileRequest\x1a\x1d.seller.SellerProfileResponse\x12J\n" +
-	"\fCreateSeller\x12\x1b.seller.CreateSellerRequest\x1a\x1d.seller.SellerProfileResponse\x12P\n" +
 	"\x13VerifySellerProfile\x12\x1b.seller.VerifySellerRequest\x1a\x1c.seller.VerifySellerResponse\x12L\n" +
 	"\rCreateListing\x12\x1c.seller.CreateListingRequest\x1a\x1d.seller.CreateListingResponse\x12R\n" +
 	"\x11GetSellersPreview\x12\x1d.seller.SellersPreviewRequest\x1a\x1e.seller.SellersPreviewResponseB\tZ\a./protob\x06proto3"
