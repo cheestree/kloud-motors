@@ -47,8 +47,8 @@ func initDB() {
 
 func main() {
 	initDB()
-	listingAddr := getenv("LISTING_GRPC_ADDR", "listing:50052")
-	auctionGRPCPort := getenv("AUCTION_GRPC_PORT", "50056")
+	listingAddr := getenv("LISTING_GRPC_ADDR", "listing:50054")
+	auctionGRPCPort := getenv("AUCTION_GRPC_PORT", "50051")
 
 	listingConn, err := grpc.NewClient(listingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -60,8 +60,8 @@ func main() {
 	nodeID := getenv("POD_ID", localNodeID())
 	ps, err := auctionpubsub.NewGCPPubSub(context.Background(), auctionpubsub.GCPPubSubConfig{
 		ProjectID:       getenv("GCP_PROJECT_ID", ""),
-		TopicID:         getenv("GCP_PUBSUB_TOPIC", "auction-events"),
-		SubscriptionID:  getenv("GCP_PUBSUB_SUBSCRIPTION", "auction-sub-"+nodeID),
+		TopicID:         getenv("AUCTION_PUBSUB_TOPIC", "auction-events"),
+		SubscriptionID:  getenv("AUCTION_PUBSUB_SUBSCRIPTION", "auction-sub-"+nodeID),
 		NodeID:          nodeID,
 		CreateResources: getenvBool("GCP_PUBSUB_AUTOCREATE", false),
 	})

@@ -100,7 +100,9 @@ func initDB() {
 func main() {
 	initDB()
 
-	lis, err := net.Listen("tcp", ":50055")
+	port := getenv("MARKETPRICE_GRPC_PORT", "50055")
+
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}
@@ -113,4 +115,11 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
+}
+
+func getenv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
