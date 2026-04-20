@@ -1,10 +1,9 @@
 package models
 
 type User struct {
-	ID          int64 `gorm:"primaryKey;autoIncrement"`
+	ID          int64 `gorm:"primaryKey"`
 	Name        string
 	Email       string `gorm:"uniqueIndex"`
-	Password    string
 }
 
 type Favorite struct {

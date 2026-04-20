@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"encoding/base64"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -29,15 +30,25 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 		return 0, errors.New(errInvalidAuthHeader)
 	}
 
-	secret := os.Getenv(envJWTSecret)
-	if secret == "" {
-		return 0, errors.New(errJWTNotConfigured)
+	b64Key := os.Getenv("JWT_PUBLIC_KEY_B64")
+	if b64Key == "" {
+		return 0, errors.New("JWT_PUBLIC_KEY_B64 is not configured")
+	}
+
+	keyBytes, err := base64.StdEncoding.DecodeString(b64Key)
+	if err != nil {
+		return 0, errors.New("failed to decode base64 public key")
+	}
+
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(keyBytes)
+	if err != nil {
+		return 0, errors.New("failed to parse RSA public key")
 	}
 
 	claims := &UserClaims{}
 	token, err := jwt.ParseWithClaims(parts[1], claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+		return pubKey, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
 	if err != nil || !token.Valid {
 		return 0, errors.New(errInvalidToken)
 	}

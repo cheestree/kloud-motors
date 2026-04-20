@@ -513,6 +513,146 @@ func (x *CreateListingResponse) GetListedAt() string {
 	return ""
 }
 
+type SellersPreviewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SellerIds     []int64                `protobuf:"varint,1,rep,packed,name=seller_ids,json=sellerIds,proto3" json:"seller_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SellersPreviewRequest) Reset() {
+	*x = SellersPreviewRequest{}
+	mi := &file_seller_proto_seller_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SellersPreviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SellersPreviewRequest) ProtoMessage() {}
+
+func (x *SellersPreviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_seller_proto_seller_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SellersPreviewRequest.ProtoReflect.Descriptor instead.
+func (*SellersPreviewRequest) Descriptor() ([]byte, []int) {
+	return file_seller_proto_seller_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SellersPreviewRequest) GetSellerIds() []int64 {
+	if x != nil {
+		return x.SellerIds
+	}
+	return nil
+}
+
+type SellerPreview struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SellerPreview) Reset() {
+	*x = SellerPreview{}
+	mi := &file_seller_proto_seller_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SellerPreview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SellerPreview) ProtoMessage() {}
+
+func (x *SellerPreview) ProtoReflect() protoreflect.Message {
+	mi := &file_seller_proto_seller_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SellerPreview.ProtoReflect.Descriptor instead.
+func (*SellerPreview) Descriptor() ([]byte, []int) {
+	return file_seller_proto_seller_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SellerPreview) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *SellerPreview) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type SellersPreviewResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Sellers       []*SellerPreview       `protobuf:"bytes,1,rep,name=sellers,proto3" json:"sellers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SellersPreviewResponse) Reset() {
+	*x = SellersPreviewResponse{}
+	mi := &file_seller_proto_seller_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SellersPreviewResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SellersPreviewResponse) ProtoMessage() {}
+
+func (x *SellersPreviewResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_seller_proto_seller_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SellersPreviewResponse.ProtoReflect.Descriptor instead.
+func (*SellersPreviewResponse) Descriptor() ([]byte, []int) {
+	return file_seller_proto_seller_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *SellersPreviewResponse) GetSellers() []*SellerPreview {
+	if x != nil {
+		return x.Sellers
+	}
+	return nil
+}
+
 var File_seller_proto_seller_proto protoreflect.FileDescriptor
 
 const file_seller_proto_seller_proto_rawDesc = "" +
@@ -557,12 +697,21 @@ const file_seller_proto_seller_proto_rawDesc = "" +
 	"\x06is_new\x18\x10 \x01(\bR\x05isNew\"D\n" +
 	"\x15CreateListingResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
-	"\tlisted_at\x18\x02 \x01(\tR\blistedAt2\xcf\x02\n" +
+	"\tlisted_at\x18\x02 \x01(\tR\blistedAt\"6\n" +
+	"\x15SellersPreviewRequest\x12\x1d\n" +
+	"\n" +
+	"seller_ids\x18\x01 \x03(\x03R\tsellerIds\"3\n" +
+	"\rSellerPreview\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"I\n" +
+	"\x16SellersPreviewResponse\x12/\n" +
+	"\asellers\x18\x01 \x03(\v2\x15.seller.SellerPreviewR\asellers2\xa3\x03\n" +
 	"\rSellerService\x12R\n" +
 	"\x10GetSellerProfile\x12\x1f.seller.GetSellerProfileRequest\x1a\x1d.seller.SellerProfileResponse\x12J\n" +
 	"\fCreateSeller\x12\x1b.seller.CreateSellerRequest\x1a\x1d.seller.SellerProfileResponse\x12P\n" +
 	"\x13VerifySellerProfile\x12\x1b.seller.VerifySellerRequest\x1a\x1c.seller.VerifySellerResponse\x12L\n" +
-	"\rCreateListing\x12\x1c.seller.CreateListingRequest\x1a\x1d.seller.CreateListingResponseB\tZ\a./protob\x06proto3"
+	"\rCreateListing\x12\x1c.seller.CreateListingRequest\x1a\x1d.seller.CreateListingResponse\x12R\n" +
+	"\x11GetSellersPreview\x12\x1d.seller.SellersPreviewRequest\x1a\x1e.seller.SellersPreviewResponseB\tZ\a./protob\x06proto3"
 
 var (
 	file_seller_proto_seller_proto_rawDescOnce sync.Once
@@ -576,7 +725,7 @@ func file_seller_proto_seller_proto_rawDescGZIP() []byte {
 	return file_seller_proto_seller_proto_rawDescData
 }
 
-var file_seller_proto_seller_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_seller_proto_seller_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_seller_proto_seller_proto_goTypes = []any{
 	(*GetSellerProfileRequest)(nil), // 0: seller.GetSellerProfileRequest
 	(*CreateSellerRequest)(nil),     // 1: seller.CreateSellerRequest
@@ -585,21 +734,27 @@ var file_seller_proto_seller_proto_goTypes = []any{
 	(*VerifySellerResponse)(nil),    // 4: seller.VerifySellerResponse
 	(*CreateListingRequest)(nil),    // 5: seller.CreateListingRequest
 	(*CreateListingResponse)(nil),   // 6: seller.CreateListingResponse
+	(*SellersPreviewRequest)(nil),   // 7: seller.SellersPreviewRequest
+	(*SellerPreview)(nil),           // 8: seller.SellerPreview
+	(*SellersPreviewResponse)(nil),  // 9: seller.SellersPreviewResponse
 }
 var file_seller_proto_seller_proto_depIdxs = []int32{
-	0, // 0: seller.SellerService.GetSellerProfile:input_type -> seller.GetSellerProfileRequest
-	1, // 1: seller.SellerService.CreateSeller:input_type -> seller.CreateSellerRequest
-	3, // 2: seller.SellerService.VerifySellerProfile:input_type -> seller.VerifySellerRequest
-	5, // 3: seller.SellerService.CreateListing:input_type -> seller.CreateListingRequest
-	2, // 4: seller.SellerService.GetSellerProfile:output_type -> seller.SellerProfileResponse
-	2, // 5: seller.SellerService.CreateSeller:output_type -> seller.SellerProfileResponse
-	4, // 6: seller.SellerService.VerifySellerProfile:output_type -> seller.VerifySellerResponse
-	6, // 7: seller.SellerService.CreateListing:output_type -> seller.CreateListingResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	8, // 0: seller.SellersPreviewResponse.sellers:type_name -> seller.SellerPreview
+	0, // 1: seller.SellerService.GetSellerProfile:input_type -> seller.GetSellerProfileRequest
+	1, // 2: seller.SellerService.CreateSeller:input_type -> seller.CreateSellerRequest
+	3, // 3: seller.SellerService.VerifySellerProfile:input_type -> seller.VerifySellerRequest
+	5, // 4: seller.SellerService.CreateListing:input_type -> seller.CreateListingRequest
+	7, // 5: seller.SellerService.GetSellersPreview:input_type -> seller.SellersPreviewRequest
+	2, // 6: seller.SellerService.GetSellerProfile:output_type -> seller.SellerProfileResponse
+	2, // 7: seller.SellerService.CreateSeller:output_type -> seller.SellerProfileResponse
+	4, // 8: seller.SellerService.VerifySellerProfile:output_type -> seller.VerifySellerResponse
+	6, // 9: seller.SellerService.CreateListing:output_type -> seller.CreateListingResponse
+	9, // 10: seller.SellerService.GetSellersPreview:output_type -> seller.SellersPreviewResponse
+	6, // [6:11] is the sub-list for method output_type
+	1, // [1:6] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_seller_proto_seller_proto_init() }
@@ -613,7 +768,7 @@ func file_seller_proto_seller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_seller_proto_seller_proto_rawDesc), len(file_seller_proto_seller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

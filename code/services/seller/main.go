@@ -133,6 +133,29 @@ func (s *server) VerifySellerProfile(ctx context.Context, req *proto.VerifySelle
 	return &proto.VerifySellerResponse{IsSeller: true}, nil
 }
 
+func (s *server) GetSellersPreview(ctx context.Context, req *proto.SellersPreviewRequest) (*proto.SellersPreviewResponse, error) {
+	if len(req.SellerIds) == 0 {
+		return &proto.SellersPreviewResponse{Sellers: []*proto.SellerPreview{}}, nil
+	}
+
+	var sellers []Seller
+	if err := db.Where("id IN ?", req.SellerIds).Find(&sellers).Error; err != nil {
+		return nil, status.Error(codes.Internal, "failed to get sellers preview")
+	}
+
+	previews := make([]*proto.SellerPreview, 0, len(sellers))
+	for _, seller := range sellers {
+		previews = append(previews, &proto.SellerPreview{
+			Id:   seller.ID,
+			Name: seller.Name,
+		})
+	}
+
+	return &proto.SellersPreviewResponse{
+		Sellers: previews,
+	}, nil
+}
+
 func initDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {

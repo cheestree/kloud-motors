@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	authpb "services/auth/proto"
 	auctionpb "services/auction/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"
@@ -61,13 +62,22 @@ func registerAuthRoutes() {
 func registerUserRoutes() {
 	http.HandleFunc(routeFavorites, handlers.HandleGetFavorites)
 	http.HandleFunc(routeFavoriteByListingID, handlers.HandleFavoriteListing)
+	http.HandleFunc(routeUsersPreview, handlers.HandleGetUsersPreview)
 }
 
 func registerSellerRoutes() {
 	http.HandleFunc(routeSellerByID, handlers.HandleGetSellerProfile)
+	http.HandleFunc(routeSellersPreview, handlers.HandleGetSellersPreview)
 }
 
 func main() {
+	authConn, err := grpc.NewClient(os.Getenv("AUTH_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to auth service: %v", err)
+	}
+	defer authConn.Close()
+	authClient := authpb.NewAuthServiceClient(authConn)
+
 	listingConn, err := grpc.NewClient(os.Getenv("LISTING_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to listing service: %v", err)
@@ -118,6 +128,7 @@ func main() {
 	auctionClient := auctionpb.NewAuctionServiceClient(auctionConn)
 
 	handlers.SetClients(
+		authClient,
 		listingClient,
 		searchClient,
 		userClient,

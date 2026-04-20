@@ -23,6 +23,7 @@ const (
 	SellerService_CreateSeller_FullMethodName        = "/seller.SellerService/CreateSeller"
 	SellerService_VerifySellerProfile_FullMethodName = "/seller.SellerService/VerifySellerProfile"
 	SellerService_CreateListing_FullMethodName       = "/seller.SellerService/CreateListing"
+	SellerService_GetSellersPreview_FullMethodName   = "/seller.SellerService/GetSellersPreview"
 )
 
 // SellerServiceClient is the client API for SellerService service.
@@ -33,6 +34,7 @@ type SellerServiceClient interface {
 	CreateSeller(ctx context.Context, in *CreateSellerRequest, opts ...grpc.CallOption) (*SellerProfileResponse, error)
 	VerifySellerProfile(ctx context.Context, in *VerifySellerRequest, opts ...grpc.CallOption) (*VerifySellerResponse, error)
 	CreateListing(ctx context.Context, in *CreateListingRequest, opts ...grpc.CallOption) (*CreateListingResponse, error)
+	GetSellersPreview(ctx context.Context, in *SellersPreviewRequest, opts ...grpc.CallOption) (*SellersPreviewResponse, error)
 }
 
 type sellerServiceClient struct {
@@ -83,6 +85,16 @@ func (c *sellerServiceClient) CreateListing(ctx context.Context, in *CreateListi
 	return out, nil
 }
 
+func (c *sellerServiceClient) GetSellersPreview(ctx context.Context, in *SellersPreviewRequest, opts ...grpc.CallOption) (*SellersPreviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SellersPreviewResponse)
+	err := c.cc.Invoke(ctx, SellerService_GetSellersPreview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SellerServiceServer is the server API for SellerService service.
 // All implementations must embed UnimplementedSellerServiceServer
 // for forward compatibility.
@@ -91,6 +103,7 @@ type SellerServiceServer interface {
 	CreateSeller(context.Context, *CreateSellerRequest) (*SellerProfileResponse, error)
 	VerifySellerProfile(context.Context, *VerifySellerRequest) (*VerifySellerResponse, error)
 	CreateListing(context.Context, *CreateListingRequest) (*CreateListingResponse, error)
+	GetSellersPreview(context.Context, *SellersPreviewRequest) (*SellersPreviewResponse, error)
 	mustEmbedUnimplementedSellerServiceServer()
 }
 
@@ -112,6 +125,9 @@ func (UnimplementedSellerServiceServer) VerifySellerProfile(context.Context, *Ve
 }
 func (UnimplementedSellerServiceServer) CreateListing(context.Context, *CreateListingRequest) (*CreateListingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateListing not implemented")
+}
+func (UnimplementedSellerServiceServer) GetSellersPreview(context.Context, *SellersPreviewRequest) (*SellersPreviewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSellersPreview not implemented")
 }
 func (UnimplementedSellerServiceServer) mustEmbedUnimplementedSellerServiceServer() {}
 func (UnimplementedSellerServiceServer) testEmbeddedByValue()                       {}
@@ -206,6 +222,24 @@ func _SellerService_CreateListing_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SellerService_GetSellersPreview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SellersPreviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SellerServiceServer).GetSellersPreview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SellerService_GetSellersPreview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SellerServiceServer).GetSellersPreview(ctx, req.(*SellersPreviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SellerService_ServiceDesc is the grpc.ServiceDesc for SellerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +262,10 @@ var SellerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateListing",
 			Handler:    _SellerService_CreateListing_Handler,
+		},
+		{
+			MethodName: "GetSellersPreview",
+			Handler:    _SellerService_GetSellersPreview_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
