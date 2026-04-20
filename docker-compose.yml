@@ -5,7 +5,7 @@ services:
       context: ./code/services
       dockerfile: gateway/Dockerfile
     ports:
-      - "8080:8080"
+      - "${GATEWAY_HOST_PORT:-8080}:8080"
     environment:
       - LISTING_GRPC_ADDR=${LISTING_GRPC_ADDR}
       - SEARCH_GRPC_ADDR=${SEARCH_GRPC_ADDR}
@@ -42,8 +42,8 @@ services:
       dockerfile: chat/Dockerfile
     restart: on-failure
     ports:
-      - "${CHAT_GRPC_PORT}:${CHAT_GRPC_PORT}"
-      - "${CHAT_WS_PORT}:${CHAT_WS_PORT}"
+      - "${CHAT_GRPC_HOST_PORT:-50052}:${CHAT_GRPC_PORT:-50052}"
+      - "${CHAT_WS_HOST_PORT:-8082}:${CHAT_WS_PORT:-8080}"
     environment:
       POSTGRES_DSN: ${CHAT_DATABASE_URL}
       POSTGRES_SCHEMA: public
@@ -213,9 +213,9 @@ services:
     container_name: user-db
     image: postgres:16
     environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      POSTGRES_USER: ${USER_POSTGRES_USER:-user_user}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD:-user_password}
+      POSTGRES_DB: ${USER_POSTGRES_DB:-user_db}
     ports:
       - "5438:5432"
     healthcheck:

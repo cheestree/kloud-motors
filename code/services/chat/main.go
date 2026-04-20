@@ -15,6 +15,7 @@ import (
 	listingproto "services/listing/proto"
 	sellerproto "services/seller/proto"
 	"strconv"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -47,15 +48,18 @@ func main() {
 	}
 
 	firestoreProjectID := getenv("FIREBASE_PROJECT_ID", getenv("GCP_PROJECT_ID", ""))
-	messageRepo, err := firestore.NewFirestoreMessageRepo(
+	var messageRepo repository.MessageRepo
+	firestoreRepo, err := firestore.NewFirestoreMessageRepo(
 		ctx,
 		firestoreProjectID,
 		getenv("FIRESTORE_MESSAGES_COLLECTION", "messages"),
 	)
 	if err != nil {
-		log.Fatalf("firestore init: %v", err)
+		log.Printf("firestore init failed, continuing without message persistence: %v", err)
+	} else {
+		messageRepo = firestoreRepo
+		defer messageRepo.Close()
 	}
-	defer messageRepo.Close()
 
 	repoConfig := repository.DBConfig{
 		Host:   getenv("POSTGRES_DSN", ""),
@@ -115,7 +119,7 @@ func setupServiceClients() (*serviceClients, error) {
 }
 
 func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, clients *serviceClients) error {
-	grpcPort := getenv("CHAT_GRPC_PORT", "50053")
+	grpcPort := normalizePort(getenv("CHAT_GRPC_PORT", "50052"), "50052")
 	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		return err
@@ -131,7 +135,7 @@ func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIn
 	})
 
 	go func() {
-		log.Printf("gRPC listening on %s", grpcPort)
+		log.Printf("gRPC listening on :%s", grpcPort)
 		if err := grpcSrv.Serve(grpcLis); err != nil {
 			log.Fatalf("grpc serve: %v", err)
 		}
@@ -145,10 +149,33 @@ func setupHTTPWS(hub *ws2.Hub, messageStore repository.MessageRepo, indexStore r
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
 
-	httpWSPort := getenv("CHAT_WS_PORT", "8080")
+	httpWSPort := normalizePort(getenv("CHAT_WS_PORT", "8080"), "8080")
 
 	log.Printf("WS listening on %s", httpWSPort)
 	return http.ListenAndServe(":"+httpWSPort, mux)
+}
+
+func normalizePort(raw, fallback string) string {
+	v := strings.TrimSpace(raw)
+	if v == "" {
+		return fallback
+	}
+
+	if strings.Contains(v, ":") {
+		if _, port, err := net.SplitHostPort(v); err == nil && port != "" {
+			return port
+		}
+		idx := strings.LastIndex(v, ":")
+		if idx >= 0 && idx+1 < len(v) {
+			v = v[idx+1:]
+		}
+	}
+
+	if _, err := strconv.Atoi(v); err != nil {
+		return fallback
+	}
+
+	return v
 }
 
 func getenv(key, fallback string) string {
