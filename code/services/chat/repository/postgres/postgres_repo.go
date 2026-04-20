@@ -1,10 +1,10 @@
 package postgres
 
 import (
+	"services/chat/repository"
 	"context"
 	"fmt"
 	"regexp"
-	"services/chat/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -119,14 +119,6 @@ func (s *RelationalRepo) GetChatsFromListingSeller(ctx context.Context, listingI
 	}
 
 	return chatIDs, nil
-}
-
-func (s *RelationalRepo) DeleteChat(ctx context.Context, chatID string) error {
-	q := fmt.Sprintf(`DELETE FROM %s WHERE chat_id = $1`, s.qualifiedTable())
-	if _, err := s.pool.Exec(ctx, q, chatID); err != nil {
-		return fmt.Errorf("delete chat: %w", err)
-	}
-	return nil
 }
 
 var identRx = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)

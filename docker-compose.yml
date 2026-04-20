@@ -115,7 +115,7 @@ services:
       context: ./code/services
       dockerfile: auth/Dockerfile
     ports:
-      - "50053:50053"
+      - "50050:50050"
     environment:
       DATABASE_URL: ${AUTH_DATABASE_URL}
       JWT_PRIVATE_KEY_B64: ${JWT_PRIVATE_KEY_B64}
@@ -148,24 +148,6 @@ services:
       POSTGRES_USER: ${USER_POSTGRES_USER}
       POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
       POSTGRES_DB: ${USER_POSTGRES_DB}
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
-    volumes:
-      - user_postgres_data:/var/lib/postgresql/data
-
-  auth-db:
-    container_name: auth-db
-    image: postgres:16
-    environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${AUTH_POSTGRES_DB}
     ports:
       - "5438:5432"
     healthcheck:

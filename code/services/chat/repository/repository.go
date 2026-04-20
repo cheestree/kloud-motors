@@ -37,6 +37,5 @@ type ChatIndexRepo interface {
 	ListUserChats(ctx context.Context, userID int64) ([]ChatSummary, error)
 	UserCanAccessChat(ctx context.Context, userID int64, chatID string) (bool, error)
 	GetChatsFromListingSeller(ctx context.Context, listingID, sellerId int64) ([]string, error)
-	DeleteChat(ctx context.Context, chatID string) error
 	Close() error
 }

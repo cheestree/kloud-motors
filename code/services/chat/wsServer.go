@@ -1,14 +1,14 @@
 package main
 
 import (
+	"services/chat/repository"
+	"services/chat/ws"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"services/chat/repository"
-	"services/chat/ws"
 	"strconv"
 	"strings"
 	"time"

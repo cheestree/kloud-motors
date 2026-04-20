@@ -21,6 +21,7 @@ COLUMN_MAP: Dict[str, str] = {
     "msrp":                   "msrp",
     "mileage":                "mileage",
     "isNew":                  "is_new",
+    "isSold":                 "is_sold",
     "color":                  "color",
     "interiorColor":          "interior_color",
     "brandName":              "brand_name",
@@ -62,6 +63,16 @@ def rename_and_select(df: pd.DataFrame, faker: Optional[Faker] = None) -> pd.Dat
             if col not in out.columns:
                 out[col] = pd.NA
         out = out[list(COLUMN_MAP.values())]
+
+    # is_sold defaults to false when not provided in the source CSV.
+    if "is_sold" not in out.columns:
+        out["is_sold"] = False
+    else:
+        out["is_sold"] = out["is_sold"].map(
+            lambda v: str(v).strip().lower() in {"1", "true", "t", "yes", "y"}
+            if pd.notna(v)
+            else False
+        )
     if faker is not None:
         districts = []
         cities = []

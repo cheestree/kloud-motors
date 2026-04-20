@@ -1,6 +1,11 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net"
+	"net/http"
+	"os"
 	"services/chat/proto"
 	pubsub2 "services/chat/pubsub"
 	"services/chat/repository"
@@ -9,11 +14,6 @@ import (
 	ws2 "services/chat/ws"
 	listingproto "services/listing/proto"
 	sellerproto "services/seller/proto"
-	"context"
-	"log"
-	"net"
-	"net/http"
-	"os"
 	"strconv"
 
 	"google.golang.org/grpc"
