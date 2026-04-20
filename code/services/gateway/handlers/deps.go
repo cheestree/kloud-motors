@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	authpb "services/auth/proto"
 	auctionpb "services/auction/proto"
+	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
 	geopb "services/geographic-maket-insights/proto"
 	listingpb "services/listing/proto"
@@ -12,14 +12,14 @@ import (
 )
 
 var (
-	authClient    authpb.AuthServiceClient
-	listingClient listingpb.ListingServiceClient
-	searchClient  searchpb.SearchServiceClient
-	userClient    userpb.UserServiceClient
-	sellerClient  sellerpb.SellerServiceClient
-	chatClient    chatpb.ChatServiceClient
-	geoClient     geopb.GeoMarketInsightsServiceClient
-	auctionClient auctionpb.AuctionServiceClient
+	authClient     authpb.AuthServiceClient
+	listingClient  listingpb.ListingServiceClient
+	searchClient   searchpb.SearchServiceClient
+	userClient     userpb.UserServiceClient
+	sellerClient   sellerpb.SellerServiceClient
+	chatClient     chatpb.ChatServiceClient
+	geoClient      geopb.GeoMarketInsightsServiceClient
+	auctionClient  auctionpb.AuctionServiceClient
 	chatWSUpstream string
 )
 
@@ -47,4 +47,3 @@ func SetClients(
 func SetChatWSUpstream(upstream string) {
 	chatWSUpstream = upstream
 }
-

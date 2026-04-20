@@ -1,9 +1,9 @@
 package firestore
 
 import (
-	"services/chat/repository"
 	"context"
 	"fmt"
+	"services/chat/repository"
 	"time"
 
 	"cloud.google.com/go/firestore"

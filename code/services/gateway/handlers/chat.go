@@ -51,7 +51,7 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func HandleGetActiveChats(w http.ResponseWriter, r *http.Request) {
+func HandleGetChats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 		return
@@ -64,8 +64,8 @@ func HandleGetActiveChats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	req := &chatpb.GetActiveChatsRequest{UserId: userID}
-	resp, err := chatClient.GetActiveChats(ctx, req)
+	req := &chatpb.GetChatsRequest{UserId: userID}
+	resp, err := chatClient.GetChats(ctx, req)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

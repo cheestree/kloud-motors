@@ -38,7 +38,7 @@ func registerListingRoutes() {
 }
 
 func registerChatRoutes() {
-	http.HandleFunc(routeGetActiveChats, handlers.HandleGetActiveChats)
+	http.HandleFunc(routeGetChats, handlers.HandleGetChats)
 	http.HandleFunc(routeChatOpen, handlers.HandleChatOpen)
 	http.HandleFunc(routeChatByID, handlers.HandleChatHistory)
 	http.HandleFunc(routeChatWS, handlers.HandleChatWebSocket)

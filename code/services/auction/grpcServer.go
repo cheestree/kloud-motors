@@ -9,13 +9,13 @@ import (
 	"time"
 
 	proto "services/auction/proto"
-	listingproto "services/listing/proto"
 	ws2 "services/auction/ws"
+	listingproto "services/listing/proto"
 )
 
 type server struct {
 	proto.UnimplementedAuctionServiceServer
-	hub *ws2.Hub
+	hub           *ws2.Hub
 	listingClient listingproto.ListingServiceClient
 }
 
@@ -64,15 +64,15 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 	var protoAuctions []*proto.Auction
 	for rows.Next() {
 		var (
-			id, status string
+			id, status          string
 			listingId, sellerId int64
-			startingPrice                   float64
-			currentPrice                    sql.NullFloat64
-			endTime                         time.Time
-			winnerUserId                    sql.NullString
-			createdAt                       time.Time
-			reserveMet                      bool
-			totalBids                       int32
+			startingPrice       float64
+			currentPrice        sql.NullFloat64
+			endTime             time.Time
+			winnerUserId        sql.NullString
+			createdAt           time.Time
+			reserveMet          bool
+			totalBids           int32
 		)
 
 		if err := rows.Scan(&id, &listingId, &sellerId, &startingPrice, &currentPrice, &status, &endTime, &winnerUserId, &createdAt, &reserveMet, &totalBids); err != nil {
@@ -194,15 +194,15 @@ func (s *server) GetAuctionDetails(ctx context.Context, req *proto.GetAuctionReq
 	          FROM auctions WHERE id = $1`
 
 	var (
-		id, status string
+		id, status          string
 		listingId, sellerId int64
-		startingPrice                   float64
-		currentPrice                    sql.NullFloat64
-		endTime                         time.Time
-		winnerUserId                    sql.NullString
-		createdAt                       time.Time
-		reserveMet                      bool
-		totalBids                       int32
+		startingPrice       float64
+		currentPrice        sql.NullFloat64
+		endTime             time.Time
+		winnerUserId        sql.NullString
+		createdAt           time.Time
+		reserveMet          bool
+		totalBids           int32
 	)
 
 	err := db.QueryRowContext(ctx, query, req.AuctionId).Scan(
@@ -320,7 +320,7 @@ func (s *server) PlaceBid(ctx context.Context, req *proto.PlaceBidRequest) (*pro
 
 	// 3. Insert the bid and get back the generated id
 	var (
-		newBidID    string
+		newBidID     string
 		bidTimestamp time.Time
 	)
 	err = db.QueryRowContext(ctx,

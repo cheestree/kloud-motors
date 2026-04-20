@@ -104,7 +104,7 @@ func main() {
 	}()
 
 	// ── HTTP / WebSocket ──────────────────────────────────────────────────────
-	ws := &wsServer{hub: hub, messageStore: messageRepo, indexStore: relationalRepo}
+	ws := &wsServer{hub: hub, messageStore: messageRepo, indexStore: relationalRepo, listingClient: listingClient}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
 
