@@ -10,6 +10,8 @@ resources:
   - common/postgres.yaml
   - listing
   - search
+  - chat
+  - geographic-market-insights
   - auth
   - user
   - seller
