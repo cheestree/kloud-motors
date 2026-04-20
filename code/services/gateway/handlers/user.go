@@ -9,43 +9,6 @@ import (
 	userpb "services/user/proto"
 )
 
-func HandleRegisterUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
-		return
-	}
-	var req userpb.RegisterUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, msgInvalidBody, http.StatusBadRequest)
-		return
-	}
-	ctx := context.Background()
-	resp, err := userClient.RegisterUser(ctx, &req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, http.StatusOK, resp)
-}
-
-func HandleLoginUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
-		return
-	}
-	var req userpb.LoginUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, msgInvalidBody, http.StatusBadRequest)
-		return
-	}
-	ctx := context.Background()
-	resp, err := userClient.LoginUser(ctx, &req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, http.StatusOK, resp)
-}
 
 func HandleGetFavorites(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -100,4 +63,23 @@ func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
 	}
+}
+
+func HandleGetUsersPreview(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		return
+	}
+	var req userpb.UsersPreviewRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, msgInvalidBody, http.StatusBadRequest)
+		return
+	}
+	ctx := context.Background()
+	resp, err := userClient.GetUsersPreview(ctx, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
 }

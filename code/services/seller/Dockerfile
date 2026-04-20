@@ -12,5 +12,5 @@ RUN go build -o seller-service .
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/seller/seller-service .
-EXPOSE 50054
+EXPOSE 50057
 CMD ["./seller-service"]

@@ -12,5 +12,5 @@ RUN go build -o geographic-maket-insights-service main.go
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/geographic-maket-insights/geographic-maket-insights-service .
-EXPOSE 50052
+EXPOSE 50053
 CMD ["./geographic-maket-insights-service"]

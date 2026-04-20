@@ -4,28 +4,21 @@ package user;
 option go_package = "./proto";
 
 service UserService {
-    rpc RegisterUser (RegisterUserRequest) returns (AuthResponse);
-    rpc LoginUser (LoginUserRequest) returns (AuthResponse);
     rpc GetFavorites (GetFavoritesRequest) returns (FavoritesResponse);
     rpc AddFavorite (AddFavoriteRequest) returns (FavoriteMutationResponse);
     rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
-    rpc CheckUserExists (CheckUserExistsRequest) returns (CheckUserExistsResponse);
+    rpc GetUsersPreview (UsersPreviewRequest) returns (UsersPreviewResponse);
+    rpc CreateUserProfile (CreateUserProfileRequest) returns (CreateUserProfileResponse);
 }
 
-message RegisterUserRequest {
-    string name = 1;
-    string email = 2;
-    string password = 3;
-}
-
-message LoginUserRequest {
-    string email = 1;
-    string password = 2;
-}
-
-message AuthResponse {
+message CreateUserProfileRequest {
     int64 user_id = 1;
-    string token = 2;
+    string name = 2;
+    string email = 3;
+}
+
+message CreateUserProfileResponse {
+    bool success = 1;
 }
 
 message GetFavoritesRequest {
@@ -51,10 +44,15 @@ message FavoriteMutationResponse {
     string message = 2;
 }
 
-message CheckUserExistsRequest {
-    string email = 1;
+message UsersPreviewRequest {
+    repeated int64 user_ids = 1;
 }
 
-message CheckUserExistsResponse {
-    bool exists = 1;
+message UserPreview {
+    int64 id = 1;
+    string name = 2;
+}
+
+message UsersPreviewResponse {
+    repeated UserPreview users = 1;
 }

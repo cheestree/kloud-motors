@@ -31,4 +31,6 @@ const (
 	routeFavorites               = routePrefixUsersMe + "/favorites"
 	routeFavoriteByListingID     = routePrefixUsersMe + "/favorites/"
 	routeSellerByID              = routePrefixSellers + "/"
+	routeUsersPreview            = routeBaseAPI + "/users/preview"
+	routeSellersPreview          = routePrefixSellers + "/preview"
 )

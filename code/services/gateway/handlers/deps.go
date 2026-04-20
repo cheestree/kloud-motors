@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	authpb "services/auth/proto"
 	auctionpb "services/auction/proto"
 	chatpb "services/chat/proto"
 	geopb "services/geographic-maket-insights/proto"
@@ -11,6 +12,7 @@ import (
 )
 
 var (
+	authClient    authpb.AuthServiceClient
 	listingClient listingpb.ListingServiceClient
 	searchClient  searchpb.SearchServiceClient
 	userClient    userpb.UserServiceClient
@@ -22,6 +24,7 @@ var (
 
 // SetClients wires service clients from main into the handlers package
 func SetClients(
+	auth authpb.AuthServiceClient,
 	listing listingpb.ListingServiceClient,
 	search searchpb.SearchServiceClient,
 	user userpb.UserServiceClient,
@@ -30,6 +33,7 @@ func SetClients(
 	geo geopb.GeoMarketInsightsServiceClient,
 	auction auctionpb.AuctionServiceClient,
 ) {
+	authClient = auth
 	listingClient = listing
 	searchClient = search
 	userClient = user

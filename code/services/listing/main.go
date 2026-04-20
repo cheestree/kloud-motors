@@ -153,7 +153,7 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	lis, err := net.Listen("tcp", ":50052")
+	lis, err := net.Listen("tcp", ":50054")
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}

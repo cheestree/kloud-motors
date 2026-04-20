@@ -10,6 +10,7 @@ COPY ./listing/proto                 ./listing/proto
 COPY ./search/proto                  ./search/proto
 COPY ./seller/proto                  ./seller/proto
 COPY ./user/proto                    ./user/proto
+COPY ./auth/proto                    ./auth/proto
 COPY ./chat/proto                    ./chat/proto
 COPY ./geographic-maket-insights/proto ./geographic-maket-insights/proto
 COPY ./auction/proto                 ./auction/proto
