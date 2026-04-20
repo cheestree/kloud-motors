@@ -14,3 +14,6 @@ venv/
 # Go workspace files
 go.work
 go.work.sum
+
+# Proto files
+*.pb.go
