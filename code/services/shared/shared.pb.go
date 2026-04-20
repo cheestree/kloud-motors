@@ -39,6 +39,8 @@ type ListingSummary struct {
 	State         string                 `protobuf:"bytes,14,opt,name=state,proto3" json:"state,omitempty"`
 	Country       string                 `protobuf:"bytes,15,opt,name=country,proto3" json:"country,omitempty"`
 	LastSeen      string                 `protobuf:"bytes,16,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	IsSold        bool                   `protobuf:"varint,17,opt,name=is_sold,json=isSold,proto3" json:"is_sold,omitempty"`
+	DealerId      int32                  `protobuf:"varint,18,opt,name=dealer_id,json=dealerId,proto3" json:"dealer_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -185,6 +187,20 @@ func (x *ListingSummary) GetLastSeen() string {
 	return ""
 }
 
+func (x *ListingSummary) GetIsSold() bool {
+	if x != nil {
+		return x.IsSold
+	}
+	return false
+}
+
+func (x *ListingSummary) GetDealerId() int32 {
+	if x != nil {
+		return x.DealerId
+	}
+	return 0
+}
+
 type ListingDetails struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -209,6 +225,7 @@ type ListingDetails struct {
 	Description   string                 `protobuf:"bytes,20,opt,name=description,proto3" json:"description,omitempty"`
 	Images        []string               `protobuf:"bytes,21,rep,name=images,proto3" json:"images,omitempty"`
 	LastSeen      string                 `protobuf:"bytes,22,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	IsSold        bool                   `protobuf:"varint,23,opt,name=is_sold,json=isSold,proto3" json:"is_sold,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -397,11 +414,18 @@ func (x *ListingDetails) GetLastSeen() string {
 	return ""
 }
 
+func (x *ListingDetails) GetIsSold() bool {
+	if x != nil {
+		return x.IsSold
+	}
+	return false
+}
+
 var File_shared_shared_proto protoreflect.FileDescriptor
 
 const file_shared_shared_proto_rawDesc = "" +
 	"\n" +
-	"\x13shared/shared.proto\x12\x06shared\"\xa1\x03\n" +
+	"\x13shared/shared.proto\x12\x06shared\"\xd7\x03\n" +
 	"\x0eListingSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04make\x18\x02 \x01(\tR\x04make\x12\x14\n" +
@@ -421,7 +445,9 @@ const file_shared_shared_proto_rawDesc = "" +
 	"\bdistrict\x18\r \x01(\tR\bdistrict\x12\x14\n" +
 	"\x05state\x18\x0e \x01(\tR\x05state\x12\x18\n" +
 	"\acountry\x18\x0f \x01(\tR\acountry\x12\x1b\n" +
-	"\tlast_seen\x18\x10 \x01(\tR\blastSeen\"\xb8\x04\n" +
+	"\tlast_seen\x18\x10 \x01(\tR\blastSeen\x12\x17\n" +
+	"\ais_sold\x18\x11 \x01(\bR\x06isSold\x12\x1b\n" +
+	"\tdealer_id\x18\x12 \x01(\x05R\bdealerId\"\xd1\x04\n" +
 	"\x0eListingDetails\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
 	"\x03vin\x18\x02 \x01(\tR\x03vin\x12\x12\n" +
@@ -448,7 +474,8 @@ const file_shared_shared_proto_rawDesc = "" +
 	"sellerType\x12 \n" +
 	"\vdescription\x18\x14 \x01(\tR\vdescription\x12\x16\n" +
 	"\x06images\x18\x15 \x03(\tR\x06images\x12\x1b\n" +
-	"\tlast_seen\x18\x16 \x01(\tR\blastSeenB\x11Z\x0fservices/sharedb\x06proto3"
+	"\tlast_seen\x18\x16 \x01(\tR\blastSeen\x12\x17\n" +
+	"\ais_sold\x18\x17 \x01(\bR\x06isSoldB\x11Z\x0fservices/sharedb\x06proto3"
 
 var (
 	file_shared_shared_proto_rawDescOnce sync.Once

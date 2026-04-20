@@ -38,6 +38,7 @@ type SearchRequest struct {
 	IsNew         *wrapperspb.BoolValue  `protobuf:"bytes,11,opt,name=is_new,json=isNew,proto3" json:"is_new,omitempty"`
 	Page          int32                  `protobuf:"varint,12,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int32                  `protobuf:"varint,13,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	IncludeSold   *wrapperspb.BoolValue  `protobuf:"bytes,14,opt,name=include_sold,json=includeSold,proto3" json:"include_sold,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -163,6 +164,13 @@ func (x *SearchRequest) GetPageSize() int32 {
 	return 0
 }
 
+func (x *SearchRequest) GetIncludeSold() *wrapperspb.BoolValue {
+	if x != nil {
+		return x.IncludeSold
+	}
+	return nil
+}
+
 type SearchResponse struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	Total         int32                    `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
@@ -235,7 +243,7 @@ var File_search_proto_search_proto protoreflect.FileDescriptor
 
 const file_search_proto_search_proto_rawDesc = "" +
 	"\n" +
-	"\x19search/proto/search.proto\x12\x06search\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x13shared/shared.proto\"\x8b\x03\n" +
+	"\x19search/proto/search.proto\x12\x06search\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x13shared/shared.proto\"\xca\x03\n" +
 	"\rSearchRequest\x12\x12\n" +
 	"\x04make\x18\x01 \x01(\tR\x04make\x12\x14\n" +
 	"\x05model\x18\x02 \x01(\tR\x05model\x12\x12\n" +
@@ -253,7 +261,8 @@ const file_search_proto_search_proto_rawDesc = "" +
 	" \x01(\tR\ftransmission\x121\n" +
 	"\x06is_new\x18\v \x01(\v2\x1a.google.protobuf.BoolValueR\x05isNew\x12\x12\n" +
 	"\x04page\x18\f \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\r \x01(\x05R\bpageSize\"\x8b\x01\n" +
+	"\tpage_size\x18\r \x01(\x05R\bpageSize\x12=\n" +
+	"\finclude_sold\x18\x0e \x01(\v2\x1a.google.protobuf.BoolValueR\vincludeSold\"\x8b\x01\n" +
 	"\x0eSearchResponse\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x05R\x05total\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x1b\n" +
@@ -283,14 +292,15 @@ var file_search_proto_search_proto_goTypes = []any{
 }
 var file_search_proto_search_proto_depIdxs = []int32{
 	2, // 0: search.SearchRequest.is_new:type_name -> google.protobuf.BoolValue
-	3, // 1: search.SearchResponse.listings:type_name -> shared.ListingSummary
-	0, // 2: search.SearchService.Search:input_type -> search.SearchRequest
-	1, // 3: search.SearchService.Search:output_type -> search.SearchResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 1: search.SearchRequest.include_sold:type_name -> google.protobuf.BoolValue
+	3, // 2: search.SearchResponse.listings:type_name -> shared.ListingSummary
+	0, // 3: search.SearchService.Search:input_type -> search.SearchRequest
+	1, // 4: search.SearchService.Search:output_type -> search.SearchResponse
+	4, // [4:5] is the sub-list for method output_type
+	3, // [3:4] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_search_proto_search_proto_init() }

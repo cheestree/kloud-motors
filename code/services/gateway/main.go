@@ -29,6 +29,7 @@ func registerRoutes() {
 }
 
 func registerListingRoutes() {
+	http.HandleFunc(routeListings, handlers.HandleListings)
 	http.HandleFunc(routeListingsSearch, handlers.HandleSearch)
 	http.HandleFunc(routeListingsCompare, handlers.HandleCompare)
 	http.HandleFunc(routeListingsByID, handlers.HandleGetListing)
