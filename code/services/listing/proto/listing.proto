@@ -143,4 +143,5 @@ message CheckListingOpenRequest {
 
 message CheckListingOpenResponse {
     bool is_open = 1;
+    int64 dealer_id = 2;
 }

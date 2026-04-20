@@ -143,18 +143,67 @@ func (s *ListingService) GetListingSummary(ctx context.Context, id int64) (*shar
 	return summary, nil
 }
 
-func (s *ListingService) CheckListingOpen(ctx context.Context, id int64) (bool, error) {
-	if id <= 0 {
-		return false, fmt.Errorf("invalid ID: must be a positive integer")
+func (s *ListingService) GetListingSummaries(ctx context.Context, ids []int64) ([]*shared.ListingSummary, error) {
+	if len(ids) == 0 {
+		return []*shared.ListingSummary{}, nil
 	}
-	open, err := s.repository.CheckListingOpen(ctx, id)
+	for _, id := range ids {
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid ID: must be a positive integer")
+		}
+	}
+
+	listings, err := s.repository.GetListingSummaries(ctx, ids)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	if !open {
-		return false, ErrListingNotFound
+	if len(listings) != len(ids) {
+		return nil, ErrListingNotFound
 	}
-	return open, nil
+
+	return listings, nil
+}
+
+func (s *ListingService) CheckListingOpen(ctx context.Context, id int64) (bool, int64, error) {
+	if id <= 0 {
+		return false, 0, fmt.Errorf("invalid ID: must be a positive integer")
+	}
+	open, dealerID, err := s.repository.CheckListingOpen(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, 0, ErrListingNotFound
+		}
+		return false, 0, err
+	}
+	return open, dealerID, nil
+}
+
+func validateListingMutation(listing repository.ListingMutation) error {
+	if strings.TrimSpace(listing.Vin) == "" {
+		return fmt.Errorf("vin is required")
+	}
+	if strings.TrimSpace(listing.Make) == "" {
+		return fmt.Errorf("make is required")
+	}
+	if strings.TrimSpace(listing.Model) == "" {
+		return fmt.Errorf("model is required")
+	}
+	if listing.DealerID <= 0 {
+		return fmt.Errorf("dealer_id must be a positive integer")
+	}
+	if listing.Year <= 0 {
+		return fmt.Errorf("year must be a positive integer")
+	}
+	if listing.Year < 1886 || listing.Year > 2100 {
+		return fmt.Errorf("year must be between 1886 and 2100")
+	}
+	if listing.Price < 0 {
+		return fmt.Errorf("price cannot be negative")
+	}
+	if listing.Mileage < 0 {
+		return fmt.Errorf("mileage cannot be negative")
+	}
+	return nil
 }
 
 var ErrListingNotFound = fmt.Errorf("listing not found")
