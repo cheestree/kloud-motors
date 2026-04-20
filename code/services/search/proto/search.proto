@@ -7,8 +7,8 @@ option go_package = "services/search/proto";
 
 
 service SearchService {
-    // Search for car listings based on various criteria such as make, model, year, price range, mileage, fuel type, and location.
-    rpc Search (SearchRequest) returns (SearchResponse);
+  // Search for car listings based on various criteria such as make, model, year, price range, mileage, fuel type, and location.
+  rpc Search (SearchRequest) returns (SearchResponse);
 }
 
 message SearchRequest {

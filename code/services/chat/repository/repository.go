@@ -36,5 +36,7 @@ type ChatIndexRepo interface {
 	UpsertChatParticipant(ctx context.Context, userID, sellerID, listingID int64, brand, model string) (string, error)
 	ListUserChats(ctx context.Context, userID int64) ([]ChatSummary, error)
 	UserCanAccessChat(ctx context.Context, userID int64, chatID string) (bool, error)
+	GetListingIDByChat(ctx context.Context, userID int64, chatID string) (int64, error)
+	GetChatsFromListingSeller(ctx context.Context, listingID, sellerId int64) ([]string, error)
 	Close() error
 }

@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: gcr.io/PROJECT_ID/gateway:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # JWT — segredo partilhado com o auth service
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: gateway-secrets
+                  key: jwt-secret
+
+            # Endereços gRPC dos microserviços (ClusterIP internos)
+            - name: LISTING_GRPC_ADDR
+              value: "listing:50054"
+            - name: SEARCH_GRPC_ADDR
+              value: "search:50055"
+            - name: USER_GRPC_ADDR
+              value: "user:50056"
+            - name: SELLER_GRPC_ADDR
+              value: "seller:50057"
+            - name: CHAT_GRPC_ADDR
+              value: "chat:50052"
+            - name: GEO_GRPC_ADDR
+              value: "geographic-market-insights:50053"
+            - name: AUCTION_GRPC_ADDR
+              value: "auction:50058"
+
+            # Endereço HTTP/WS do chat service — para proxy de WebSocket
+            - name: CHAT_WS_ADDR
+              value: "chat:8080"
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+spec:
+  selector:
+    app: gateway
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# kubectl create secret generic gateway-secrets \
+#   --from-literal=jwt-secret=MY_STRONG_SECRET
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gateway-secrets
+type: Opaque
+stringData:
+  jwt-secret: "REPLACE_ME"

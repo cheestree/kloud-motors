@@ -12,14 +12,15 @@ import (
 )
 
 var (
-	authClient    authpb.AuthServiceClient
-	listingClient listingpb.ListingServiceClient
-	searchClient  searchpb.SearchServiceClient
-	userClient    userpb.UserServiceClient
-	sellerClient  sellerpb.SellerServiceClient
-	chatClient    chatpb.ChatServiceClient
-	geoClient     geopb.GeoMarketInsightsServiceClient
-	auctionClient auctionpb.AuctionServiceClient
+	authClient     authpb.AuthServiceClient
+	listingClient  listingpb.ListingServiceClient
+	searchClient   searchpb.SearchServiceClient
+	userClient     userpb.UserServiceClient
+	sellerClient   sellerpb.SellerServiceClient
+	chatClient     chatpb.ChatServiceClient
+	geoClient      geopb.GeoMarketInsightsServiceClient
+	auctionClient  auctionpb.AuctionServiceClient
+	chatWSUpstream string
 )
 
 // SetClients wires service clients from main into the handlers package
@@ -41,4 +42,8 @@ func SetClients(
 	chatClient = chat
 	geoClient = geo
 	auctionClient = auction
+}
+
+func SetChatWSUpstream(upstream string) {
+	chatWSUpstream = upstream
 }

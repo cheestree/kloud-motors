@@ -12,9 +12,9 @@ service UserService {
 }
 
 message CreateUserProfileRequest {
-    int64 user_id = 1;
-    string name = 2;
-    string email = 3;
+  int64 user_id = 1;
+  string name = 2;
+  string email = 3;
 }
 
 message CreateUserProfileResponse {
@@ -22,35 +22,35 @@ message CreateUserProfileResponse {
 }
 
 message GetFavoritesRequest {
-    int64 user_id = 1;
+  int64 user_id = 1;
 }
 
 message FavoritesResponse {
-    repeated int64 favorites = 1;
+  repeated int64 favorites = 1;
 }
 
 message AddFavoriteRequest {
-    int64 user_id = 1;
-    int64 listing_id = 2;
+  int64 user_id = 1;
+  int64 listing_id = 2;
 }
 
 message RemoveFavoriteRequest {
-    int64 user_id = 1;
-    int64 listing_id = 2;
+  int64 user_id = 1;
+  int64 listing_id = 2;
 }
 
 message FavoriteMutationResponse {
-    bool success = 1;
-    string message = 2;
+  bool success = 1;
+  string message = 2;
 }
 
 message UsersPreviewRequest {
-    repeated int64 user_ids = 1;
+  repeated int64 user_ids = 1;
 }
 
 message UserPreview {
-    int64 id = 1;
-    string name = 2;
+  int64 id = 1;
+  string name = 2;
 }
 
 message UsersPreviewResponse {

@@ -1,6 +1,11 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net"
+	"net/http"
+	"os"
 	"services/chat/proto"
 	pubsub2 "services/chat/pubsub"
 	"services/chat/repository"
@@ -9,20 +14,25 @@ import (
 	ws2 "services/chat/ws"
 	listingproto "services/listing/proto"
 	sellerproto "services/seller/proto"
-	"context"
-	"log"
-	"net"
-	"net/http"
-	"os"
 	"strconv"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+type serviceClients struct {
+	listingConn   *grpc.ClientConn
+	sellerConn    *grpc.ClientConn
+	listingClient listingproto.ListingServiceClient
+	sellerClient  sellerproto.SellerServiceClient
+}
+
 func main() {
+	ctx := context.Background()
+
 	nodeID := getenv("POD_ID", localNodeID())
-	pubsub, err := pubsub2.NewGCPPubSub(context.Background(), pubsub2.GCPPubSubConfig{
+	pubsub, err := pubsub2.NewGCPPubSub(ctx, pubsub2.GCPPubSubConfig{
 		ProjectID:       getenv("GCP_PROJECT_ID", ""),
 		TopicID:         getenv("GCP_PUBSUB_TOPIC", "chat-events"),
 		SubscriptionID:  getenv("GCP_PUBSUB_SUBSCRIPTION", "chat-sub-"+nodeID),
@@ -31,27 +41,32 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("pubsub init: %v", err)
+		log.Printf("pubsub init failed, continuing without distributed WS: %v", err)
 	}
-	defer pubsub.Close()
+	if pubsub != nil {
+		defer pubsub.Close()
+	}
 
 	firestoreProjectID := getenv("FIREBASE_PROJECT_ID", getenv("GCP_PROJECT_ID", ""))
-	messageRepo, err := firestore.NewFirestoreMessageRepo(
-		context.Background(),
+	var messageRepo repository.MessageRepo
+	firestoreRepo, err := firestore.NewFirestoreMessageRepo(
+		ctx,
 		firestoreProjectID,
 		getenv("FIRESTORE_MESSAGES_COLLECTION", "messages"),
 	)
 	if err != nil {
-		log.Fatalf("firestore init: %v", err)
+		log.Printf("firestore init failed, continuing without message persistence: %v", err)
+	} else {
+		messageRepo = firestoreRepo
+		defer messageRepo.Close()
 	}
-	defer messageRepo.Close()
 
 	repoConfig := repository.DBConfig{
 		Host:   getenv("POSTGRES_DSN", ""),
 		Schema: getenv("POSTGRES_SCHEMA", "chat-db"),
 		Table:  getenv("POSTGRES_TABLE", "chat"),
 	}
-	relationalRepo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
+	relationalRepo, err := postgres.NewPostgresRepo(ctx, repoConfig)
 
 	if err != nil {
 		log.Fatalf("postgres init: %v", err)
@@ -60,58 +75,107 @@ func main() {
 
 	hub := ws2.NewHub(pubsub)
 
-	// ── gRPC (OpenChat, GetChatHistory) ──────────────────────────────────────
-	grpcLis, err := net.Listen("tcp", ":50052")
+
+	clients, err := setupServiceClients()
 	if err != nil {
-		log.Fatalf("grpc listen: %v", err)
+		log.Fatalf("service clients init: %v", err)
+	}
+	defer clients.listingConn.Close()
+	defer clients.sellerConn.Close()
+
+	if err := setupGRPC(messageRepo, relationalRepo, clients); err != nil {
+		log.Fatalf("grpc setup: %v", err)
 	}
 
+	if err := setupHTTPWS(hub, messageRepo, relationalRepo, clients.listingClient); err != nil {
+		log.Fatalf("http serve: %v", err)
+	}
+}
+
+func setupServiceClients() (*serviceClients, error) {
 	listingConn, err := grpc.NewClient(
 		getenv("LISTING_SERVICE_ADDR", "localhost:50054"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to listing service: %v", err)
+		return nil, err
 	}
-	defer listingConn.Close()
 
 	sellerConn, err := grpc.NewClient(
 		getenv("SELLER_SERVICE_ADDR", "localhost:50057"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to seller service: %v", err)
+		_ = listingConn.Close()
+		return nil, err
 	}
-	defer sellerConn.Close()
 
-	listingClient := listingproto.NewListingServiceClient(listingConn)
-	sellerClient := sellerproto.NewSellerServiceClient(sellerConn)
+	return &serviceClients{
+		listingConn:   listingConn,
+		sellerConn:    sellerConn,
+		listingClient: listingproto.NewListingServiceClient(listingConn),
+		sellerClient:  sellerproto.NewSellerServiceClient(sellerConn),
+	}, nil
+}
+
+func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, clients *serviceClients) error {
+	grpcPort := normalizePort(getenv("CHAT_GRPC_PORT", "50052"), "50052")
+	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		return err
+	}
 
 	grpcSrv := grpc.NewServer()
 	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{
-		messageStore:  messageRepo,
-		indexStore:    relationalRepo,
+		messageStore:  messageStore,
+		indexStore:    indexStore,
 		historyLimit:  getenvInt32("CHAT_HISTORY_LIMIT", int32(50)),
-		listingClient: listingClient,
-		sellerClient:  sellerClient,
+		listingClient: clients.listingClient,
+		sellerClient:  clients.sellerClient,
 	})
 
 	go func() {
-		log.Println("gRPC listening on :50052")
+		log.Printf("gRPC listening on :%s", grpcPort)
 		if err := grpcSrv.Serve(grpcLis); err != nil {
 			log.Fatalf("grpc serve: %v", err)
 		}
 	}()
 
-	// ── HTTP / WebSocket ──────────────────────────────────────────────────────
-	ws := &wsServer{hub: hub, messageStore: messageRepo, indexStore: relationalRepo}
+	return nil
+}
+
+func setupHTTPWS(hub *ws2.Hub, messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, listingClient listingproto.ListingServiceClient) error {
+	ws := &wsServer{hub: hub, messageStore: messageStore, indexStore: indexStore, listingClient: listingClient}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
 
-	log.Println("WS listening on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		log.Fatalf("http serve: %v", err)
+	httpWSPort := normalizePort(getenv("CHAT_WS_PORT", "8080"), "8080")
+
+	log.Printf("WS listening on %s", httpWSPort)
+	return http.ListenAndServe(":"+httpWSPort, mux)
+}
+
+func normalizePort(raw, fallback string) string {
+	v := strings.TrimSpace(raw)
+	if v == "" {
+		return fallback
 	}
+
+	if strings.Contains(v, ":") {
+		if _, port, err := net.SplitHostPort(v); err == nil && port != "" {
+			return port
+		}
+		idx := strings.LastIndex(v, ":")
+		if idx >= 0 && idx+1 < len(v) {
+			v = v[idx+1:]
+		}
+	}
+
+	if _, err := strconv.Atoi(v); err != nil {
+		return fallback
+	}
+
+	return v
 }
 
 func getenv(key, fallback string) string {

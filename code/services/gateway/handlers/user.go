@@ -9,7 +9,6 @@ import (
 	userpb "services/user/proto"
 )
 
-
 func HandleGetFavorites(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)

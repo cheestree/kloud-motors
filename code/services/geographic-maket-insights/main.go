@@ -16,9 +16,9 @@ import (
 
 func main() {
 	grpcPort := getenv("GEO_GRPC_PORT", "50053")
-	postgresDSN := getenv("GEO_DATABASE_URL", "")
+	postgresDSN := getenv("GEO_DATABASE_URL", getenv("LISTING_DATABASE_URL", ""))
 	if postgresDSN == "" {
-		log.Fatal("GEO_DATABASE_URL is required")
+		log.Fatal("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")
 	}
 
 	repoConfig := repository.DBConfig{
@@ -26,7 +26,7 @@ func main() {
 		Table:        getenv("POSTGRES_TABLE", "automotive_data"),
 		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
 		MaxLimit:     getenvInt("MAX_LIMIT", 100),
-		Dsn:          getenv("GEO_DATABASE_URL", "localhost"),
+		Dsn:          postgresDSN,
 	}
 
 	repo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
