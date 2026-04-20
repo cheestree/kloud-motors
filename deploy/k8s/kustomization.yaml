@@ -11,6 +11,8 @@ resources:
   - common/auction-secrets.yaml
   - listing
   - search
+  - chat
+  - geographic-market-insights
   - auth
   - user
   - seller
