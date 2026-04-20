@@ -28,6 +28,7 @@ const (
 	routeListingsStatsByLocation = routePrefixListings + "/stats/by-location"
 	routeMarketAveragePrice      = routePrefixMarket + "/average-price"
 	routeAuctions                = routePrefixAuctions
+	routeAuctionWS               = routePrefixAuctions + "/ws/{auctionID}"
 	routeAuctionByID             = routePrefixAuctions + "/"
 	routeAuthRegister            = routePrefixAuth + "/register"
 	routeAuthLogin               = routePrefixAuth + "/login"

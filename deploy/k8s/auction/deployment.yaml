@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auction
+  namespace: vehicles-prod
+  labels:
+    app: auction
+spec:
+  type: ClusterIP
+  selector:
+    app: auction
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+    - name: ws
+      port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auction
+  namespace: vehicles-prod
+  labels:
+    app: auction
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 300
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: auction
+  template:
+    metadata:
+      labels:
+        app: auction
+    spec:
+      serviceAccountName: auction-sa
+      containers:
+        - name: auction
+          image: europe-west1-docker.pkg.dev/cn-project-491618/vehicles/auction:v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 50051
+              name: grpc
+            - containerPort: 8081
+              name: ws
+          env:
+            - name: POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: GCP_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: auction-secrets
+                  key: gcp-project-id
+            - name: AUCTION_PUBSUB_TOPIC
+              value: "auction-events"
+            - name: AUCTION_PUBSUB_SUBSCRIPTION
+              value: "auction-sub-$(POD_ID)"
+            - name: GCP_PUBSUB_AUTOCREATE
+              value: "true"
+            - name: AUCTION_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: auction-secrets
+                  key: postgres-dsn
+            - name: LISTING_GRPC_ADDR
+              value: "listing-service:50052"
+            - name: AUCTION_GRPC_PORT
+              value: "50051"
+            - name: AUCTION_WS_PORT
+              value: "8081"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          startupProbe:
+            grpc:
+              port: 50051
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3

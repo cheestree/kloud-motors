@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: marketprice
+  namespace: vehicles-prod
+  labels:
+    app: marketprice
+spec:
+  type: ClusterIP
+  selector:
+    app: marketprice
+  ports:
+    - name: grpc
+      port: 50055
+      targetPort: 50055
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marketprice
+  namespace: vehicles-prod
+  labels:
+    app: marketprice
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 300
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: marketprice
+  template:
+    metadata:
+      labels:
+        app: marketprice
+    spec:
+      containers:
+        - name: marketprice
+          image: europe-west1-docker.pkg.dev/cn-project-491618/vehicles/marketprice:v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 50055
+              name: grpc
+          env:
+            - name: MARKETPRICE_GRPC_PORT
+              value: "50055"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: geo-secrets
+                  key: postgres-dsn
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          startupProbe:
+            grpc:
+              port: 50055
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            grpc:
+              port: 50055
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            grpc:
+              port: 50055
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3

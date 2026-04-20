@@ -53,6 +53,7 @@ func registerMarketRoutes() {
 
 func registerAuctionRoutes() {
 	http.HandleFunc(routeAuctions, handlers.HandleAuctions)
+	http.HandleFunc(routeAuctionWS, handlers.HandleAuctionWebSocket)
 	http.HandleFunc(routeAuctionByID, handlers.HandleAuctionByIDRoutes)
 }
 
@@ -149,6 +150,7 @@ func main() {
 	)
 
 	handlers.SetChatWSUpstream(os.Getenv("CHAT_WS_ADDR"))
+	handlers.SetAuctionWSUpstream(os.Getenv("AUCTION_WS_ADDR"))
 
 	registerRoutes()
 

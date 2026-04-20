@@ -16,6 +16,7 @@ services:
       - GEO_GRPC_ADDR=${GEO_GRPC_ADDR}
       - AUCTION_GRPC_ADDR=${AUCTION_GRPC_ADDR}
       - MARKETPRICE_GRPC_ADDR=${MARKETPRICE_GRPC_ADDR}
+      - AUCTION_WS_ADDR=ws://auction:8081
       - JWT_PUBLIC_KEY_B64=${JWT_PUBLIC_KEY_B64}
     depends_on:
       - listing

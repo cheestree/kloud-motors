@@ -3,12 +3,22 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	auctionpb "services/auction/proto"
+	"github.com/gorilla/websocket"
 )
+
+var auctionWSUpstream string
+
+func SetAuctionWSUpstream(url string) {
+	auctionWSUpstream = url
+}
 
 func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
@@ -141,4 +151,88 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, msgNotFound, http.StatusNotFound)
+}
+
+func HandleAuctionWebSocket(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, err := authenticatedUserIDFromRequest(r)
+	if err != nil {
+		http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+		return
+	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 5 || parts[4] == "" {
+		http.Error(w, "Missing auction id", http.StatusBadRequest)
+		return
+	}
+	auctionID := parts[4]
+
+	upstreamURL, err := auctionWSProxyURL(auctionID, r.URL.RawQuery)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	upstreamHeader := make(http.Header)
+	upstreamHeader.Set("X-User-ID", strconv.FormatInt(userID, 10))
+
+	upstreamConn, resp, err := websocket.DefaultDialer.Dial(upstreamURL, upstreamHeader)
+	if err != nil {
+		status := http.StatusBadGateway
+		if resp != nil {
+			status = resp.StatusCode
+			_ = resp.Body.Close()
+		}
+		http.Error(w, "failed to connect auction websocket upstream", status)
+		return
+	}
+
+	clientConn, err := wsUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		_ = upstreamConn.Close()
+		log.Printf("ws upgrade error: %v", err)
+		return
+	}
+
+	errCh := make(chan error, 2)
+
+	// Server -> Client (Sends out notices of new bids without accepting new requests)
+	go proxyWebSocket(upstreamConn, clientConn, errCh)
+
+	// Client -> Server (Read and discard strictly for processing Ping/Pong/Close control frames)
+	go readAndDiscardWebSocket(clientConn, errCh)
+
+	<-errCh
+	_ = clientConn.Close()
+	_ = upstreamConn.Close()
+}
+
+func auctionWSProxyURL(auctionID, rawQuery string) (string, error) {
+	if auctionWSUpstream == "" {
+		return "", errors.New("auction websocket upstream is not configured")
+	}
+
+	baseURL, err := url.Parse(auctionWSUpstream)
+	if err != nil {
+		return "", err
+	}
+
+	baseURL.Path = "/ws/auction/" + auctionID
+	baseURL.RawQuery = rawQuery
+	return baseURL.String(), nil
+}
+
+func readAndDiscardWebSocket(src *websocket.Conn, errCh chan<- error) {
+	for {
+		_, _, err := src.ReadMessage()
+		if err != nil {
+			errCh <- err
+			return
+		}
+	}
 }

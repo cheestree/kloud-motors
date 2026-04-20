@@ -42,11 +42,15 @@ spec:
             - name: GEO_GRPC_ADDR
               value: "geographic-market-insights:50053"
             - name: AUCTION_GRPC_ADDR
-              value: "auction:50058"
+              value: "auction:50051"
+            - name: MARKETPRICE_GRPC_ADDR
+              value: "marketprice:50055"
 
-            # Endereço HTTP/WS do chat service — para proxy de WebSocket
+            # Endereço HTTP/WS do chat service e auction service
             - name: CHAT_WS_ADDR
               value: "chat:8080"
+            - name: AUCTION_WS_ADDR
+              value: "auction:8081"
 
           readinessProbe:
             httpGet:

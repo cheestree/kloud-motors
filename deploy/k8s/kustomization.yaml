@@ -8,8 +8,11 @@ resources:
   - common/user-secrets.yaml
   - common/seller-secrets.yaml
   - common/postgres.yaml
+  - common/auction-secrets.yaml
   - listing
   - search
   - auth
   - user
   - seller
+  - marketprice
+  - auction
