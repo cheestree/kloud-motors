@@ -30,4 +30,5 @@ RUN protoc \
     user/proto/user.proto \
     auth/proto/auth.proto \
     geographic-maket-insights/proto/geo-market-insights.proto \
-    auction/proto/auction.proto
+    auction/proto/auction.proto \
+    marketprice/proto/marketprice.proto

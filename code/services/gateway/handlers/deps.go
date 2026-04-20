@@ -6,20 +6,22 @@ import (
 	chatpb "services/chat/proto"
 	geopb "services/geographic-maket-insights/proto"
 	listingpb "services/listing/proto"
+	marketpricepb "services/marketprice/proto"
 	searchpb "services/search/proto"
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
 )
 
 var (
-	authClient    authpb.AuthServiceClient
-	listingClient listingpb.ListingServiceClient
-	searchClient  searchpb.SearchServiceClient
-	userClient    userpb.UserServiceClient
-	sellerClient  sellerpb.SellerServiceClient
-	chatClient    chatpb.ChatServiceClient
-	geoClient     geopb.GeoMarketInsightsServiceClient
-	auctionClient auctionpb.AuctionServiceClient
+	authClient        authpb.AuthServiceClient
+	listingClient     listingpb.ListingServiceClient
+	searchClient      searchpb.SearchServiceClient
+	userClient        userpb.UserServiceClient
+	sellerClient      sellerpb.SellerServiceClient
+	chatClient        chatpb.ChatServiceClient
+	geoClient         geopb.GeoMarketInsightsServiceClient
+	auctionClient     auctionpb.AuctionServiceClient
+	marketpriceClient marketpricepb.MarketPriceServiceClient
 )
 
 // SetClients wires service clients from main into the handlers package
@@ -32,6 +34,7 @@ func SetClients(
 	chat chatpb.ChatServiceClient,
 	geo geopb.GeoMarketInsightsServiceClient,
 	auction auctionpb.AuctionServiceClient,
+	marketprice marketpricepb.MarketPriceServiceClient,
 ) {
 	authClient = auth
 	listingClient = listing
@@ -41,4 +44,5 @@ func SetClients(
 	chatClient = chat
 	geoClient = geo
 	auctionClient = auction
+	marketpriceClient = marketprice
 }

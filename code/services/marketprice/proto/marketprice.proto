@@ -1,6 +1,7 @@
 syntax = "proto3";
+
 package marketprice;
-option go_package = "./proto";
+option go_package = "services/marketprice/proto";
 
 service MarketPriceService {
     rpc GetAverageMarketPrice (AveragePriceRequest) returns (AveragePriceResponse);

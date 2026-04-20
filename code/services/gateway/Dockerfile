@@ -14,6 +14,7 @@ COPY ./auth/proto                    ./auth/proto
 COPY ./chat/proto                    ./chat/proto
 COPY ./geographic-maket-insights/proto ./geographic-maket-insights/proto
 COPY ./auction/proto                 ./auction/proto
+COPY ./marketprice/proto             ./marketprice/proto
 COPY ./gateway                       ./gateway
 
 RUN go build -o gateway/gateway ./gateway

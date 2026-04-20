@@ -15,10 +15,12 @@ services:
       - CHAT_GRPC_ADDR=${CHAT_GRPC_ADDR}
       - GEO_GRPC_ADDR=${GEO_GRPC_ADDR}
       - AUCTION_GRPC_ADDR=${AUCTION_GRPC_ADDR}
+      - MARKETPRICE_GRPC_ADDR=${MARKETPRICE_GRPC_ADDR}
       - JWT_PUBLIC_KEY_B64=${JWT_PUBLIC_KEY_B64}
     depends_on:
       - listing
       - search
+      - marketprice
   search:
     container_name: search-service
     build:
@@ -49,7 +51,9 @@ services:
 
   marketprice:
     container_name: marketprice-service
-    build: ./code/services/marketprice
+    build:
+      context: ./code/services
+      dockerfile: marketprice/Dockerfile
     restart: on-failure
     ports:
       - "50055:50055"

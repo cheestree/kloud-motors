@@ -14,6 +14,7 @@ docker cp proto-gen-container:/workspace/user/proto/. "$SERVICES_ROOT/user/proto
 docker cp proto-gen-container:/workspace/auth/proto/. "$SERVICES_ROOT/auth/proto/"
 docker cp proto-gen-container:/workspace/geographic-maket-insights/proto/. "$SERVICES_ROOT/geographic-maket-insights/proto/"
 docker cp proto-gen-container:/workspace/auction/proto/. "$SERVICES_ROOT/auction/proto/"
+docker cp proto-gen-container:/workspace/marketprice/proto/. "$SERVICES_ROOT/marketprice/proto/"
 docker rm proto-gen-container
 
 echo "Protobuf generation complete."

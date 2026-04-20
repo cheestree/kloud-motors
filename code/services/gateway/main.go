@@ -11,6 +11,7 @@ import (
 	"services/gateway/handlers"
 	geopb "services/geographic-maket-insights/proto"
 	listingpb "services/listing/proto"
+	marketpricepb "services/marketprice/proto"
 	searchpb "services/search/proto"
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
@@ -126,6 +127,13 @@ func main() {
 	defer auctionConn.Close()
 	auctionClient := auctionpb.NewAuctionServiceClient(auctionConn)
 
+	marketpriceConn, err := grpc.NewClient(os.Getenv("MARKETPRICE_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect to marketprice service: %v", err)
+	}
+	defer marketpriceConn.Close()
+	marketpriceClient := marketpricepb.NewMarketPriceServiceClient(marketpriceConn)
+
 	handlers.SetClients(
 		authClient,
 		listingClient,
@@ -135,6 +143,7 @@ func main() {
 		chatClient,
 		geoClient,
 		auctionClient,
+		marketpriceClient,
 	)
 
 	registerRoutes()

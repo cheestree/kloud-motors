@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	proto "marketprice/proto"
+	marketpricepb "services/marketprice/proto"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -19,10 +19,10 @@ import (
 var db *sql.DB
 
 type server struct {
-	proto.UnimplementedMarketPriceServiceServer
+	marketpricepb.UnimplementedMarketPriceServiceServer
 }
 
-func (s *server) GetAverageMarketPrice(ctx context.Context, req *proto.AveragePriceRequest) (*proto.AveragePriceResponse, error) {
+func (s *server) GetAverageMarketPrice(ctx context.Context, req *marketpricepb.AveragePriceRequest) (*marketpricepb.AveragePriceResponse, error) {
 	query := `SELECT 
 		COALESCE(AVG(ad.ask_price), 0), 
 		COALESCE(MIN(ad.ask_price), 0), 
@@ -66,7 +66,7 @@ func (s *server) GetAverageMarketPrice(ctx context.Context, req *proto.AveragePr
 		return nil, err
 	}
 
-	return &proto.AveragePriceResponse{
+	return &marketpricepb.AveragePriceResponse{
 		Brand:        req.Brand,
 		Model:        req.Model,
 		AveragePrice: avgPrice,
@@ -106,7 +106,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterMarketPriceServiceServer(grpcServer, &server{})
+	marketpricepb.RegisterMarketPriceServiceServer(grpcServer, &server{})
 
 	log.Println("Market Price Analysis gRPC server is running on " + lis.Addr().String() + "...")
 
