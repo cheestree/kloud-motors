@@ -213,9 +213,9 @@ services:
     container_name: user-db
     image: postgres:16
     environment:
-      POSTGRES_USER: ${USER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${USER_POSTGRES_DB}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_POSTGRES_DB}
     ports:
       - "5438:5432"
     healthcheck:

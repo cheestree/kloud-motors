@@ -17,7 +17,6 @@ import (
 func main() {
 	grpcPort := getenv("GEO_GRPC_PORT", "50053")
 	postgresDSN := getenv("GEO_DATABASE_URL", getenv("LISTING_DATABASE_URL", ""))
-
 	if postgresDSN == "" {
 		log.Fatal("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")
 	}

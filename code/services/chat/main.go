@@ -71,6 +71,7 @@ func main() {
 
 	hub := ws2.NewHub(pubsub)
 
+
 	clients, err := setupServiceClients()
 	if err != nil {
 		log.Fatalf("service clients init: %v", err)

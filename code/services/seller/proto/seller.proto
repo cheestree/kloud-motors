@@ -4,11 +4,11 @@ package seller;
 option go_package = "./proto";
 
 service SellerService {
-  rpc GetSellerProfile (GetSellerProfileRequest) returns (SellerProfileResponse);
-  rpc CreateSeller (CreateSellerRequest) returns (SellerProfileResponse);
-  rpc VerifySellerProfile (VerifySellerRequest) returns (VerifySellerResponse);
-  rpc CreateListing (CreateListingRequest) returns (CreateListingResponse);
-  rpc GetSellersPreview (SellersPreviewRequest) returns (SellersPreviewResponse);
+    rpc GetSellerProfile (GetSellerProfileRequest) returns (SellerProfileResponse);
+    rpc CreateSeller (CreateSellerRequest) returns (SellerProfileResponse);
+    rpc VerifySellerProfile (VerifySellerRequest) returns (VerifySellerResponse);
+    rpc CreateListing (CreateListingRequest) returns (CreateListingResponse);
+    rpc GetSellersPreview (SellersPreviewRequest) returns (SellersPreviewResponse);
 }
 
 message GetSellerProfileRequest {

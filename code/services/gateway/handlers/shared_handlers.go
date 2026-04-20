@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"encoding/base64"
-
 	"github.com/golang-jwt/jwt/v5"
 )
 

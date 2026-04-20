@@ -4,11 +4,11 @@ package user;
 option go_package = "./proto";
 
 service UserService {
-  rpc GetFavorites (GetFavoritesRequest) returns (FavoritesResponse);
-  rpc AddFavorite (AddFavoriteRequest) returns (FavoriteMutationResponse);
-  rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
-  rpc GetUsersPreview (UsersPreviewRequest) returns (UsersPreviewResponse);
-  rpc CreateUserProfile (CreateUserProfileRequest) returns (CreateUserProfileResponse);
+    rpc GetFavorites (GetFavoritesRequest) returns (FavoritesResponse);
+    rpc AddFavorite (AddFavoriteRequest) returns (FavoriteMutationResponse);
+    rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
+    rpc GetUsersPreview (UsersPreviewRequest) returns (UsersPreviewResponse);
+    rpc CreateUserProfile (CreateUserProfileRequest) returns (CreateUserProfileResponse);
 }
 
 message CreateUserProfileRequest {
@@ -18,7 +18,7 @@ message CreateUserProfileRequest {
 }
 
 message CreateUserProfileResponse {
-  bool success = 1;
+    bool success = 1;
 }
 
 message GetFavoritesRequest {
@@ -54,5 +54,5 @@ message UserPreview {
 }
 
 message UsersPreviewResponse {
-  repeated UserPreview users = 1;
+    repeated UserPreview users = 1;
 }

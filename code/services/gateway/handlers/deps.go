@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	authpb "services/auth/proto"
 	auctionpb "services/auction/proto"
 	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
