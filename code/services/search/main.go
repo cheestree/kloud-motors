@@ -31,6 +31,11 @@ func (s *server) Search(ctx context.Context, req *proto.SearchRequest) (*proto.S
 		isNew = &v
 	}
 
+	includeSold := false
+	if req.IncludeSold != nil {
+		includeSold = req.IncludeSold.Value
+	}
+
 	result, err := s.service.Search(ctx, domain.SearchParams{
 		Make:         req.Make,
 		Model:        req.Model,
@@ -45,31 +50,19 @@ func (s *server) Search(ctx context.Context, req *proto.SearchRequest) (*proto.S
 		IsNew:        isNew,
 		Page:         req.Page,
 		PageSize:     req.PageSize,
+		IncludeSold:  includeSold,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "search failed: %v", err)
 	}
 
+	return toSearchResponse(result), nil
+}
+
+func toSearchResponse(result *domain.SearchResult) *proto.SearchResponse {
 	listings := make([]*shared.ListingSummary, 0, len(result.Listings))
 	for _, item := range result.Listings {
-		listings = append(listings, &shared.ListingSummary{
-			Id:           item.Id,
-			Make:         item.Make,
-			Model:        item.Model,
-			Year:         item.Year,
-			Price:        item.Price,
-			Mileage:      item.Mileage,
-			FuelType:     item.FuelType,
-			BodyClass:    item.BodyClass,
-			DriveType:    item.DriveType,
-			Transmission: item.Transmission,
-			IsNew:        item.IsNew,
-			City:         item.City,
-			District:     item.District,
-			State:        item.State,
-			Country:      item.Country,
-			LastSeen:     item.LastSeen,
-		})
+		listings = append(listings, toListingSummary(item))
 	}
 
 	return &proto.SearchResponse{
@@ -77,7 +70,30 @@ func (s *server) Search(ctx context.Context, req *proto.SearchRequest) (*proto.S
 		Page:     result.Page,
 		PageSize: result.PageSize,
 		Listings: listings,
-	}, nil
+	}
+}
+
+func toListingSummary(item shared.ListingSummary) *shared.ListingSummary {
+	return &shared.ListingSummary{
+		Id:           item.Id,
+		DealerId:     item.DealerId,
+		Make:         item.Make,
+		Model:        item.Model,
+		Year:         item.Year,
+		Price:        item.Price,
+		Mileage:      item.Mileage,
+		FuelType:     item.FuelType,
+		BodyClass:    item.BodyClass,
+		DriveType:    item.DriveType,
+		Transmission: item.Transmission,
+		IsNew:        item.IsNew,
+		IsSold:       item.IsSold,
+		City:         item.City,
+		District:     item.District,
+		State:        item.State,
+		Country:      item.Country,
+		LastSeen:     item.LastSeen,
+	}
 }
 
 func main() {

@@ -20,6 +20,7 @@ type SearchParams struct {
 	District     string
 	City         string
 	Country      string
+	IncludeSold  bool
 }
 
 type SearchResult struct {

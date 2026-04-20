@@ -51,14 +51,15 @@ const (
 	queryBrand     = "brand"
 	queryModel     = "model"
 
-	queryMake       = "make"
-	queryYear       = "year"
-	queryMinPrice   = "minPrice"
-	queryMaxPrice   = "maxPrice"
-	queryMaxMileage = "maxMileage"
-	queryFuelTypeV2 = "fuelType"
-	queryPageSizeV2 = "pageSize"
-	queryIDs        = "ids"
+	queryMake        = "make"
+	queryYear        = "year"
+	queryMinPrice    = "minPrice"
+	queryMaxPrice    = "maxPrice"
+	queryMaxMileage  = "maxMileage"
+	queryIncludeSold = "includeSold"
+	queryFuelTypeV2  = "fuelType"
+	queryPageSizeV2  = "pageSize"
+	queryIDs         = "ids"
 )
 
 const (

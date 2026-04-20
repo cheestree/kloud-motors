@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	authpb "services/auth/proto"
 	auctionpb "services/auction/proto"
+	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"
 	geopb "services/geographic-maket-insights/proto"
@@ -30,6 +30,7 @@ func registerRoutes() {
 }
 
 func registerListingRoutes() {
+	http.HandleFunc(routeListings, handlers.HandleListings)
 	http.HandleFunc(routeListingsSearch, handlers.HandleSearch)
 	http.HandleFunc(routeListingsCompare, handlers.HandleCompare)
 	http.HandleFunc(routeListingsByID, handlers.HandleGetListing)

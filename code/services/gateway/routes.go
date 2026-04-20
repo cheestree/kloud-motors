@@ -15,6 +15,7 @@ const (
 )
 
 const (
+	routeListings                = routePrefixListings
 	routeListingsSearch          = routePrefixListings + "/search"
 	routeListingsCompare         = routePrefixListings + "/compare"
 	routeListingsByID            = routePrefixListings + "/"
