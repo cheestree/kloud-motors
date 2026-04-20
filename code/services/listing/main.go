@@ -233,7 +233,6 @@ func (s *server) CheckListingOpen(ctx context.Context, req *proto.CheckListingOp
 	return &proto.CheckListingOpenResponse{IsOpen: open, DealerId: dealerID}, nil
 }
 
-
 func toListingDetailsResponse(listing *shared.ListingDetails) *proto.ListingDetailsResponse {
 	if listing == nil {
 		return nil

@@ -4,6 +4,12 @@ namespace: vehicles-prod
 resources:
   - common/namespace.yaml
   - common/secrets.yaml
+  - common/auth-secrets.yaml
+  - common/user-secrets.yaml
+  - common/seller-secrets.yaml
   - common/postgres.yaml
   - listing
   - search
+  - auth
+  - user
+  - seller

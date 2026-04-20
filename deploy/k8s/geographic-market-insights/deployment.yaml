@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geographic-market-insights
+  labels:
+    app: geographic-market-insights
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: geographic-market-insights
+  template:
+    metadata:
+      labels:
+        app: geographic-market-insights
+    spec:
+      containers:
+        - name: geographic-market-insights
+          image: gcr.io/PROJECT_ID/geographic-market-insights:latest
+          ports:
+            - name: grpc
+              containerPort: 50053
+          env:
+            - name: GEO_GRPC_PORT
+              value: "50053"
+            - name: GEO_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: geo-secrets
+                  key: postgres-dsn
+            - name: POSTGRES_SCHEMA
+              value: "public"
+            - name: POSTGRES_TABLE
+              value: "automotive_data"
+            - name: DEFAULT_LIMIT
+              value: "20"
+            - name: MAX_LIMIT
+              value: "100"
+
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

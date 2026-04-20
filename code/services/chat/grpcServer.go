@@ -21,13 +21,13 @@ type grpcServer struct {
 	sellerClient  sellerproto.SellerServiceClient
 }
 
-func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveChatsRequest) (*proto.GetActiveChatsResponse, error) {
+func (s *grpcServer) GetChats(ctx context.Context, req *proto.GetChatsRequest) (*proto.GetChatsResponse, error) {
 	if req.GetUserId() < 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}
 
 	if s.indexStore == nil {
-		return &proto.GetActiveChatsResponse{Chats: []*proto.ChatsSummary{}}, nil
+		return &proto.GetChatsResponse{Chats: []*proto.ChatsSummary{}}, nil
 	}
 
 	chats, err := s.indexStore.ListUserChats(ctx, req.GetUserId())
@@ -45,7 +45,7 @@ func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveCha
 		})
 	}
 
-	return &proto.GetActiveChatsResponse{Chats: protoChats}, nil
+	return &proto.GetChatsResponse{Chats: protoChats}, nil
 }
 
 func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (*proto.OpenChatResponse, error) {
@@ -82,6 +82,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 
 	brand := listing.Make
 	model := listing.Model
+	isSold := listing.IsSold
 
 	var chatID string
 	if s.indexStore != nil {
@@ -91,10 +92,10 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 			return nil, status.Errorf(codes.Internal, "failed to index chat participants: %v", err)
 		}
 
-		return &proto.OpenChatResponse{ChatId: chatID}, nil
-	} else {
-		return nil, status.Errorf(codes.Internal, "failed to index chat participants")
+		return &proto.OpenChatResponse{ChatId: chatID, IsChatClosed: isSold}, nil
 	}
+
+	return nil, status.Errorf(codes.Internal, "failed to index chat participants")
 }
 
 func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHistoryRequest) (*proto.GetChatHistoryResponse, error) {

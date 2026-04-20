@@ -1,14 +1,15 @@
 package main
 
 import (
-	"services/chat/repository"
-	"services/chat/ws"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"services/chat/repository"
+	"services/chat/ws"
+	listingproto "services/listing/proto"
 	"strconv"
 	"strings"
 	"time"
@@ -17,9 +18,10 @@ import (
 )
 
 type wsServer struct {
-	hub          *ws.Hub
-	messageStore repository.MessageRepo
-	indexStore   repository.ChatIndexRepo
+	hub           *ws.Hub
+	messageStore  repository.MessageRepo
+	indexStore    repository.ChatIndexRepo
+	listingClient listingproto.ListingServiceClient
 }
 
 type InboundMessage struct {
@@ -29,7 +31,7 @@ type InboundMessage struct {
 type OutboundMessage struct {
 	ID       string    `json:"id"`
 	ChatID   string    `json:"chat_id"`
-	SenderID int64    `json:"sender_id"`
+	SenderID int64     `json:"sender_id"`
 	Content  string    `json:"content"`
 	SentAt   time.Time `json:"sent_at"`
 }
@@ -55,23 +57,32 @@ func (s *wsServer) ServeWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.indexStore != nil {
-		listingID := r.URL.Query().Get("listing_id")
-		if listingID == "" {
-			http.Error(w, "missing listing_id", http.StatusBadRequest)
-			return
-		}
+	if s.indexStore == nil {
+		http.Error(w, "chat index unavailable", http.StatusInternalServerError)
+		return
+	}
 
-		allowed, err := s.indexStore.UserCanAccessChat(r.Context(), userID, listingID)
-		if err != nil {
-			log.Printf("chat access check error user=%d listing=%s err=%v", userID, listingID, err)
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-		if !allowed {
-			http.Error(w, "forbidden", http.StatusForbidden)
-			return
-		}
+	if s.listingClient == nil {
+		http.Error(w, "listing service unavailable", http.StatusInternalServerError)
+		return
+	}
+
+	listingID, err := s.indexStore.GetListingIDByChat(r.Context(), userID, chatID)
+	if err != nil {
+		log.Printf("get listing by chat error chat=%s user=%d err=%v", chatID, userID, err)
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
+	listingOpen, err := s.listingClient.CheckListingOpen(r.Context(), &listingproto.CheckListingOpenRequest{ListingId: listingID})
+	if err != nil {
+		log.Printf("listing open check error listing=%d user=%d err=%v", listingID, userID, err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	if !listingOpen.GetIsOpen() {
+		http.Error(w, "listing is closed", http.StatusForbidden)
+		return
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -126,15 +137,15 @@ func (s *wsServer) onMessage(chatID string, userID int64, raw []byte) {
 }
 
 func (s *wsServer) userIDFromGateway(r *http.Request) (int64, error) {
-	for _, header := range []string{"X-User-ID", "X-User-Id", "X-Authenticated-User-Id", "X-Forwarded-User"} {
-		if userID := strings.TrimSpace(r.Header.Get(header)); userID != "" {
-			int64UserID, err := strconv.ParseInt(userID, 10, 64)
-			if err != nil {
-				return 0, err
-			}
-			return int64UserID, nil
-		}
+	userID := strings.TrimSpace(r.Header.Get("X-User-ID"))
+	if userID == "" {
+		return 0, errors.New("missing gateway user id")
 	}
 
-	return 0, errors.New("missing gateway user id")
+	int64UserID, err := strconv.ParseInt(userID, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64UserID, nil
 }
