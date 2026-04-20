@@ -40,9 +40,11 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("pubsub init: %v", err)
+		log.Printf("pubsub init failed, continuing without distributed WS: %v", err)
 	}
-	defer pubsub.Close()
+	if pubsub != nil {
+		defer pubsub.Close()
+	}
 
 	firestoreProjectID := getenv("FIREBASE_PROJECT_ID", getenv("GCP_PROJECT_ID", ""))
 	messageRepo, err := firestore.NewFirestoreMessageRepo(
@@ -145,7 +147,7 @@ func setupHTTPWS(hub *ws2.Hub, messageStore repository.MessageRepo, indexStore r
 	httpWSPort := getenv("CHAT_WS_PORT", "8080")
 
 	log.Printf("WS listening on %s", httpWSPort)
-	return http.ListenAndServe(httpWSPort, mux)
+	return http.ListenAndServe(":"+httpWSPort, mux)
 }
 
 func getenv(key, fallback string) string {

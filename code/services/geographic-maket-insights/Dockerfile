@@ -7,7 +7,7 @@ RUN go mod download
 COPY ./geographic-maket-insights ./geographic-maket-insights
 
 WORKDIR /app/geographic-maket-insights
-RUN go build -o geographic-maket-insights-service main.go
+RUN go build -o geographic-maket-insights-service .
 
 FROM alpine:latest
 WORKDIR /app

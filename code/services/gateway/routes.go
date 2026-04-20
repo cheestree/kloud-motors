@@ -19,10 +19,10 @@ const (
 	routeListingsSearch          = routePrefixListings + "/search"
 	routeListingsCompare         = routePrefixListings + "/compare"
 	routeListingsByID            = routePrefixListings + "/"
-	routeGetChats                = routePrefixChat + "/"
+	routeGetChats                = routePrefixChat
 	routeChatOpen                = routePrefixChat + "/open"
-	routeChatWS                  = routePrefixChat + "/ws/"
-	routeChatByID                = routePrefixChat + "/"
+	routeChatWS                  = routePrefixChat + "/ws/{chatID}"
+	routeChatByID                = routePrefixChat + "/{chatID}"
 	routeMarketAggregates        = routePrefixMarket + "/insights/aggregates"
 	routeMarketPriceComparison   = routePrefixMarket + "/price-comparison"
 	routeListingsStatsByLocation = routePrefixListings + "/stats/by-location"

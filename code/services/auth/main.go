@@ -151,8 +151,9 @@ func initDB() {
 
 func main() {
 	initDB()
+	grpcPort := getenv("AUTH_GRPC_PORT", "50050")
 
-	lis, err := net.Listen("tcp", ":50053")
+	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}
@@ -165,4 +166,12 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
+}
+
+func getenv(key, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
 }
