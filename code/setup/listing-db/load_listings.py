@@ -25,6 +25,7 @@ from sqlalchemy import (
     create_engine,
     inspect,
     select,
+    text,
 )
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -40,6 +41,7 @@ EXPECTED_COLUMNS = [
     "msrp",
     "mileage",
     "is_new",
+    "is_sold",
     "color",
     "interior_color",
     "brand_name",
@@ -79,6 +81,7 @@ COLUMN_DTYPES: Dict[str, str] = {
     "msrp":               "Int64",
     "mileage":            "Int64",
     "is_new":             "boolean",
+    "is_sold":            "boolean",
     "dealer_id":          "Int64",
     "model_year":         "Int64",
     "engine_cylinders":   "Float64",
@@ -197,6 +200,7 @@ def create_fact_table(table_name: str, metadata: MetaData) -> Table:
         Column("msrp",                 BigInteger),
         Column("mileage",              BigInteger),
         Column("is_new",               Boolean),
+        Column("is_sold",              Boolean, nullable=False, server_default=text("false")),
         Column("color",                Text),
         Column("interior_color",       Text),
         Column("dealer_id",            BigInteger),
@@ -229,6 +233,11 @@ def transform_chunk(
     cache: LookupCache,
 ) -> pd.DataFrame:
     df = chunk.copy()
+
+    if "is_sold" not in df.columns:
+        df["is_sold"] = False
+    else:
+        df["is_sold"] = df["is_sold"].fillna(False)
 
     # Normalise all lookup source columns up front.
     normalised: Dict[str, pd.Series] = {
@@ -358,6 +367,7 @@ def main() -> int:
             metadata.create_all(conn)  # creates fact table
         else:
             fact_table = Table(args.table, MetaData(), autoload_with=conn)
+            conn.execute(text(f"ALTER TABLE {args.table} ADD COLUMN IF NOT EXISTS is_sold BOOLEAN NOT NULL DEFAULT false"))
 
     cache = LookupCache()
 

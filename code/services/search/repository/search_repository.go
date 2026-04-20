@@ -22,6 +22,11 @@ func (r *SearchRepository) Search(ctx context.Context, filters domain.SearchPara
 	clauses := make([]string, 0)
 	args := make([]interface{}, 0)
 
+	// Search returns only active listings by default.
+	if !filters.IncludeSold {
+		clauses = append(clauses, "COALESCE(ad.is_sold, false) = false")
+	}
+
 	if filters.Make != "" {
 		args = append(args, "%"+filters.Make+"%")
 		clauses = append(clauses, fmt.Sprintf("b.name ILIKE $%d", len(args)))
@@ -106,6 +111,7 @@ func (r *SearchRepository) Search(ctx context.Context, filters domain.SearchPara
 	limitIdx, offsetIdx := len(args)-1, len(args)
 
 	selectQuery := "SELECT ad.id," +
+		" COALESCE(ad.dealer_id, 0)," +
 		" COALESCE(b.name, '')," +
 		" COALESCE(m.name, '')," +
 		" COALESCE(ad.model_year, 0)," +
@@ -116,6 +122,7 @@ func (r *SearchRepository) Search(ctx context.Context, filters domain.SearchPara
 		" COALESCE(dt.name, '')," +
 		" COALESCE(tr.name, '')," +
 		" COALESCE(ad.is_new, false)," +
+		" COALESCE(ad.is_sold, false)," +
 		" COALESCE(ad.city, '')," +
 		" COALESCE(ad.district, '')," +
 		" COALESCE(ad.state, '')," +
@@ -133,15 +140,16 @@ func (r *SearchRepository) Search(ctx context.Context, filters domain.SearchPara
 	listings := make([]shared.ListingSummary, 0)
 	for rows.Next() {
 		var s shared.ListingSummary
+		var dealerID int64
 		if err := rows.Scan(
-			&s.Id, &s.Make, &s.Model, &s.Year,
+			&s.Id, &dealerID, &s.Make, &s.Model, &s.Year,
 			&s.Price, &s.Mileage,
 			&s.FuelType, &s.BodyClass, &s.DriveType, &s.Transmission,
-			&s.IsNew, &s.City, &s.District, &s.State, &s.Country, &s.LastSeen,
+			&s.IsNew, &s.IsSold, &s.City, &s.District, &s.State, &s.Country, &s.LastSeen,
 		); err != nil {
 			return nil, 0, err
 		}
-		fmt.Printf("DEBUG: id=%d city=%q district=%q state=%q country=%q last_seen=%q\n", s.Id, s.City, s.District, s.State, s.Country, s.LastSeen)
+		s.DealerId = int32(dealerID)
 		listings = append(listings, s)
 	}
 	if err := rows.Err(); err != nil {
