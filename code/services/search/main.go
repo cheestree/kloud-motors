@@ -110,7 +110,7 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":50056")
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}

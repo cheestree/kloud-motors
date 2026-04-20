@@ -13,5 +13,5 @@ RUN go build -o listing-service main.go
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/listing/listing-service .
-EXPOSE 50052
+EXPOSE 50054
 CMD ["./listing-service"]

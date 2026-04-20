@@ -1,6 +1,11 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net"
+	"net/http"
+	"os"
 	"services/chat/proto"
 	pubsub2 "services/chat/pubsub"
 	"services/chat/repository"
@@ -9,11 +14,6 @@ import (
 	ws2 "services/chat/ws"
 	listingproto "services/listing/proto"
 	sellerproto "services/seller/proto"
-	"context"
-	"log"
-	"net"
-	"net/http"
-	"os"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -61,13 +61,13 @@ func main() {
 	hub := ws2.NewHub(pubsub)
 
 	// ── gRPC (OpenChat, GetChatHistory) ──────────────────────────────────────
-	grpcLis, err := net.Listen("tcp", ":50051")
+	grpcLis, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		log.Fatalf("grpc listen: %v", err)
 	}
 
 	listingConn, err := grpc.NewClient(
-		getenv("LISTING_SERVICE_ADDR", "localhost:50052"),
+		getenv("LISTING_SERVICE_ADDR", "localhost:50054"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
@@ -76,7 +76,7 @@ func main() {
 	defer listingConn.Close()
 
 	sellerConn, err := grpc.NewClient(
-		getenv("SELLER_SERVICE_ADDR", "localhost:50053"),
+		getenv("SELLER_SERVICE_ADDR", "localhost:50057"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
@@ -97,7 +97,7 @@ func main() {
 	})
 
 	go func() {
-		log.Println("gRPC listening on :50051")
+		log.Println("gRPC listening on :50052")
 		if err := grpcSrv.Serve(grpcLis); err != nil {
 			log.Fatalf("grpc serve: %v", err)
 		}

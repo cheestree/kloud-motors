@@ -8,6 +8,7 @@ service SellerService {
     rpc CreateSeller (CreateSellerRequest) returns (SellerProfileResponse);
     rpc VerifySellerProfile (VerifySellerRequest) returns (VerifySellerResponse);
     rpc CreateListing (CreateListingRequest) returns (CreateListingResponse);
+    rpc GetSellersPreview (SellersPreviewRequest) returns (SellersPreviewResponse);
 }
 
 message GetSellerProfileRequest {
@@ -59,4 +60,17 @@ message CreateListingRequest {
 message CreateListingResponse {
     int64 id = 1;
     string listed_at = 2;
+}
+
+message SellersPreviewRequest {
+    repeated int64 seller_ids = 1;
+}
+
+message SellerPreview {
+    int64 id = 1;
+    string name = 2;
+}
+
+message SellersPreviewResponse {
+    repeated SellerPreview sellers = 1;
 }

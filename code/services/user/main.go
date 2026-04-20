@@ -2,18 +2,13 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net"
 	"os"
-	"strconv"
-	"time"
 
 	. "services/user/models"
 	proto "services/user/proto"
 
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,98 +22,23 @@ type server struct {
 	proto.UnimplementedUserServiceServer
 }
 
-type UserClaims struct {
-	UserID     int64 `json:"user_id"`
-	Email      string `json:"email"`
-	jwt.RegisteredClaims
-}
-
-func generateJWT(user *User) (string, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		return "", status.Error(codes.Internal, "JWT_SECRET is not configured")
-	}
-
-	claims := UserClaims{
-		UserID:     user.ID,
-		Email:      user.Email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   strconv.FormatInt(user.ID, 10),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
-}
-
-func CheckUserExists(email string) bool {
-	var user User
-	if err := db.Where("email = ?", email).First(&user).Error; err == nil {
-		return true
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return false
-	}
-	return false
-}
-
-func (s *server) RegisterUser(ctx context.Context, req *proto.RegisterUserRequest) (*proto.AuthResponse, error) {
-	if req.Name == "" || req.Email == "" || req.Password == "" {
-		return nil, status.Error(codes.InvalidArgument, "name, email, and password are required")
-	}
-
-	if CheckUserExists(req.Email) {
-		return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to hash password")
+func (s *server) CreateUserProfile(ctx context.Context, req *proto.CreateUserProfileRequest) (*proto.CreateUserProfileResponse, error) {
+	if req.UserId <= 0 || req.Name == "" || req.Email == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id, name, and email are required")
 	}
 
 	newUser := User{
-		Name:        req.Name,
-		Email:       req.Email,
-		Password:    string(hashedPassword),
+		ID:    req.UserId,
+		Name:  req.Name,
+		Email: req.Email,
 	}
 
 	if err := db.Create(&newUser).Error; err != nil {
-		return nil, status.Error(codes.Internal, "failed to create user")
+		return nil, status.Error(codes.Internal, "failed to create user profile")
 	}
 
-	token, err := generateJWT(&newUser)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to generate token")
-	}
-
-	return &proto.AuthResponse{
-		UserId: newUser.ID,
-		Token:  token,
-	}, nil
-}
-
-func (s *server) LoginUser(ctx context.Context, req *proto.LoginUserRequest) (*proto.AuthResponse, error) {
-	var user User
-	if err := db.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Error(codes.Unauthenticated, "invalid credentials")
-		}
-		return nil, status.Error(codes.Internal, "database error")
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
-	}
-
-	token, err := generateJWT(&user)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to generate token")
-	}
-
-	return &proto.AuthResponse{
-		UserId: user.ID,
-		Token:  token,
+	return &proto.CreateUserProfileResponse{
+		Success: true,
 	}, nil
 }
 
@@ -191,13 +111,27 @@ func (s *server) RemoveFavorite(ctx context.Context, req *proto.RemoveFavoriteRe
 	}, nil
 }
 
-func (s *server) CheckUserExists(ctx context.Context, req *proto.CheckUserExistsRequest) (*proto.CheckUserExistsResponse, error) {
-	if req.Email == "" {
-		return nil, status.Error(codes.InvalidArgument, "email is required")
+func (s *server) GetUsersPreview(ctx context.Context, req *proto.UsersPreviewRequest) (*proto.UsersPreviewResponse, error) {
+	if len(req.UserIds) == 0 {
+		return &proto.UsersPreviewResponse{Users: []*proto.UserPreview{}}, nil
 	}
 
-	exists := CheckUserExists(req.Email)
-	return &proto.CheckUserExistsResponse{Exists: exists}, nil
+	var users []User
+	if err := db.Where("id IN ?", req.UserIds).Find(&users).Error; err != nil {
+		return nil, status.Error(codes.Internal, "failed to get users preview")
+	}
+
+	previews := make([]*proto.UserPreview, 0, len(users))
+	for _, user := range users {
+		previews = append(previews, &proto.UserPreview{
+			Id:   user.ID,
+			Name: user.Name,
+		})
+	}
+
+	return &proto.UsersPreviewResponse{
+		Users: previews,
+	}, nil
 }
 
 func initDB() {
@@ -218,7 +152,7 @@ func initDB() {
 func main() {
 	initDB()
 
-	lis, err := net.Listen("tcp", ":50053")
+	lis, err := net.Listen("tcp", ":50058")
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}
