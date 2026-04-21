@@ -60,9 +60,9 @@ spec:
               value: "chat"
 
             - name: LISTING_SERVICE_ADDR
-              value: "listing:50054"
+              value: "listing-service:50052"
             - name: SELLER_SERVICE_ADDR
-              value: "seller:50057"
+              value: "seller-service:50057"
 
             - name: CHAT_HISTORY_LIMIT
               value: "50"

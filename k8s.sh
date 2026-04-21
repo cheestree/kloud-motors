@@ -87,16 +87,8 @@ if ! k cluster-info >/dev/null 2>&1; then
 fi
 
 apply_up() {
-  echo "Applying base manifests with kustomize..."
+  echo "Applying manifests with kustomize..."
   k apply -k "$KUSTOMIZE_DIR"
-
-  echo "Applying gateway manifest..."
-  k apply -f "$GATEWAY_MANIFEST"
-
-  if [[ "$WITH_INGRESS" == true ]]; then
-    echo "Applying ingress manifest..."
-    k apply -f "$INGRESS_MANIFEST"
-  fi
 
   if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
     echo "Waiting for deployments in namespace $NAMESPACE..."
@@ -107,15 +99,7 @@ apply_up() {
 }
 
 apply_down() {
-  if [[ "$WITH_INGRESS" == true ]]; then
-    echo "Deleting ingress manifest..."
-    k delete -f "$INGRESS_MANIFEST" --ignore-not-found
-  fi
-
-  echo "Deleting gateway manifest..."
-  k delete -f "$GATEWAY_MANIFEST" --ignore-not-found
-
-  echo "Deleting base manifests..."
+  echo "Deleting manifests..."
   k delete -k "$KUSTOMIZE_DIR" --ignore-not-found
 
   echo "Kubernetes deployment removed."

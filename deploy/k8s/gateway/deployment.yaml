@@ -30,13 +30,13 @@ spec:
 
             # Endereços gRPC dos microserviços (ClusterIP internos)
             - name: LISTING_GRPC_ADDR
-              value: "listing:50054"
+              value: "listing-service:50052"
             - name: SEARCH_GRPC_ADDR
-              value: "search:50055"
+              value: "search-service:50051"
             - name: USER_GRPC_ADDR
-              value: "user:50056"
+              value: "user-service:50058"
             - name: SELLER_GRPC_ADDR
-              value: "seller:50057"
+              value: "seller-service:50057"
             - name: CHAT_GRPC_ADDR
               value: "chat:50052"
             - name: GEO_GRPC_ADDR
@@ -72,28 +72,3 @@ spec:
             limits:
               cpu: "500m"
               memory: "256Mi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: gateway
-  labels:
-    app: gateway
-spec:
-  selector:
-    app: gateway
-  type: ClusterIP
-  ports:
-    - name: http
-      port: 80
-      targetPort: http
----
-# kubectl create secret generic gateway-secrets \
-#   --from-literal=jwt-secret=MY_STRONG_SECRET
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gateway-secrets
-type: Opaque
-stringData:
-  jwt-secret: "REPLACE_ME"
