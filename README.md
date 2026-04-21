@@ -27,6 +27,32 @@ This project uses Go microservices with PostgreSQL databases and a REST gateway.
 ./seed.sh
 ```
 
+## Run on Kubernetes
+
+1. Deploy all Kubernetes manifests:
+
+```bash
+./k8s.sh up
+```
+
+1. Deploy including ingress:
+
+```bash
+./k8s.sh up --with-ingress
+```
+
+1. Check deployment status:
+
+```bash
+./k8s.sh status
+```
+
+1. Remove deployment:
+
+```bash
+./k8s.sh down
+```
+
 ## Gateway REST Endpoints
 
 Base URL: `http://localhost:8080`
