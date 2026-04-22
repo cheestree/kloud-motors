@@ -24,20 +24,16 @@ echo "🛠️ A iniciar Build e Push para o GCP Artifact Registry..."
 
 for SERVICE in "${SERVICES[@]}"; do
   echo "---------------------------------------------------"
-  echo "🚀 Processando serviço: ${SERVICE}..."
+  echo "Prcessing service: ${SERVICE}..."
   
   IMAGE_TAG="${BASE_IMAGE_URL}/${SERVICE}"
   
-  # Fazer o Build da imagem (contexto na raiz do code/services para ler shared/ se precisar, ou na pasta do serviço)
-  # Como os Dockerfiles estão dentro da pasta de cada serviço:
-  echo "📦 A fazer build de ${IMAGE_TAG}..."
+
   docker build -t ${IMAGE_TAG} -f code/services/${SERVICE}/Dockerfile code/services/
   
-  # Empurrar para a Google Cloud
-  echo "☁️ A fazer push para GCP..."
+  echo "Pushing ${SERVICE} to GCP Artifact Registry..."
   docker push ${IMAGE_TAG}
   
-  echo "✅ ${SERVICE} concluído com sucesso!"
+  echo "✅ ${SERVICE} processed successfully!"
 done
 
-echo "🎉 Todas as imagens foram processadas!"
