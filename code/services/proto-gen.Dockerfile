@@ -29,6 +29,6 @@ RUN protoc \
     seller/proto/seller.proto \
     user/proto/user.proto \
     auth/proto/auth.proto \
-    geographic-maket-insights/proto/geo-market-insights.proto \
+    geographic-market-insights/proto/geo-market-insights.proto \
     auction/proto/auction.proto \
     marketprice/proto/marketprice.proto

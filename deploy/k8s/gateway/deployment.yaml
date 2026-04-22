@@ -14,9 +14,10 @@ spec:
       labels:
         app: gateway
     spec:
+      serviceAccountName: vehicles-workload-sa
       containers:
         - name: gateway
-          image: gcr.io/PROJECT_ID/gateway:latest
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/gateway
           ports:
             - name: http
               containerPort: 8080
@@ -29,22 +30,22 @@ spec:
                   key: jwt-secret
 
             # Endereços gRPC dos microserviços (ClusterIP internos)
-            - name: LISTING_GRPC_ADDR
-              value: "listing-service:50052"
-            - name: SEARCH_GRPC_ADDR
-              value: "search-service:50051"
-            - name: USER_GRPC_ADDR
-              value: "user-service:50058"
-            - name: SELLER_GRPC_ADDR
-              value: "seller-service:50057"
+            - name: AUCTION_GRPC_ADDR
+              value: "auction:50051"
             - name: CHAT_GRPC_ADDR
               value: "chat:50052"
             - name: GEO_GRPC_ADDR
               value: "geographic-market-insights:50053"
-            - name: AUCTION_GRPC_ADDR
-              value: "auction:50051"
+            - name: LISTING_GRPC_ADDR
+              value: "listing-service:50054"
             - name: MARKETPRICE_GRPC_ADDR
               value: "marketprice:50055"
+            - name: SEARCH_GRPC_ADDR
+              value: "search-service:50056"
+            - name: SELLER_GRPC_ADDR
+              value: "seller-service:50057"
+            - name: USER_GRPC_ADDR
+              value: "user-service:50058"
 
             # Endereço HTTP/WS do chat service e auction service
             - name: CHAT_WS_ADDR
@@ -53,14 +54,12 @@ spec:
               value: "auction:8081"
 
           readinessProbe:
-            httpGet:
-              path: /api/health
+            tcpSocket:
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
-            httpGet:
-              path: /api/health
+            tcpSocket:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 20

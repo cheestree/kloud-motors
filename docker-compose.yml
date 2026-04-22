@@ -71,7 +71,7 @@ services:
     container_name: geo-service
     build:
       context: ./code/services
-      dockerfile: geographic-maket-insights/Dockerfile
+      dockerfile: geographic-market-insights/Dockerfile
     restart: on-failure
     ports:
       - "${GEO_GRPC_PORT}:${GEO_GRPC_PORT}"

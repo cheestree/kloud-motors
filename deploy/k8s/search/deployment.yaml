@@ -1,19 +1,3 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: search-service
-  namespace: vehicles-prod
-  labels:
-    app: search-service
-spec:
-  type: ClusterIP
-  selector:
-    app: search-service
-  ports:
-    - name: grpc
-      port: 50051
-      targetPort: 50051
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,14 +6,7 @@ metadata:
   labels:
     app: search-service
 spec:
-  replicas: 1
-  revisionHistoryLimit: 10
-  progressDeadlineSeconds: 300
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+  replicas: 2
   selector:
     matchLabels:
       app: search-service
@@ -38,19 +15,20 @@ spec:
       labels:
         app: search-service
     spec:
+      serviceAccountName: vehicles-workload-sa
       containers:
         - name: search-service
-          image: europe-west1-docker.pkg.dev/PROJECT_ID/vehicles/search:latest
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/search
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 50051
+            - containerPort: 50056
               name: grpc
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: listing-search-env
-                  key: LISTING_DATABASE_URL
+                  name: search-secrets
+                  key: postgres-dsn
           resources:
             requests:
               cpu: 100m
@@ -58,22 +36,36 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
-          startupProbe:
-            grpc:
-              port: 50051
-            failureThreshold: 30
-            periodSeconds: 5
           livenessProbe:
-            grpc:
-              port: 50051
+            tcpSocket:
+              port: grpc
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
-            grpc:
-              port: 50051
+            tcpSocket:
+              port: grpc
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "$(CLOUD_SQL_INSTANCE)"
+          env:
+            - name: CLOUD_SQL_INSTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-config
+                  key: instance-connection-name
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

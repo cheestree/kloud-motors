@@ -1,19 +1,3 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-service
-  namespace: vehicles-prod
-  labels:
-    app: user-service
-spec:
-  type: ClusterIP
-  selector:
-    app: user-service
-  ports:
-    - name: grpc
-      port: 50058
-      targetPort: 50058
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,9 +22,10 @@ spec:
       labels:
         app: user-service
     spec:
+      serviceAccountName: vehicles-workload-sa
       containers:
         - name: user-service
-          image: europe-west1-docker.pkg.dev/PROJECT_ID/vehicles/user:latest
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/user
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50058
@@ -49,7 +34,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: user-env
+                  name: user-secrets
                   key: USER_DATABASE_URL
           resources:
             requests:
@@ -59,21 +44,40 @@ spec:
               cpu: 500m
               memory: 512Mi
           startupProbe:
-            grpc:
-              port: 50058
+            tcpSocket:
+              port: grpc
             failureThreshold: 30
             periodSeconds: 5
           livenessProbe:
-            grpc:
-              port: 50058
+            tcpSocket:
+              port: grpc
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
-            grpc:
-              port: 50058
+            tcpSocket:
+              port: grpc
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "$(CLOUD_SQL_INSTANCE)"
+          env:
+            - name: CLOUD_SQL_INSTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-config
+                  key: instance-connection-name
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

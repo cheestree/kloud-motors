@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	authpb "services/auth/proto"
 	auctionpb "services/auction/proto"
+	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
-	geopb "services/geographic-maket-insights/proto"
+	geopb "services/geographic-market-insights/proto"
 	listingpb "services/listing/proto"
 	marketpricepb "services/marketprice/proto"
 	searchpb "services/search/proto"
@@ -13,16 +13,16 @@ import (
 )
 
 var (
-	authClient     authpb.AuthServiceClient
-	listingClient  listingpb.ListingServiceClient
-	searchClient   searchpb.SearchServiceClient
-	userClient     userpb.UserServiceClient
-	sellerClient   sellerpb.SellerServiceClient
-	chatClient     chatpb.ChatServiceClient
-	geoClient      geopb.GeoMarketInsightsServiceClient
-	auctionClient  auctionpb.AuctionServiceClient
-	chatWSUpstream string
-    marketpriceClient marketpricepb.MarketPriceServiceClient
+	authClient        authpb.AuthServiceClient
+	listingClient     listingpb.ListingServiceClient
+	searchClient      searchpb.SearchServiceClient
+	userClient        userpb.UserServiceClient
+	sellerClient      sellerpb.SellerServiceClient
+	chatClient        chatpb.ChatServiceClient
+	geoClient         geopb.GeoMarketInsightsServiceClient
+	auctionClient     auctionpb.AuctionServiceClient
+	chatWSUpstream    string
+	marketpriceClient marketpricepb.MarketPriceServiceClient
 )
 
 // SetClients wires service clients from main into the handlers package

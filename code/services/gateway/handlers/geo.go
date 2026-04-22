@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	geopb "services/geographic-maket-insights/proto"
+	geopb "services/geographic-market-insights/proto"
 )
 
 func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {

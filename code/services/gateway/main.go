@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -9,7 +9,7 @@ import (
 	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"
-	geopb "services/geographic-maket-insights/proto"
+	geopb "services/geographic-market-insights/proto"
 	listingpb "services/listing/proto"
 	marketpricepb "services/marketprice/proto"
 	searchpb "services/search/proto"
@@ -74,65 +74,67 @@ func registerSellerRoutes() {
 }
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 	authConn, err := grpc.NewClient(os.Getenv("AUTH_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to auth service: %v", err)
+		logger.Error("Failed to connect to auth service: %v", err)
 	}
 	defer authConn.Close()
 	authClient := authpb.NewAuthServiceClient(authConn)
 
 	listingConn, err := grpc.NewClient(os.Getenv("LISTING_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to listing service: %v", err)
+		logger.Error("Failed to connect to listing service: %v", err)
 	}
 	defer listingConn.Close()
 	listingClient := listingpb.NewListingServiceClient(listingConn)
 
 	searchConn, err := grpc.NewClient(os.Getenv("SEARCH_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to search service: %v", err)
+		logger.Error("Failed to connect to search service: %v", err)
 	}
 	defer searchConn.Close()
 	searchClient := searchpb.NewSearchServiceClient(searchConn)
 
 	userConn, err := grpc.NewClient(os.Getenv("USER_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to user service: %v", err)
+		logger.Error("Failed to connect to user service: %v", err)
 	}
 	defer userConn.Close()
 	userClient := userpb.NewUserServiceClient(userConn)
 
 	sellerConn, err := grpc.NewClient(os.Getenv("SELLER_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to seller service: %v", err)
+		logger.Error("Failed to connect to seller service: %v", err)
 	}
 	defer sellerConn.Close()
 	sellerClient := sellerpb.NewSellerServiceClient(sellerConn)
 
 	chatConn, err := grpc.NewClient(os.Getenv("CHAT_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to chat service: %v", err)
+		logger.Error("Failed to connect to chat service: %v", err)
 	}
 	defer chatConn.Close()
 	chatClient := chatpb.NewChatServiceClient(chatConn)
 
 	geoConn, err := grpc.NewClient(os.Getenv("GEO_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to geo-market-insights service: %v", err)
+		logger.Error("Failed to connect to geo-market-insights service: %v", err)
 	}
 	defer geoConn.Close()
 	geoClient := geopb.NewGeoMarketInsightsServiceClient(geoConn)
 
 	auctionConn, err := grpc.NewClient(os.Getenv("AUCTION_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to auction service: %v", err)
+		logger.Error("Failed to connect to auction service: %v", err)
 	}
 	defer auctionConn.Close()
 	auctionClient := auctionpb.NewAuctionServiceClient(auctionConn)
 
 	marketpriceConn, err := grpc.NewClient(os.Getenv("MARKETPRICE_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to marketprice service: %v", err)
+		logger.Error("Failed to connect to marketprice service: %v", err)
 	}
 	defer marketpriceConn.Close()
 	marketpriceClient := marketpricepb.NewMarketPriceServiceClient(marketpriceConn)
@@ -154,6 +156,7 @@ func main() {
 
 	registerRoutes()
 
-	log.Println("Gateway listening on :8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	logger.Info("Gateway listening on :8080...")
+	http.ListenAndServe(":8080", nil)
+	logger.Error("Failed to start HTTP server: %v", err)
 }

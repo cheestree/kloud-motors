@@ -289,7 +289,7 @@ func main() {
 		log.Fatal("DATABASE_URL is not set")
 	}
 
-	db, err := sql.Open("postgres", databaseURL)
+	db, err := sql.Open("pgx", databaseURL)
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}

@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat
+  namespace: vehicles-prod
   labels:
     app: chat
 spec:
@@ -14,10 +15,10 @@ spec:
       labels:
         app: chat
     spec:
-      serviceAccountName: chat-sa
+      serviceAccountName: vehicles-workload-sa
       containers:
         - name: chat
-          image: gcr.io/PROJECT_ID/chat:latest
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/chat
           ports:
             - name: grpc
               containerPort: 50052
@@ -60,7 +61,7 @@ spec:
               value: "chat"
 
             - name: LISTING_SERVICE_ADDR
-              value: "listing-service:50052"
+              value: "listing-service:50054"
             - name: SELLER_SERVICE_ADDR
               value: "seller-service:50057"
 
@@ -85,3 +86,22 @@ spec:
             limits:
               cpu: "500m"
               memory: "256Mi"
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "$(CLOUD_SQL_INSTANCE)"
+          env:
+            - name: CLOUD_SQL_INSTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-config
+                  key: instance-connection-name
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"

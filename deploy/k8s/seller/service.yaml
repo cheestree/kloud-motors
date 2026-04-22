@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seller-service
+  namespace: vehicles-prod
+  labels:
+    app: seller-service
+spec:
+  type: ClusterIP
+  selector:
+    app: seller-service
+  ports:
+    - name: grpc
+      port: 50057
+      targetPort: grpc
