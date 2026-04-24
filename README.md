@@ -7,27 +7,36 @@ This project uses Go microservices with PostgreSQL databases and a REST gateway.
 1. Clone the repository and enter it.
 2. Download the dataset from Kaggle ([this link](https://www.kaggle.com/datasets/cisautomotiveapi/large-car-dataset)) and place it under code/setup. You can download the dataset from .
 
-## Run
+## Run locally
+To run the application entirely on your local machine using Docker:
 
 1. Prepare dataset artifacts:
 
 ```bash
-./prepare.sh
+./scripts/local/prepare.sh
 ```
 
 1. Start services and databases:
 
 ```bash
-./start.sh
+./scripts/local/start.sh
 ```
 
 1. Seed listing data:
 
 ```bash
-./seed.sh
+./scripts/local/seed.sh
 ```
 
 ## Run on Kubernetes
+Read the sections carefully, as some scripts only need to be run once.
+
+1. Bootstrap Environment(Run once per machine)
+
+```bash
+./scripts/cloud/bootstrap_env.sh
+```
+
 
 1. Deploy all Kubernetes manifests:
 
@@ -55,7 +64,7 @@ This project uses Go microservices with PostgreSQL databases and a REST gateway.
 
 ## Gateway REST Endpoints
 
-Base URL: `http://localhost:8080`
+Base URL: `http://localhost:8080` (local) if in Cloud replace with your Ingress IP
 
 - `GET /api/listings/search`
 - `GET /api/listings/compare`

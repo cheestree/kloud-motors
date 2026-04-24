@@ -8,7 +8,7 @@ fi
 
 export $(grep -v '^#' .env | xargs)
 
-REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PREPARED_CSV="${1:-$REPO_ROOT/code/setup/dataset_prepared.csv}"
 LISTING_LOAD_SCRIPT="$REPO_ROOT/code/setup/listing-db/load_listings.py"
 

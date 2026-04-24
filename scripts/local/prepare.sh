@@ -8,7 +8,7 @@ fi
 
 export $(grep -v '^#' .env | xargs)
 
-REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ORIGINAL_CSV="${1:-$REPO_ROOT/code/setup/CIS_Automotive_Kaggle_Sample.csv}"
 PREPARED_CSV="${2:-$REPO_ROOT/code/setup/dataset_prepared.csv}"
 USERS_PREPARED_CSV="$REPO_ROOT/code/setup/users_prepared.csv"

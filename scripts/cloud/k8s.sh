@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 K8S_DIR="$ROOT_DIR/deploy/k8s"
 KUSTOMIZE_DIR="$K8S_DIR"
 GATEWAY_MANIFEST="$K8S_DIR/gateway/gateway.yaml"
