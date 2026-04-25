@@ -25,6 +25,12 @@ func HandleRegisterUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}
+	// Validate input fields
+	if req.Name == "" || req.Email == "" || req.Password == "" {
+		http.Error(w, "name, email, and password are required", http.StatusBadRequest)
+		return
+	}
+
 	ctx := context.Background()
 	authResp, err := authClient.Register(ctx, &authpb.RegisterRequest{
 		Email:    req.Email,

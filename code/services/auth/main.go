@@ -79,9 +79,11 @@ func (s *server) Register(ctx context.Context, req *proto.RegisterRequest) (*pro
 	}
 
 	var existing AuthUser
-	if err := db.Where("email = ?", req.Email).First(&existing).Error; err == nil {
+	err := db.Where("email = ?", req.Email).First(&existing).Error
+	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Error(codes.Internal, "database error")
 	}
 
