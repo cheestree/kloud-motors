@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	userpb "services/user/proto"
+	"services/utils"
 )
 
 func HandleGetFavorites(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing listing id", http.StatusBadRequest)
 		return
 	}
-	listingID := parseInt64(parts[5])
+	listingID := utils.ParseInt64(parts[5])
 	authUserID, err := authenticatedUserIDFromRequest(r)
 	if err != nil {
 		http.Error(w, msgUnauthorized, http.StatusUnauthorized)

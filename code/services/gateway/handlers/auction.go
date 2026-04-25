@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	auctionpb "services/auction/proto"
+	"services/utils"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -27,8 +29,8 @@ func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		req := &auctionpb.ListAuctionsRequest{
 			Status: q.Get(queryStatus),
-			Page:   parseInt32WithDefault(q.Get(queryPage), 1),
-			Limit:  parseInt32WithDefault(q.Get(queryPageSize), 20),
+			Page:   utils.ParseInt32WithDefault(q.Get(queryPage), 1),
+			Limit:  utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
 		}
 		resp, err := auctionClient.ListAuctions(ctx, req)
 		if err != nil {
@@ -135,8 +137,8 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 			q := r.URL.Query()
 			req := &auctionpb.GetAuctionBidsRequest{
 				AuctionId: auctionID,
-				Page:      parseInt32WithDefault(q.Get(queryPage), 1),
-				Limit:     parseInt32WithDefault(q.Get(queryPageSize), 20),
+				Page:      utils.ParseInt32WithDefault(q.Get(queryPage), 1),
+				Limit:     utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
 			}
 			resp, err := auctionClient.GetAuctionBids(ctx, req)
 			if err != nil {

@@ -7,6 +7,7 @@ import (
 
 	. "services/seller/models"
 	proto "services/seller/proto"
+	"services/utils"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -140,15 +141,15 @@ func CreateListing(ctx context.Context, listingDB *gorm.DB, req *proto.CreateLis
 		}
 
 		now := time.Now().UTC()
-		yearValue := int32Ptr(req.Year)
-		priceValue := int64PtrFromFloat(req.Price)
-		mileageValue := int64PtrFromInt32(req.Mileage)
-		trimValue := stringPtr(req.Trim)
-		cityValue := stringPtr(req.City)
-		districtValue := stringPtr(req.District)
-		stateValue := stringPtr(req.State)
-		countryValue := stringPtr(req.Country)
-		colorValue := stringPtr(req.Color)
+		yearValue := utils.Int32Ptr(req.Year)
+		priceValue := utils.Int64PtrFromFloat(req.Price)
+		mileageValue := utils.Int64PtrFromInt32(req.Mileage)
+		trimValue := utils.StringPtr(req.Trim)
+		cityValue := utils.StringPtr(req.City)
+		districtValue := utils.StringPtr(req.District)
+		stateValue := utils.StringPtr(req.State)
+		countryValue := utils.StringPtr(req.Country)
+		colorValue := utils.StringPtr(req.Color)
 
 		listing := AutomotiveData{
 			Vin:            req.Vin,
@@ -184,34 +185,4 @@ func CreateListing(ctx context.Context, listingDB *gorm.DB, req *proto.CreateLis
 	}
 
 	return listingID, listedAt, nil
-}
-
-func stringPtr(value string) *string {
-	if value == "" {
-		return nil
-	}
-	return &value
-}
-
-func int32Ptr(value int32) *int32 {
-	if value <= 0 {
-		return nil
-	}
-	return &value
-}
-
-func int64PtrFromInt32(value int32) *int64 {
-	if value <= 0 {
-		return nil
-	}
-	converted := int64(value)
-	return &converted
-}
-
-func int64PtrFromFloat(value float64) *int64 {
-	if value <= 0 {
-		return nil
-	}
-	converted := int64(value)
-	return &converted
 }

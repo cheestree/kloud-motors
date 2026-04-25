@@ -5,30 +5,30 @@ import (
 	"log/slog"
 	"net"
 	"os"
-	"strconv"
 
 	"google.golang.org/grpc"
 
 	"services/geographic-market-insights/proto"
 	"services/geographic-market-insights/repository"
 	"services/geographic-market-insights/repository/postgres"
+	"services/utils"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	grpcPort := getenv("GEO_GRPC_PORT", "50053")
-	postgresDSN := getenv("GEO_DATABASE_URL", getenv("LISTING_DATABASE_URL", ""))
+	grpcPort := utils.GetEnv("GEO_GRPC_PORT", "50053")
+	postgresDSN := utils.GetEnv("GEO_DATABASE_URL", utils.GetEnv("LISTING_DATABASE_URL", ""))
 	if postgresDSN == "" {
 		logger.Error("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")
 	}
 
 	repoConfig := repository.DBConfig{
-		Schema:       getenv("POSTGRES_SCHEMA", "public"),
-		Table:        getenv("POSTGRES_TABLE", "automotive_data"),
-		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
-		MaxLimit:     getenvInt("MAX_LIMIT", 100),
+		Schema:       utils.GetEnv("POSTGRES_SCHEMA", "public"),
+		Table:        utils.GetEnv("POSTGRES_TABLE", "automotive_data"),
+		DefaultLimit: utils.GetEnvInt("DEFAULT_LIMIT", 20),
+		MaxLimit:     utils.GetEnvInt("MAX_LIMIT", 100),
 		Dsn:          postgresDSN,
 	}
 
@@ -50,25 +50,4 @@ func main() {
 	if err := grpcSrv.Serve(lis); err != nil {
 		logger.Error("fail to serve error", "error", err)
 	}
-}
-
-func getenv(key, fallback string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-	return v
-}
-
-func getenvInt(key string, fallback int) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-
-	n, err := strconv.Atoi(v)
-	if err != nil {
-		return fallback
-	}
-	return n
 }

@@ -7,13 +7,13 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	proto "services/auction/proto"
 	auctionpubsub "services/auction/pubsub"
 	ws2 "services/auction/ws"
 	listingproto "services/listing/proto"
+	utils "services/utils"
 
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -47,8 +47,8 @@ func initDB() {
 
 func main() {
 	initDB()
-	listingAddr := getenv("LISTING_GRPC_ADDR", "listing:50054")
-	auctionGRPCPort := getenv("AUCTION_GRPC_PORT", "50051")
+	listingAddr := utils.GetEnv("LISTING_GRPC_ADDR", "listing:50054")
+	auctionGRPCPort := utils.GetEnv("AUCTION_GRPC_PORT", "50051")
 
 	listingConn, err := grpc.NewClient(listingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -57,13 +57,13 @@ func main() {
 	defer listingConn.Close()
 	listingClient := listingproto.NewListingServiceClient(listingConn)
 
-	nodeID := getenv("POD_ID", localNodeID())
+	nodeID := utils.GetEnv("POD_ID", utils.LocalNodeID())
 	ps, err := auctionpubsub.NewGCPPubSub(context.Background(), auctionpubsub.GCPPubSubConfig{
-		ProjectID:       getenv("GCP_PROJECT_ID", ""),
-		TopicID:         getenv("AUCTION_PUBSUB_TOPIC", "auction-events"),
-		SubscriptionID:  getenv("AUCTION_PUBSUB_SUBSCRIPTION", "auction-sub-"+nodeID),
+		ProjectID:       utils.GetEnv("GCP_PROJECT_ID", ""),
+		TopicID:         utils.GetEnv("AUCTION_PUBSUB_TOPIC", "auction-events"),
+		SubscriptionID:  utils.GetEnv("AUCTION_PUBSUB_SUBSCRIPTION", "auction-sub-"+nodeID),
 		NodeID:          nodeID,
-		CreateResources: getenvBool("GCP_PUBSUB_AUTOCREATE", false),
+		CreateResources: utils.GetEnvBool("GCP_PUBSUB_AUTOCREATE", false),
 	})
 	if err != nil {
 		log.Printf("pubsub init failed (running without distributed WS): %v", err)
@@ -98,38 +98,10 @@ func main() {
 	wsSrv := &wsServer{hub: hub}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/auction/{auctionID}", wsSrv.ServeWS)
-	wsPort := getenv("AUCTION_WS_PORT", "8080")
+	wsPort := utils.GetEnv("AUCTION_WS_PORT", "8080")
 
 	log.Printf("Auction WS server is running on :%s...", wsPort)
 	if err := http.ListenAndServe(":"+wsPort, mux); err != nil {
 		log.Fatalf("http serve: %v", err)
 	}
-}
-
-func getenv(key, fallback string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-	return v
-}
-
-func getenvBool(key string, fallback bool) bool {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-	b, err := strconv.ParseBool(v)
-	if err != nil {
-		return fallback
-	}
-	return b
-}
-
-func localNodeID() string {
-	host, err := os.Hostname()
-	if err != nil || host == "" {
-		return "auction-local"
-	}
-	return host
 }

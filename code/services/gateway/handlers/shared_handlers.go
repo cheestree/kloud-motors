@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	"encoding/base64"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -65,25 +65,6 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 	}
 
 	return 0, errors.New(errUserIDNotInToken)
-}
-
-func parseInt32(s string) int32 {
-	var v int32
-	_, _ = fmt.Sscan(s, &v)
-	return v
-}
-
-func parseInt32WithDefault(s string, def int32) int32 {
-	if s == "" {
-		return def
-	}
-	return parseInt32(s)
-}
-
-func parseInt64(s string) int64 {
-	var v int64
-	_, _ = fmt.Sscan(s, &v)
-	return v
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
