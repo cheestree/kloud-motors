@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -29,6 +30,9 @@ type serviceClients struct {
 }
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	ctx := context.Background()
 
 	nodeID := getenv("POD_ID", localNodeID())
@@ -41,7 +45,7 @@ func main() {
 	})
 
 	if err != nil {
-		log.Printf("pubsub init failed, continuing without distributed WS: %v", err)
+		logger.Error("pubsub init failed, continuing without distributed WS", "error", err)
 	}
 	if pubsub != nil {
 		defer pubsub.Close()
@@ -55,7 +59,7 @@ func main() {
 		getenv("FIRESTORE_MESSAGES_COLLECTION", "messages"),
 	)
 	if err != nil {
-		log.Printf("firestore init failed, continuing without message persistence: %v", err)
+		logger.Error("firestore init failed, continuing without message persistence", "error", err)
 	} else {
 		messageRepo = firestoreRepo
 		defer messageRepo.Close()
@@ -69,26 +73,25 @@ func main() {
 	relationalRepo, err := postgres.NewPostgresRepo(ctx, repoConfig)
 
 	if err != nil {
-		log.Fatalf("postgres init: %v", err)
+		logger.Error("postgres init failed", "error", err)
 	}
 	defer relationalRepo.Close()
 
 	hub := ws2.NewHub(pubsub)
 
-
 	clients, err := setupServiceClients()
 	if err != nil {
-		log.Fatalf("service clients init: %v", err)
+		logger.Error("service clients init failed", "error", err)
 	}
 	defer clients.listingConn.Close()
 	defer clients.sellerConn.Close()
 
 	if err := setupGRPC(messageRepo, relationalRepo, clients); err != nil {
-		log.Fatalf("grpc setup: %v", err)
+		logger.Error("grpc setup failed", "error", err)
 	}
 
 	if err := setupHTTPWS(hub, messageRepo, relationalRepo, clients.listingClient); err != nil {
-		log.Fatalf("http serve: %v", err)
+		logger.Error("failed to serve HTTPWS", "error", err)
 	}
 }
 

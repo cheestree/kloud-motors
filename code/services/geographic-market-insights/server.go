@@ -12,7 +12,7 @@ import (
 )
 
 type geoServer struct {
-	proto.UnimplementedGeoMarketInsightsServiceServer
+	proto.GeoMarketInsightsServiceServer
 	repo repository.InsightsRepo
 }
 

@@ -105,15 +105,15 @@ func main() {
 
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
-		logger.Error("Failed to open database: %v", err)
+		logger.Error("failed to open database", "error", err)
 	}
 	if err := db.Ping(); err != nil {
-		logger.Error("Failed to connect to database: %v", err)
+		logger.Error("failed to connect to database", "error", err)
 	}
 
 	lis, err := net.Listen("tcp", ":50056")
 	if err != nil {
-		logger.Error("Error on listen: %v", err)
+		logger.Error("error on listen", "error", err)
 	}
 
 	repo := repository.NewSearchRepository(db)
@@ -125,6 +125,6 @@ func main() {
 	logger.Info("gRPC server is running on " + lis.Addr().String() + "...")
 
 	if err := s.Serve(lis); err != nil {
-		logger.Error("Failed to serve: %v", err)
+		logger.Error("failed to serve", "error", err)
 	}
 }

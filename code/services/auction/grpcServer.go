@@ -14,7 +14,7 @@ import (
 )
 
 type server struct {
-	proto.UnimplementedAuctionServiceServer
+	proto.AuctionServiceServer
 	hub           *ws2.Hub
 	listingClient listingproto.ListingServiceClient
 }

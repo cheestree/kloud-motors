@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"strconv"
@@ -15,10 +15,13 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	grpcPort := getenv("GEO_GRPC_PORT", "50053")
 	postgresDSN := getenv("GEO_DATABASE_URL", getenv("LISTING_DATABASE_URL", ""))
 	if postgresDSN == "" {
-		log.Fatal("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")
+		logger.Error("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")
 	}
 
 	repoConfig := repository.DBConfig{
@@ -31,7 +34,7 @@ func main() {
 
 	repo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
 	if err != nil {
-		log.Fatalf("postgres repo init error: %v", err)
+		logger.Error("postgres repo init error", "error", err)
 	}
 	defer repo.Close()
 
@@ -40,12 +43,12 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
-		log.Fatalf("listen error: %v", err)
+		logger.Error("fail to listen error", "error", err)
 	}
 
-	log.Printf("geo-market-insights gRPC listening on :%s", grpcPort)
+	logger.Info("geo-market-insights gRPC listening", "port", grpcPort)
 	if err := grpcSrv.Serve(lis); err != nil {
-		log.Fatalf("grpc serve error: %v", err)
+		logger.Error("fail to serve error", "error", err)
 	}
 }
 

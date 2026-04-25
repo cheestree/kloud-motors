@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"strings"
@@ -284,22 +284,25 @@ func mapListingError(action string, err error) error {
 }
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		log.Fatal("DATABASE_URL is not set")
+		logger.Error("DATABASE_URL is not set")
 	}
 
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
+		logger.Error("failed to open database", "error", err)
 	}
 	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		logger.Error("failed to connect to database", "error", err)
 	}
 
 	lis, err := net.Listen("tcp", ":50054")
 	if err != nil {
-		log.Fatalf("Error on listen: %v", err)
+		logger.Error("error on listen", "error", err)
 	}
 
 	repo := repository.NewListingRepository(db)
@@ -308,9 +311,9 @@ func main() {
 	s := grpc.NewServer()
 	proto.RegisterListingServiceServer(s, &server{service: svc})
 
-	log.Println("Listing gRPC server is running on " + lis.Addr().String() + "...")
+	logger.Info("Listing gRPC server is running", "addr", lis.Addr().String())
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		logger.Error("failed to serve", "error", err)
 	}
 }

@@ -3,123 +3,87 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
-	"strings"
 	"time"
 
 	marketpricepb "services/marketprice/proto"
+	"services/marketprice/service"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 )
 
-var db *sql.DB
-
 type server struct {
-	marketpricepb.UnimplementedMarketPriceServiceServer
+	marketpricepb.MarketPriceServiceServer
+	service *service.Service
+	logger  *slog.Logger
 }
 
 func (s *server) GetAverageMarketPrice(ctx context.Context, req *marketpricepb.AveragePriceRequest) (*marketpricepb.AveragePriceResponse, error) {
-	query := `SELECT 
-		COALESCE(AVG(ad.ask_price), 0), 
-		COALESCE(MIN(ad.ask_price), 0), 
-		COALESCE(MAX(ad.ask_price), 0), 
-		COUNT(ad.ask_price) 
-		FROM automotive_data ad
-		JOIN brand b ON ad.brand_id = b.id
-		JOIN model m ON ad.model_id = m.id
-		WHERE 1=1`
-
-	var args []interface{}
-	argId := 1
-
-	if req.Brand != "" {
-		query += fmt.Sprintf(` AND b.name = $%d`, argId)
-		args = append(args, strings.ToUpper(req.Brand))
-		argId++
-	}
-	if req.Model != "" {
-		query += fmt.Sprintf(` AND m.name = $%d`, argId)
-		args = append(args, req.Model)
-		argId++
-	}
-	if req.YearFrom != 0 {
-		query += fmt.Sprintf(` AND ad.model_year >= $%d`, argId)
-		args = append(args, req.YearFrom)
-		argId++
-	}
-	if req.YearTo != 0 {
-		query += fmt.Sprintf(` AND ad.model_year <= $%d`, argId)
-		args = append(args, req.YearTo)
-		argId++
-	}
-
-	var avgPrice, minPrice, maxPrice float64
-	var count int32
-
-	err := db.QueryRow(query, args...).Scan(&avgPrice, &minPrice, &maxPrice, &count)
+	resp, err := s.service.GetAverageMarketPrice(ctx, req)
 	if err != nil {
-		log.Printf("Error in query: %v", err)
+		s.logger.Error("get average market price failed", "error", err)
 		return nil, err
 	}
-
-	return &marketpricepb.AveragePriceResponse{
-		Brand:        req.Brand,
-		Model:        req.Model,
-		AveragePrice: avgPrice,
-		MinPrice:     minPrice,
-		MaxPrice:     maxPrice,
-		ListingCount: count,
-	}, nil
+	return resp, nil
 }
 
-func initDB() {
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		log.Fatalf("DATABASE_URL is not set")
-	}
-
+func connectDB(dsn string, logger *slog.Logger) (*sql.DB, error) {
 	var err error
 	for i := 0; i < 10; i++ {
-		db, err = sql.Open("postgres", dsn)
-		if err == nil {
+		db, openErr := sql.Open("postgres", dsn)
+		if openErr == nil {
 			if pingErr := db.Ping(); pingErr == nil {
-				return
+				return db, nil
+			} else {
+				err = pingErr
 			}
+		} else {
+			err = openErr
 		}
-		log.Printf("Waiting for database... (%d/10)", i+1)
+		logger.Warn("waiting for database", "attempt", i+1)
 		time.Sleep(3 * time.Second)
 	}
 
-	log.Fatalf("failed to connect database: %v", err)
+	return nil, err
 }
 
 func main() {
-	initDB()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
-	port := getenv("MARKETPRICE_GRPC_PORT", "50055")
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		logger.Error("DATABASE_URL is not set")
+		return
+	}
+	db, err := connectDB(dsn, logger)
+	if err != nil {
+		logger.Error("failed to connect database", "error", err)
+		return
+	}
+
+	port := os.Getenv("MARKETPRICE_GRPC_PORT")
+	if port == "" {
+		logger.Error("MARKETPRICE_GRPC_PORT is not set")
+		return
+	}
 
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("Error on listen: %v", err)
+		logger.Error("error on listen", "error", err)
+		return
 	}
 
 	grpcServer := grpc.NewServer()
-	marketpricepb.RegisterMarketPriceServiceServer(grpcServer, &server{})
+	marketSvc := service.NewService(db)
+	marketpricepb.RegisterMarketPriceServiceServer(grpcServer, &server{service: marketSvc, logger: logger})
 
-	log.Println("Market Price Analysis gRPC server is running on " + lis.Addr().String() + "...")
+	logger.Info("Market Price Analysis gRPC server is running", "addr", lis.Addr().String())
 
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		logger.Error("failed to serve", "error", err)
 	}
-}
-
-func getenv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
 }

@@ -1,32 +1,16 @@
-package main
+package repository
 
 import (
 	"context"
 	"errors"
-	"log"
-	"os"
 	"time"
 
 	. "services/seller/models"
 	proto "services/seller/proto"
 
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
-
-func initListingDB() {
-	dsn := os.Getenv("LISTING_DATABASE_URL")
-	if dsn == "" {
-		log.Fatalf("LISTING_DATABASE_URL is not set")
-	}
-
-	var err error
-	listingDb, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to connect listing database: %v", err)
-	}
-}
 
 func getOrCreateLookup(ctx context.Context, tx *gorm.DB, kind string, name string, brandID *int64) (*int64, error) {
 	if name == "" {
@@ -134,10 +118,10 @@ func getOrCreateLookup(ctx context.Context, tx *gorm.DB, kind string, name strin
 	}
 }
 
-func createListing(ctx context.Context, req *proto.CreateListingRequest) (int64, time.Time, error) {
+func CreateListing(ctx context.Context, listingDB *gorm.DB, req *proto.CreateListingRequest) (int64, time.Time, error) {
 	var listingID int64
 	var listedAt time.Time
-	err := listingDb.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := listingDB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		brandID, err := getOrCreateLookup(ctx, tx, "brand", req.Make, nil)
 		if err != nil {
 			return err
