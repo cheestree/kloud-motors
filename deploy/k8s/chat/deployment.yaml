@@ -1,24 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat
+  name: chat-service
   namespace: vehicles-prod
   labels:
-    app: chat
+    app: chat-service
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: chat
+      app: chat-service
   template:
     metadata:
       labels:
-        app: chat
+        app: chat-service
     spec:
       serviceAccountName: vehicles-workload-sa
       containers:
-        - name: chat
+        - name: chat-service
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/chat
+          imagePullPolicy: Always
           ports:
             - name: grpc
               containerPort: 50052

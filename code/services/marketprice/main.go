@@ -54,24 +54,25 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("LISTING_DATABASE_URL")
 	if dsn == "" {
-		logger.Error("DATABASE_URL is not set")
+		logger.Error("LISTING_DATABASE_URL is not set")
 		return
 	}
+
 	db, err := connectDB(dsn, logger)
 	if err != nil {
 		logger.Error("failed to connect database", "error", err)
 		return
 	}
 
-	port := os.Getenv("MARKETPRICE_GRPC_PORT")
-	if port == "" {
+	grpcPort := os.Getenv("MARKETPRICE_GRPC_PORT")
+	if grpcPort == "" {
 		logger.Error("MARKETPRICE_GRPC_PORT is not set")
 		return
 	}
 
-	lis, err := net.Listen("tcp", ":"+port)
+	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		logger.Error("error on listen", "error", err)
 		return

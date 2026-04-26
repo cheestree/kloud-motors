@@ -9,9 +9,20 @@ import (
 	proto "services/seller/proto"
 	"services/utils"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+type Repository struct {
+	ListingDB *gorm.DB
+	SellerDB  *gorm.DB
+}
+
+func NewRepository(listingDB *gorm.DB, sellerDB *gorm.DB) *Repository {
+	return &Repository{ListingDB: listingDB, SellerDB: sellerDB}
+}
 
 func getOrCreateLookup(ctx context.Context, tx *gorm.DB, kind string, name string, brandID *int64) (*int64, error) {
 	if name == "" {
@@ -185,4 +196,21 @@ func CreateListing(ctx context.Context, listingDB *gorm.DB, req *proto.CreateLis
 	}
 
 	return listingID, listedAt, nil
+}
+
+func GetSellersPreview(ctx context.Context, db *gorm.DB, sellerIDs []int64) ([]*proto.SellerPreview, error) {
+	var sellers []Seller
+	if err := db.Where("id IN ?", sellerIDs).Find(&sellers).Error; err != nil {
+		return nil, status.Error(codes.Internal, "failed to get sellers preview")
+	}
+
+	previews := make([]*proto.SellerPreview, 0, len(sellers))
+	for _, seller := range sellers {
+		previews = append(previews, &proto.SellerPreview{
+			Id:   seller.ID,
+			Name: seller.Name,
+		})
+	}
+
+	return previews, nil
 }

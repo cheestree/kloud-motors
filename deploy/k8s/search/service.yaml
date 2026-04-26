@@ -11,5 +11,5 @@ spec:
     app: search-service
   ports:
     - name: grpc
-      port: 50051
+      port: 50056
       targetPort: grpc

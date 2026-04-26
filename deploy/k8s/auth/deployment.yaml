@@ -26,12 +26,12 @@ spec:
       containers:
         - name: auth-service
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/auth
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50050
               name: grpc
           env:
-            - name: DATABASE_URL
+            - name: AUTH_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: auth-secrets
@@ -41,6 +41,16 @@ spec:
                 secretKeyRef:
                   name: auth-secrets
                   key: JWT_PRIVATE_KEY_B64
+            - name: USER_GRPC_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: USER_GRPC_ADDR
+            - name: AUTH_GRPC_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: AUTH_GRPC_PORT
           resources:
             requests:
               cpu: 100m

@@ -61,9 +61,9 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("AUTH_DATABASE_URL")
 	if dsn == "" {
-		logger.Error("DATABASE_URL is not set")
+		logger.Error("AUTH_DATABASE_URL is not set")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})

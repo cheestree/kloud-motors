@@ -18,7 +18,7 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	grpcPort := utils.GetEnv("GEO_GRPC_PORT", "50053")
+	grpcPort := utils.MustGetEnv("GEO_GRPC_PORT")
 	postgresDSN := utils.GetEnv("GEO_DATABASE_URL", utils.GetEnv("LISTING_DATABASE_URL", ""))
 	if postgresDSN == "" {
 		logger.Error("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")

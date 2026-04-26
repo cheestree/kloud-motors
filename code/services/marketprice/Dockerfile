@@ -6,6 +6,7 @@ RUN go mod download
 
 COPY ./shared ./shared
 COPY ./marketprice ./marketprice
+COPY ./utils ./utils
 
 WORKDIR /app/marketprice
 RUN go build -o marketprice-service main.go

@@ -33,7 +33,8 @@ services:
     ports:
       - "${SEARCH_HOST_PORT}:50056"
     environment:
-      DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+      SEARCH_GRPC_PORT: ${SEARCH_GRPC_PORT}
     depends_on:
       listing-db:
         condition: service_healthy
@@ -95,7 +96,8 @@ services:
     ports:
       - "${LISTING_HOST_PORT}:50054"
     environment:
-      DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_GRPC_PORT: ${LISTING_GRPC_PORT}
     depends_on:
       listing-db:
         condition: service_healthy
@@ -109,7 +111,7 @@ services:
     ports:
       - "${MARKETPRICE_HOST_PORT}:50055"
     environment:
-      DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
       MARKETPRICE_GRPC_PORT: ${MARKETPRICE_GRPC_PORT}
     depends_on:
       listing-db:
@@ -160,7 +162,7 @@ services:
     ports:
       - "${USER_HOST_PORT}:50058"
     environment:
-      DATABASE_URL: ${USER_DATABASE_URL}
+      USER_DATABASE_URL: ${USER_DATABASE_URL}
       USER_GRPC_PORT: ${USER_GRPC_PORT}
     depends_on:
       user-db:
@@ -174,7 +176,7 @@ services:
     ports:
       - "${AUTH_HOST_PORT}:50050"
     environment:
-      DATABASE_URL: ${AUTH_DATABASE_URL}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
       JWT_PRIVATE_KEY_B64: ${JWT_PRIVATE_KEY_B64}
       USER_GRPC_ADDR: ${USER_GRPC_ADDR}
       AUTH_GRPC_PORT: ${AUTH_GRPC_PORT}
@@ -191,7 +193,7 @@ services:
     ports:
       - "${SELLER_HOST_PORT}:50057"
     environment:
-      DATABASE_URL: ${SELLER_DATABASE_URL}
+      SELLER_DATABASE_URL: ${SELLER_DATABASE_URL}
       LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
       SELLER_GRPC_PORT: ${SELLER_GRPC_PORT}
     depends_on:

@@ -26,16 +26,21 @@ spec:
       containers:
         - name: user-service
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/user
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50058
               name: grpc
           env:
-            - name: DATABASE_URL
+            - name: USER_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: user-secrets
                   key: USER_DATABASE_URL
+            - name: USER_GRPC_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: user-secrets
+                  key: USER_GRPC_PORT
           resources:
             requests:
               cpu: 100m

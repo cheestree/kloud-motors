@@ -7,6 +7,7 @@ RUN go mod download
 COPY ./shared ./shared
 COPY ./auction ./auction
 COPY ./listing ./listing
+COPY ./utils ./utils
 
 WORKDIR /app/auction
 RUN go build -o auction-service .

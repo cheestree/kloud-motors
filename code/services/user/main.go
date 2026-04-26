@@ -64,9 +64,9 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("USER_DATABASE_URL")
 	if dsn == "" {
-		logger.Error("DATABASE_URL is not set")
+		logger.Error("USER_DATABASE_URL is not set")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -79,12 +79,12 @@ func main() {
 		return
 	}
 
-	port := os.Getenv("USER_GRPC_PORT")
-	if port == "" {
+	grpcPort := os.Getenv("USER_GRPC_PORT")
+	if grpcPort == "" {
 		logger.Error("USER_GRPC_PORT is not set")
 		return
 	}
-	lis, err := net.Listen("tcp", ":"+port)
+	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		logger.Error("error on listen", "error", err)
 		return

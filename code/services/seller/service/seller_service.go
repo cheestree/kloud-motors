@@ -15,17 +15,16 @@ import (
 )
 
 type Service struct {
-	DB        *gorm.DB
-	ListingDB *gorm.DB
+	repo *repository.Repository
 }
 
-func NewService(db *gorm.DB, listingDB *gorm.DB) *Service {
-	return &Service{DB: db, ListingDB: listingDB}
+func NewService(repo *repository.Repository) *Service {
+	return &Service{repo: repo}
 }
 
 func (s *Service) CreateSeller(ctx context.Context, req *proto.CreateSellerRequest) (*proto.SellerProfileResponse, error) {
 	var existing Seller
-	if err := s.DB.Where("id = ?", req.SellerId).First(&existing).Error; err == nil {
+	if err := s.repo.SellerDB.Where("id = ?", req.SellerId).First(&existing).Error; err == nil {
 		return nil, status.Error(codes.AlreadyExists, "seller already exists")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Error(codes.Internal, "database error")
@@ -39,7 +38,7 @@ func (s *Service) CreateSeller(ctx context.Context, req *proto.CreateSellerReque
 		Rating:      0,
 	}
 
-	if err := s.DB.Create(&seller).Error; err != nil {
+	if err := s.repo.SellerDB.Create(&seller).Error; err != nil {
 		return nil, status.Error(codes.Internal, "failed to create seller")
 	}
 
@@ -53,7 +52,7 @@ func (s *Service) CreateSeller(ctx context.Context, req *proto.CreateSellerReque
 }
 
 func (s *Service) CreateListing(ctx context.Context, req *proto.CreateListingRequest) (*proto.CreateListingResponse, error) {
-	listingID, listedAt, err := repository.CreateListing(ctx, s.ListingDB, req)
+	listingID, listedAt, err := repository.CreateListing(ctx, s.repo.ListingDB, req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create listing: %v", err)
 	}
@@ -71,7 +70,7 @@ func (s *Service) CreateListing(ctx context.Context, req *proto.CreateListingReq
 
 func (s *Service) GetSellerProfile(ctx context.Context, req *proto.GetSellerProfileRequest) (*proto.SellerProfileResponse, error) {
 	var seller Seller
-	if err := s.DB.Where("id = ?", req.SellerId).First(&seller).Error; err != nil {
+	if err := s.repo.SellerDB.Where("id = ?", req.SellerId).First(&seller).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "seller not found")
 		}
@@ -89,7 +88,7 @@ func (s *Service) GetSellerProfile(ctx context.Context, req *proto.GetSellerProf
 
 func (s *Service) VerifySellerProfile(ctx context.Context, req *proto.VerifySellerRequest) (*proto.VerifySellerResponse, error) {
 	var seller Seller
-	if err := s.DB.Where("id = ?", req.SellerId).First(&seller).Error; err != nil {
+	if err := s.repo.SellerDB.Where("id = ?", req.SellerId).First(&seller).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return &proto.VerifySellerResponse{IsSeller: false}, nil
 		}
@@ -99,9 +98,9 @@ func (s *Service) VerifySellerProfile(ctx context.Context, req *proto.VerifySell
 	return &proto.VerifySellerResponse{IsSeller: true}, nil
 }
 
-func (s *Service) GetSellersPreview(ctx context.Context, req *proto.SellersPreviewRequest) (*proto.SellersPreviewResponse, error) {
+func (s *Service) GetSellersPreview(ctx context.Context, sellerIDs []int64) ([]*proto.SellerPreview, error) {
 	var sellers []Seller
-	if err := s.DB.Where("id IN ?", req.SellerIds).Find(&sellers).Error; err != nil {
+	if err := s.repo.SellerDB.Where("id IN ?", sellerIDs).Find(&sellers).Error; err != nil {
 		return nil, status.Error(codes.Internal, "failed to get sellers preview")
 	}
 
@@ -113,5 +112,5 @@ func (s *Service) GetSellersPreview(ctx context.Context, req *proto.SellersPrevi
 		})
 	}
 
-	return &proto.SellersPreviewResponse{Sellers: previews}, nil
+	return previews, nil
 }

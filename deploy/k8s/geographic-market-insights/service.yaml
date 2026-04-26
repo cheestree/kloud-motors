@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: geographic-market-insights
+  name: geographic-market-insights-service
   namespace: vehicles-prod
   labels:
-    app: geographic-market-insights
+    app: geographic-market-insights-service
 spec:
   type: ClusterIP
   selector:
-    app: geographic-market-insights
+    app: geographic-market-insights-service
   ports:
     - name: grpc
       port: 50053

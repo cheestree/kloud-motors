@@ -287,9 +287,9 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	databaseURL := os.Getenv("DATABASE_URL")
+	databaseURL := os.Getenv("LISTING_DATABASE_URL")
 	if databaseURL == "" {
-		logger.Error("DATABASE_URL is not set")
+		logger.Error("LISTING_DATABASE_URL is not set")
 	}
 
 	db, err := sql.Open("postgres", databaseURL)
@@ -300,7 +300,12 @@ func main() {
 		logger.Error("failed to connect to database", "error", err)
 	}
 
-	lis, err := net.Listen("tcp", ":50054")
+	grpc_port := os.Getenv("LISTING_GRPC_PORT")
+	if grpc_port == "" {
+		logger.Error("LISTING_GRPC_PORT is not set")
+	}
+
+	lis, err := net.Listen("tcp", ":"+grpc_port)
 	if err != nil {
 		logger.Error("error on listen", "error", err)
 	}
@@ -308,12 +313,12 @@ func main() {
 	repo := repository.NewListingRepository(db)
 	svc := service.NewListingService(repo)
 
-	s := grpc.NewServer()
-	proto.RegisterListingServiceServer(s, &server{service: svc})
+	grpcSrv := grpc.NewServer()
+	proto.RegisterListingServiceServer(grpcSrv, &server{service: svc})
 
 	logger.Info("Listing gRPC server is running", "addr", lis.Addr().String())
 
-	if err := s.Serve(lis); err != nil {
+	if err := grpcSrv.Serve(lis); err != nil {
 		logger.Error("failed to serve", "error", err)
 	}
 }

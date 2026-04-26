@@ -19,16 +19,21 @@ spec:
       containers:
         - name: search-service
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/search
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50056
               name: grpc
           env:
-            - name: DATABASE_URL
+            - name: LISTING_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: search-secrets
-                  key: postgres-dsn
+                  key: LISTING_DATABASE_URL
+            - name: SEARCH_GRPC_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: search-secrets
+                  key: SEARCH_GRPC_PORT
           resources:
             requests:
               cpu: 100m
