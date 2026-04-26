@@ -21,6 +21,7 @@ import (
 )
 
 func registerRoutes() {
+	http.HandleFunc(routeHealth, handlers.HandleHealth)
 	registerListingRoutes()
 	registerChatRoutes()
 	registerMarketRoutes()
@@ -29,6 +30,7 @@ func registerRoutes() {
 	registerUserRoutes()
 	registerSellerRoutes()
 }
+
 
 func registerListingRoutes() {
 	http.HandleFunc(routeListings, handlers.HandleListings)

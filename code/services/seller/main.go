@@ -16,6 +16,9 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var db *gorm.DB
@@ -187,6 +190,10 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterSellerServiceServer(grpcServer, &server{})
+
+	healthcheck := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthcheck)
+	healthcheck.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	log.Println("Seller gRPC server is running on " + lis.Addr().String() + "...")
 

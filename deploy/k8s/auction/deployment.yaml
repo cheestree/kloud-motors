@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auction-service
+  name: auction
   namespace: vehicles-prod
   labels:
-    app: auction-service
+    app: auction
 spec:
   replicas: 2
   revisionHistoryLimit: 10
@@ -16,15 +16,15 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: auction-service
+      app: auction
   template:
     metadata:
       labels:
-        app: auction-service
+        app: auction
     spec:
       serviceAccountName: vehicles-workload-sa
       containers:
-        - name: auction-service
+        - name: auction
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/auction
           imagePullPolicy: Always
           ports:
@@ -67,21 +67,21 @@ spec:
               cpu: 500m
               memory: 512Mi
           startupProbe:
-            tcpSocket:
-              port: grpc
+            grpc:
+              port: 50051
             failureThreshold: 30
             periodSeconds: 5
             timeoutSeconds: 3
           livenessProbe:
-            tcpSocket:
-              port: grpc
+            grpc:
+              port: 50051
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
-            tcpSocket:
-              port: grpc
+            grpc:
+              port: 50051
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 2
@@ -91,6 +91,8 @@ spec:
           args:
             - "--structured-logs"
             - "--port=5432"
+            - "--health-check"
+            - "--http-address=0.0.0.0"
             - "$(CLOUD_SQL_INSTANCE)"
           env:
             - name: CLOUD_SQL_INSTANCE
@@ -105,3 +107,17 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+          startupProbe:
+            httpGet:
+              path: /startup
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /liveness
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3

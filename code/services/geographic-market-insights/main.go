@@ -12,6 +12,9 @@ import (
 	"services/geographic-market-insights/proto"
 	"services/geographic-market-insights/repository"
 	"services/geographic-market-insights/repository/postgres"
+
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func main() {
@@ -37,6 +40,10 @@ func main() {
 
 	grpcSrv := grpc.NewServer()
 	proto.RegisterGeoMarketInsightsServiceServer(grpcSrv, NewGeoServer(repo))
+
+	healthcheck := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcSrv, healthcheck)
+	healthcheck.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {

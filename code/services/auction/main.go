@@ -19,6 +19,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var db *sql.DB
@@ -87,6 +89,10 @@ func main() {
 		hub:           hub,
 		listingClient: listingClient,
 	})
+
+	healthcheck := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthcheck)
+	healthcheck.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {
 		log.Println("Auction gRPC server is running on " + lis.Addr().String() + "...")

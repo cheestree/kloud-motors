@@ -57,12 +57,14 @@ spec:
               value: "auction:8081"
 
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: api/health
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: api/health
               port: http
             initialDelaySeconds: 15
             periodSeconds: 20

@@ -19,6 +19,9 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type serviceClients struct {
@@ -133,6 +136,10 @@ func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIn
 		listingClient: clients.listingClient,
 		sellerClient:  clients.sellerClient,
 	})
+
+	healthcheck := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcSrv, healthcheck)
+	healthcheck.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {
 		log.Printf("gRPC listening on :%s", grpcPort)

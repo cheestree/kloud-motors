@@ -1,7 +1,7 @@
 .DS_Store
 code/setup/data/*.csv
 venv/
-.env
+env
 *.csv
 
 # Go Binaries

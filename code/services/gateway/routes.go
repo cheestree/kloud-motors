@@ -12,6 +12,7 @@ const (
 	routePrefixAuth     = routeBaseAPI + "/auth"
 	routePrefixUsersMe  = routeBaseAPI + "/users/me"
 	routePrefixSellers  = routeBaseAPI + "/sellers"
+	routePrefixHealth   = routeBaseAPI + "/health"
 )
 
 const (
@@ -37,4 +38,5 @@ const (
 	routeSellerByID              = routePrefixSellers + "/"
 	routeUsersPreview            = routeBaseAPI + "/users/preview"
 	routeSellersPreview          = routePrefixSellers + "/preview"
+	routeHealth                  = routePrefixHealth
 )
