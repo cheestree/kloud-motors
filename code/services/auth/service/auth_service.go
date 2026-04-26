@@ -45,9 +45,10 @@ func (s *AuthService) GenerateJWT(user *AuthUser) (string, error) {
 }
 
 func (s *AuthService) Register(ctx context.Context, req *proto.RegisterRequest) (*proto.AuthResponse, error) {
-	err := s.DB.UserExistsByEmail(req.Email)
-	if err != nil {
-		return nil, err
+	user, err := s.DB.GetUserByEmail(req.Email)
+	
+	if user != nil || err == nil {
+		return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -76,8 +77,9 @@ func (s *AuthService) Register(ctx context.Context, req *proto.RegisterRequest) 
 }
 
 func (s *AuthService) Login(ctx context.Context, req *proto.LoginRequest) (*proto.AuthResponse, error) {
-	var user AuthUser
-	if err := s.DB.UserExistsByEmail(req.Email); err != nil {
+	user, err := s.DB.GetUserByEmail(req.Email)
+
+	if user == nil || err != nil {
 		return nil, status.Error(codes.Unauthenticated, "email not found")
 	}
 
@@ -85,7 +87,7 @@ func (s *AuthService) Login(ctx context.Context, req *proto.LoginRequest) (*prot
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 
-	token, err := s.GenerateJWT(&user)
+	token, err := s.GenerateJWT(user)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to generate token")
 	}

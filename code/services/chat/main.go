@@ -16,8 +16,6 @@ import (
 	listingproto "services/listing/proto"
 	sellerproto "services/seller/proto"
 	"services/utils"
-	"strconv"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -126,8 +124,8 @@ func setupServiceClients() (*serviceClients, error) {
 }
 
 func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, clients *serviceClients) error {
-	grpcPort := normalizePort(utils.GetEnv("CHAT_GRPC_PORT", "50052"), "50052")
-	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
+	grpcPort := utils.GetEnv("CHAT_GRPC_PORT", "50052")
+	grpcLis, err := net.Listen("tcp", ":" + grpcPort)
 	if err != nil {
 		return err
 	}
@@ -160,31 +158,8 @@ func setupHTTPWS(hub *ws2.Hub, messageStore repository.MessageRepo, indexStore r
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
 
-	httpWSPort := normalizePort(utils.GetEnv("CHAT_WS_PORT", "8080"), "8080")
+	httpWSPort := utils.GetEnv("CHAT_WS_PORT", "8080")
 
 	log.Printf("WS listening on %s", httpWSPort)
 	return http.ListenAndServe(":"+httpWSPort, mux)
-}
-
-func normalizePort(raw, fallback string) string {
-	v := strings.TrimSpace(raw)
-	if v == "" {
-		return fallback
-	}
-
-	if strings.Contains(v, ":") {
-		if _, port, err := net.SplitHostPort(v); err == nil && port != "" {
-			return port
-		}
-		idx := strings.LastIndex(v, ":")
-		if idx >= 0 && idx+1 < len(v) {
-			v = v[idx+1:]
-		}
-	}
-
-	if _, err := strconv.Atoi(v); err != nil {
-		return fallback
-	}
-
-	return v
 }

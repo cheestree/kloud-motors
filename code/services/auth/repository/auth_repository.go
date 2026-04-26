@@ -16,14 +16,14 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 	return &AuthRepository{db: *db}
 }
 
-func (r *AuthRepository) UserExistsByEmail(email string) error {
+func (r *AuthRepository) GetUserByEmail(email string) (*models.AuthUser, error) {
 	var user models.AuthUser
-	err := r.db.Where("email = ?", email).First(&user).Error
-	if err == nil {
-		return status.Error(codes.AlreadyExists, "user with this email already exists")
+	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, status.Error(codes.NotFound, "user not found")
 	}
-	return nil
+	return &user, nil
 }
+
 
 func (r *AuthRepository) CreateUser(user *models.AuthUser) error {
 	if err := r.db.Create(&user).Error; err != nil {
