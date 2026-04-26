@@ -121,7 +121,7 @@ func main() {
 	}
 	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
-		logger.Error("error on listen", "error", err)
+		logger.Error("failed to listen", "error", err)
 		return
 	}
 

@@ -290,24 +290,29 @@ func main() {
 	databaseURL := os.Getenv("LISTING_DATABASE_URL")
 	if databaseURL == "" {
 		logger.Error("LISTING_DATABASE_URL is not set")
+		return
 	}
 
 	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
 		logger.Error("failed to open database", "error", err)
+		return
 	}
 	if err := db.Ping(); err != nil {
 		logger.Error("failed to connect to database", "error", err)
+		return
 	}
 
 	grpc_port := os.Getenv("LISTING_GRPC_PORT")
 	if grpc_port == "" {
 		logger.Error("LISTING_GRPC_PORT is not set")
+		return
 	}
 
 	lis, err := net.Listen("tcp", ":"+grpc_port)
 	if err != nil {
-		logger.Error("error on listen", "error", err)
+		logger.Error("failed to listen", "error", err)
+		return
 	}
 
 	repo := repository.NewListingRepository(db)

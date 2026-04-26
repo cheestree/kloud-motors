@@ -35,6 +35,7 @@ func main() {
 	repo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
 	if err != nil {
 		logger.Error("postgres repo init error", "error", err)
+		return
 	}
 	defer repo.Close()
 
@@ -43,11 +44,12 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
-		logger.Error("fail to listen error", "error", err)
+		logger.Error("failed to listen", "error", err)
+		return
 	}
 
 	logger.Info("geo-market-insights gRPC listening", "port", grpcPort)
 	if err := grpcSrv.Serve(lis); err != nil {
-		logger.Error("fail to serve error", "error", err)
+		logger.Error("failed to serve", "error", err)
 	}
 }
