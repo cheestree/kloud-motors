@@ -5,20 +5,17 @@ import (
 	"encoding/base64"
 	"errors"
 	"log/slog"
-	"net"
 	"os"
 
-	. "services/auth/models"
 	proto "services/auth/proto"
 	"services/auth/repository"
 	"services/auth/service"
+	"services/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 type server struct {
@@ -61,20 +58,9 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	dsn := os.Getenv("AUTH_DATABASE_URL")
-	if dsn == "" {
-		logger.Error("AUTH_DATABASE_URL is not set")
-		return
-	}
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		logger.Error("failed to connect database", "error", err)
-		return
-	}
-	if err := db.AutoMigrate(&AuthUser{}); err != nil {
-		logger.Error("failed to migrate database", "error", err)
-		return
-	}
+	dsn := utils.MustGetEnv("AUTH_DATABASE_URL")
+
+	db := utils.TryConnectGorm(dsn, 3, 10)
 
 	privateKey, err := getPrivateKey()
 	if err != nil {
@@ -84,23 +70,14 @@ func main() {
 	repo := repository.NewAuthRepository(db)
 	authService := service.NewAuthService(repo, privateKey)
 
-	grpcPort := os.Getenv("AUTH_GRPC_PORT")
-	if grpcPort == "" {
-		logger.Error("AUTH_GRPC_PORT is not set")
-		return
-	}
-	lis, err := net.Listen("tcp", ":"+grpcPort)
-	if err != nil {
-		logger.Error("failed to listen", "error", err)
-		return
-	}
+	grpcPort := utils.MustGetEnv("AUTH_GRPC_PORT")
+
+	lis := utils.TryListen(grpcPort)
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterAuthServiceServer(grpcServer, &server{service: authService})
 
 	logger.Info("Auth gRPC server is running", "addr", lis.Addr().String())
 
-	if err := grpcServer.Serve(lis); err != nil {
-		logger.Error("failed to serve", "error", err)
-	}
+	utils.TryServe(grpcServer, lis)
 }

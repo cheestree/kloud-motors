@@ -1,11 +1,18 @@
 package utils
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"strconv"
 	"strings"
+	"time"
+
+	"google.golang.org/grpc"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func GetEnv(key, fallback string) string {
@@ -147,4 +154,63 @@ func ParseInt64(s string) int64 {
 	var v int64
 	_, _ = fmt.Sscan(s, &v)
 	return v
+}
+
+func TryListen(port string) net.Listener {
+	lis, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Fatalf("Failed to listen on port %s: %v", port, err)
+	}
+	return lis
+}
+
+func TryServe(grpcServer *grpc.Server, lis net.Listener) {
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+	}
+}
+
+func TryConnectDB(databaseURL string, timeout int, tries int) *sql.DB {
+	db, err := sql.Open("postgres", databaseURL)
+
+	for i := range tries {
+		if err == nil {
+			if pingErr := db.Ping(); pingErr == nil {
+				return db
+			} else {
+				err = pingErr
+			}
+		}
+		log.Printf("Waiting for database to be ready (attempt %d/%d)", i+1, tries)
+		time.Sleep(time.Duration(timeout) * time.Second)
+	}
+
+	log.Fatalf("Failed to connect to database after %d attempts: %v", tries, err)
+	return nil
+}
+
+func TryConnectGorm(databaseURL string, timeout int, tries int) *gorm.DB {
+	var db *gorm.DB
+	var err error
+
+	for i := range tries {
+		db, err = gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+		if err == nil {
+			sqlDB, pingErr := db.DB()
+			if pingErr == nil {
+				if pingErr = sqlDB.Ping(); pingErr == nil {
+					return db
+				} else {
+					err = pingErr
+				}
+			} else {
+				err = pingErr
+			}
+		}
+		log.Printf("Waiting for database to be ready (attempt %d/%d)", i+1, tries)
+		time.Sleep(time.Duration(timeout) * time.Second)
+	}
+
+	log.Fatalf("Failed to connect to database after %d attempts: %v", tries, err)
+	return nil
 }

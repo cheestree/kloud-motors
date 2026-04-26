@@ -3,18 +3,16 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net"
 	"os"
 
 	. "services/user/models"
 	proto "services/user/proto"
 	"services/user/service"
+	"services/utils"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 type server struct {
@@ -64,31 +62,17 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	dsn := os.Getenv("USER_DATABASE_URL")
-	if dsn == "" {
-		logger.Error("USER_DATABASE_URL is not set")
-		return
-	}
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		logger.Error("failed to connect database", "error", err)
-		return
-	}
+	dsn := utils.MustGetEnv("USER_DATABASE_URL")
+
+	db := utils.TryConnectGorm(dsn, 3, 10)
 	if err := db.AutoMigrate(&User{}, &Favorite{}); err != nil {
 		logger.Error("failed to migrate database", "error", err)
 		return
 	}
 
-	grpcPort := os.Getenv("USER_GRPC_PORT")
-	if grpcPort == "" {
-		logger.Error("USER_GRPC_PORT is not set")
-		return
-	}
-	lis, err := net.Listen("tcp", ":"+grpcPort)
-	if err != nil {
-		logger.Error("failed to listen", "error", err)
-		return
-	}
+	grpcPort := utils.MustGetEnv("USER_GRPC_PORT")
+
+	lis := utils.TryListen(grpcPort)
 
 	grpcServer := grpc.NewServer()
 	userSvc := service.NewService(db)
@@ -96,7 +80,5 @@ func main() {
 
 	logger.Info("User gRPC server is running", "addr", lis.Addr().String())
 
-	if err := grpcServer.Serve(lis); err != nil {
-		logger.Error("failed to serve", "error", err)
-	}
+	utils.TryServe(grpcServer, lis)
 }

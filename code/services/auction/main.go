@@ -4,10 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"net"
 	"net/http"
-	"os"
-	"time"
 
 	proto "services/auction/proto"
 	auctionpubsub "services/auction/pubsub"
@@ -23,30 +20,10 @@ import (
 
 var db *sql.DB
 
-func initDB() {
-	dsn := os.Getenv("AUCTION_DATABASE_URL")
-	if dsn == "" {
-		log.Fatalf("AUCTION_DATABASE_URL is not set")
-	}
-
-	var err error
-	for i := 0; i < 10; i++ {
-		db, err = sql.Open("postgres", dsn)
-		if err == nil {
-			if pingErr := db.Ping(); pingErr == nil {
-				log.Println("Connected to auction database!")
-				return
-			}
-		}
-		log.Printf("Waiting for auction database... (%d/10)", i+1)
-		time.Sleep(3 * time.Second)
-	}
-
-	log.Fatalf("failed to connect database: %v", err)
-}
-
 func main() {
-	initDB()
+	dsn := utils.MustGetEnv("AUCTION_DATABASE_URL")
+	db = utils.TryConnectDB(dsn, 3, 10)
+
 	listingAddr := utils.GetEnv("LISTING_GRPC_ADDR", "listing:50054")
 	auctionGRPCPort := utils.GetEnv("AUCTION_GRPC_PORT", "50051")
 
@@ -77,10 +54,7 @@ func main() {
 		hub = ws2.NewHub(nil)
 	}
 
-	lis, err := net.Listen("tcp", ":"+auctionGRPCPort)
-	if err != nil {
-		log.Fatalf("Error on listen: %v", err)
-	}
+	lis := utils.TryListen(auctionGRPCPort)
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterAuctionServiceServer(grpcServer, &server{

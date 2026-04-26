@@ -2,17 +2,15 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"log/slog"
-	"net"
 	"os"
-	"strings"
 
+	models "services/listing/models"
 	"services/listing/proto"
 	"services/listing/repository"
 	"services/listing/service"
 	"services/shared"
+	"services/utils"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -32,13 +30,13 @@ func (s *server) GetListingDetails(ctx context.Context, req *proto.ListingDetail
 
 	listing, err := s.service.GetListingDetails(ctx, req.Id)
 	if err != nil {
-		return nil, mapListingError("fetch listing", err)
+		return nil, models.MapListingError("fetch listing", err)
 	}
 	if listing == nil {
 		return nil, status.Error(codes.NotFound, "listing not found")
 	}
 
-	return toListingDetailsResponse(listing), nil
+	return models.ToListingDetailsResponse(listing), nil
 }
 
 func (s *server) CompareListings(ctx context.Context, req *proto.CompareListingsRequest) (*proto.CompareListingsResponse, error) {
@@ -48,12 +46,12 @@ func (s *server) CompareListings(ctx context.Context, req *proto.CompareListings
 
 	listings, err := s.service.CompareListings(ctx, req.Ids)
 	if err != nil {
-		return nil, mapListingError("compare listings", err)
+		return nil, models.MapListingError("compare listings", err)
 	}
 
 	responses := make([]*proto.ListingDetailsResponse, 0, len(listings))
 	for _, listing := range listings {
-		responses = append(responses, toListingDetailsResponse(listing))
+		responses = append(responses, models.ToListingDetailsResponse(listing))
 	}
 
 	return &proto.CompareListingsResponse{Listings: responses}, nil
@@ -86,10 +84,10 @@ func (s *server) CreateListing(ctx context.Context, req *proto.CreateListingRequ
 		IsSold:       req.IsSold,
 	})
 	if err != nil {
-		return nil, mapListingError("create listing", err)
+		return nil, models.MapListingError("create listing", err)
 	}
 
-	return toListingDetailsResponse(listing), nil
+	return models.ToListingDetailsResponse(listing), nil
 }
 
 func (s *server) UpdateListing(ctx context.Context, req *proto.UpdateListingRequest) (*proto.ListingDetailsResponse, error) {
@@ -118,10 +116,10 @@ func (s *server) UpdateListing(ctx context.Context, req *proto.UpdateListingRequ
 		IsNew:        req.IsNew,
 	})
 	if err != nil {
-		return nil, mapListingError("update listing", err)
+		return nil, models.MapListingError("update listing", err)
 	}
 
-	return toListingDetailsResponse(listing), nil
+	return models.ToListingDetailsResponse(listing), nil
 }
 
 func (s *server) SetListingSoldStatus(ctx context.Context, req *proto.SetListingSoldStatusRequest) (*proto.ListingDetailsResponse, error) {
@@ -130,9 +128,9 @@ func (s *server) SetListingSoldStatus(ctx context.Context, req *proto.SetListing
 	}
 	listing, err := s.service.SetListingSoldStatus(ctx, req.Id, req.DealerId, req.IsSold)
 	if err != nil {
-		return nil, mapListingError("set listing sold status", err)
+		return nil, models.MapListingError("set listing sold status", err)
 	}
-	return toListingDetailsResponse(listing), nil
+	return models.ToListingDetailsResponse(listing), nil
 }
 
 func (s *server) DeleteListing(ctx context.Context, req *proto.DeleteListingRequest) (*proto.DeleteListingResponse, error) {
@@ -142,7 +140,7 @@ func (s *server) DeleteListing(ctx context.Context, req *proto.DeleteListingRequ
 
 	deleted, err := s.service.DeleteListing(ctx, req.Id, req.DealerId)
 	if err != nil {
-		return nil, mapListingError("delete listing", err)
+		return nil, models.MapListingError("delete listing", err)
 	}
 
 	return &proto.DeleteListingResponse{Deleted: deleted}, nil
@@ -154,7 +152,7 @@ func (s *server) CheckListingOwnership(ctx context.Context, req *proto.CheckList
 	}
 	isOwner, err := s.service.CheckListingOwnership(ctx, req.ListingId, req.DealerId)
 	if err != nil {
-		return nil, mapListingError("check listing ownership", err)
+		return nil, models.MapListingError("check listing ownership", err)
 	}
 	return &proto.CheckListingOwnershipResponse{IsOwner: isOwner}, nil
 }
@@ -166,13 +164,13 @@ func (s *server) GetListingSummary(ctx context.Context, req *proto.ListingDetail
 
 	summary, err := s.service.GetListingSummary(ctx, req.Id)
 	if err != nil {
-		return nil, mapListingError("fetch listing summary", err)
+		return nil, models.MapListingError("fetch listing summary", err)
 	}
 	if summary == nil {
 		return nil, status.Error(codes.NotFound, "listing not found")
 	}
 
-	return toListingSummary(summary), nil
+	return models.ToListingSummary(summary), nil
 }
 
 func (s *server) GetListingSummaries(ctx context.Context, req *proto.ListingSummariesRequest) (*proto.ListingSummariesResponse, error) {
@@ -182,42 +180,15 @@ func (s *server) GetListingSummaries(ctx context.Context, req *proto.ListingSumm
 
 	listings, err := s.service.GetListingSummaries(ctx, req.Ids)
 	if err != nil {
-		return nil, mapListingError("fetch listing summaries", err)
+		return nil, models.MapListingError("fetch listing summaries", err)
 	}
 
 	responseListings := make([]*shared.ListingSummary, 0, len(listings))
 	for _, listing := range listings {
-		responseListings = append(responseListings, toListingSummary(listing))
+		responseListings = append(responseListings, models.ToListingSummary(listing))
 	}
 
 	return &proto.ListingSummariesResponse{Listings: responseListings}, nil
-}
-
-func toListingSummary(summary *shared.ListingSummary) *shared.ListingSummary {
-	if summary == nil {
-		return nil
-	}
-
-	return &shared.ListingSummary{
-		Id:           summary.Id,
-		DealerId:     summary.DealerId,
-		Make:         summary.Make,
-		Model:        summary.Model,
-		Year:         summary.Year,
-		Price:        summary.Price,
-		Mileage:      summary.Mileage,
-		FuelType:     summary.FuelType,
-		BodyClass:    summary.BodyClass,
-		DriveType:    summary.DriveType,
-		Transmission: summary.Transmission,
-		IsNew:        summary.IsNew,
-		City:         summary.City,
-		District:     summary.District,
-		State:        summary.State,
-		Country:      summary.Country,
-		LastSeen:     summary.LastSeen,
-		IsSold:       summary.IsSold,
-	}
 }
 
 func (s *server) CheckListingOpen(ctx context.Context, req *proto.CheckListingOpenRequest) (*proto.CheckListingOpenResponse, error) {
@@ -227,93 +198,23 @@ func (s *server) CheckListingOpen(ctx context.Context, req *proto.CheckListingOp
 
 	open, dealerID, err := s.service.CheckListingOpen(ctx, req.ListingId)
 	if err != nil {
-		return nil, mapListingError("check listing open", err)
+		return nil, models.MapListingError("check listing open", err)
 	}
 
 	return &proto.CheckListingOpenResponse{IsOpen: open, DealerId: dealerID}, nil
-}
-
-func toListingDetailsResponse(listing *shared.ListingDetails) *proto.ListingDetailsResponse {
-	if listing == nil {
-		return nil
-	}
-	return &proto.ListingDetailsResponse{
-		Id:           listing.Id,
-		Make:         listing.Make,
-		Model:        listing.Model,
-		Year:         listing.Year,
-		Price:        float64(listing.Price),
-		Mileage:      listing.Mileage,
-		City:         listing.City,
-		District:     listing.District,
-		State:        listing.State,
-		Country:      listing.Country,
-		FuelType:     listing.FuelType,
-		Trim:         listing.Trim,
-		Transmission: listing.Transmission,
-		Color:        listing.Color,
-		SellerType:   listing.SellerType,
-		Description:  listing.Description,
-		ListedAt:     listing.LastSeen,
-		Images:       listing.Images,
-		IsSold:       listing.IsSold,
-	}
-}
-
-func mapListingError(action string, err error) error {
-	if err == nil {
-		return nil
-	}
-	if errors.Is(err, service.ErrListingNotFound) {
-		return status.Error(codes.NotFound, "listing not found")
-	}
-
-	lower := strings.ToLower(err.Error())
-	if strings.Contains(lower, "required") ||
-		strings.Contains(lower, "invalid") ||
-		strings.Contains(lower, "must be") ||
-		strings.Contains(lower, "cannot") ||
-		strings.Contains(lower, "unknown") {
-		return status.Error(codes.InvalidArgument, err.Error())
-	}
-	if strings.Contains(lower, "duplicate") || strings.Contains(lower, "unique") {
-		return status.Error(codes.AlreadyExists, "listing with this VIN already exists")
-	}
-
-	return status.Errorf(codes.Internal, "failed to %s: %v", action, err)
 }
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	databaseURL := os.Getenv("LISTING_DATABASE_URL")
-	if databaseURL == "" {
-		logger.Error("LISTING_DATABASE_URL is not set")
-		return
-	}
+	databaseURL := utils.MustGetEnv("LISTING_DATABASE_URL")
 
-	db, err := sql.Open("postgres", databaseURL)
-	if err != nil {
-		logger.Error("failed to open database", "error", err)
-		return
-	}
-	if err := db.Ping(); err != nil {
-		logger.Error("failed to connect to database", "error", err)
-		return
-	}
+	db := utils.TryConnectDB(databaseURL, 3, 10)
 
-	grpc_port := os.Getenv("LISTING_GRPC_PORT")
-	if grpc_port == "" {
-		logger.Error("LISTING_GRPC_PORT is not set")
-		return
-	}
+	grpc_port := utils.MustGetEnv("LISTING_GRPC_PORT")
 
-	lis, err := net.Listen("tcp", ":"+grpc_port)
-	if err != nil {
-		logger.Error("failed to listen", "error", err)
-		return
-	}
+	lis := utils.TryListen(grpc_port)
 
 	repo := repository.NewListingRepository(db)
 	svc := service.NewListingService(repo)
@@ -323,7 +224,5 @@ func main() {
 
 	logger.Info("Listing gRPC server is running", "addr", lis.Addr().String())
 
-	if err := grpcSrv.Serve(lis); err != nil {
-		logger.Error("failed to serve", "error", err)
-	}
+	utils.TryServe(grpcSrv, lis)
 }

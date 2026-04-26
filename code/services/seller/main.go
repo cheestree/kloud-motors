@@ -3,19 +3,16 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net"
 	"os"
 
-	. "services/seller/models"
 	proto "services/seller/proto"
 	"services/seller/repository"
 	"services/seller/service"
+	"services/utils"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 type server struct {
@@ -81,49 +78,19 @@ func (s *server) GetSellersPreview(ctx context.Context, req *proto.SellersPrevie
 	}, nil
 }
 
-func initDB(dsn string, logger *slog.Logger) *gorm.DB {
-	var err error
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		logger.Error("failed to connect database", "error", err)
-		return nil
-	}
-	if err := db.AutoMigrate(&Seller{}); err != nil {
-		logger.Error("failed to migrate database", "error", err)
-		return nil
-	}
-	return db
-}
-
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	sellerDsn := os.Getenv("SELLER_DATABASE_URL")
-	if sellerDsn == "" {
-		logger.Error("SELLER_DATABASE_URL is not set")
-		return
-	}
+	sellerDsn := utils.MustGetEnv("SELLER_DATABASE_URL")
+	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
-	listingDsn := os.Getenv("LISTING_DATABASE_URL")
-	if listingDsn == "" {
-		logger.Error("LISTING_DATABASE_URL is not set")
-		return
-	}
+	sellerDB := utils.TryConnectGorm(sellerDsn, 3, 10)
+	listingDB := utils.TryConnectGorm(listingDsn, 3, 10)
 
-	sellerDB := initDB(sellerDsn, logger)
-	listingDB := initDB(listingDsn, logger)
+	grpcPort := utils.MustGetEnv("SELLER_GRPC_PORT")
 
-	grpcPort := os.Getenv("SELLER_GRPC_PORT")
-	if grpcPort == "" {
-		logger.Error("SELLER_GRPC_PORT is not set")
-		return
-	}
-	lis, err := net.Listen("tcp", ":"+grpcPort)
-	if err != nil {
-		logger.Error("failed to listen", "error", err)
-		return
-	}
+	lis := utils.TryListen(grpcPort)
 
 	repo := repository.NewRepository(sellerDB, listingDB)
 	sellerSvc := service.NewService(repo)
