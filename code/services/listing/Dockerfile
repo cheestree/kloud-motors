@@ -6,6 +6,7 @@ RUN go mod download
 
 COPY ./shared ./shared
 COPY ./listing ./listing
+COPY ./utils ./utils
 
 WORKDIR /app/listing
 RUN go build -o listing-service main.go

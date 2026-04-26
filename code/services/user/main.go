@@ -2,179 +2,85 @@ package main
 
 import (
 	"context"
-	"log"
-	"net"
+	"log/slog"
 	"os"
 
-	. "services/user/models"
-	proto "services/user/proto"
+	"services/user/models"
+	userpb "services/user/proto"
+	"services/user/service"
+	"services/utils"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-var db *gorm.DB
-
 type server struct {
-	proto.UnimplementedUserServiceServer
+	userpb.UserServiceServer
+	service *service.Service
 }
 
-func (s *server) CreateUserProfile(ctx context.Context, req *proto.CreateUserProfileRequest) (*proto.CreateUserProfileResponse, error) {
+func (s *server) CreateUserProfile(ctx context.Context, req *userpb.CreateUserProfileRequest) (*userpb.CreateUserProfileResponse, error) {
 	if req.UserId <= 0 || req.Name == "" || req.Email == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id, name, and email are required")
 	}
 
-	newUser := User{
-		ID:    req.UserId,
-		Name:  req.Name,
-		Email: req.Email,
-	}
-
-	if err := db.Create(&newUser).Error; err != nil {
-		return nil, status.Error(codes.Internal, "failed to create user profile")
-	}
-
-	return &proto.CreateUserProfileResponse{
-		Success: true,
-	}, nil
+	return s.service.CreateUserProfile(ctx, req)
 }
 
-func (s *server) GetFavorites(ctx context.Context, req *proto.GetFavoritesRequest) (*proto.FavoritesResponse, error) {
+func (s *server) GetFavorites(ctx context.Context, req *userpb.GetFavoritesRequest) (*userpb.FavoritesResponse, error) {
 	if req.UserId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
 
-	var favorites []Favorite
-	if err := db.Where("user_id = ?", req.UserId).Find(&favorites).Error; err != nil {
-		return nil, status.Error(codes.Internal, "failed to get favorites")
-	}
-
-	listings := make([]int64, len(favorites))
-	for i, f := range favorites {
-		listings[i] = f.ListingID
-	}
-
-	return &proto.FavoritesResponse{
-		Favorites: listings,
-	}, nil
+	return s.service.GetFavorites(ctx, req)
 }
 
-func (s *server) AddFavorite(ctx context.Context, req *proto.AddFavoriteRequest) (*proto.FavoriteMutationResponse, error) {
+func (s *server) AddFavorite(ctx context.Context, req *userpb.AddFavoriteRequest) (*userpb.FavoriteMutationResponse, error) {
 	if req.UserId <= 0 || req.ListingId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id and listing_id are required")
 	}
 
-	fav := Favorite{
-		UserID:    req.UserId,
-		ListingID: req.ListingId,
-	}
-
-	if err := db.Create(&fav).Error; err != nil {
-		return &proto.FavoriteMutationResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &proto.FavoriteMutationResponse{
-		Success: true,
-		Message: "favorite added",
-	}, nil
+	return s.service.AddFavorite(ctx, req)
 }
 
-func (s *server) RemoveFavorite(ctx context.Context, req *proto.RemoveFavoriteRequest) (*proto.FavoriteMutationResponse, error) {
+func (s *server) RemoveFavorite(ctx context.Context, req *userpb.RemoveFavoriteRequest) (*userpb.FavoriteMutationResponse, error) {
 	if req.UserId <= 0 || req.ListingId <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "user_id and listing_id are required")
 	}
-
-	res := db.Where("user_id = ? AND listing_id = ?", req.UserId, req.ListingId).Delete(&Favorite{})
-	if res.Error != nil {
-		return &proto.FavoriteMutationResponse{
-			Success: false,
-			Message: res.Error.Error(),
-		}, nil
-	}
-
-	if res.RowsAffected == 0 {
-		return &proto.FavoriteMutationResponse{
-			Success: false,
-			Message: "favorite not found",
-		}, nil
-	}
-
-	return &proto.FavoriteMutationResponse{
-		Success: true,
-		Message: "favorite removed",
-	}, nil
+	return s.service.RemoveFavorite(ctx, req)
 }
 
-func (s *server) GetUsersPreview(ctx context.Context, req *proto.UsersPreviewRequest) (*proto.UsersPreviewResponse, error) {
+func (s *server) GetUsersPreview(ctx context.Context, req *userpb.UsersPreviewRequest) (*userpb.UsersPreviewResponse, error) {
 	if len(req.UserIds) == 0 {
-		return &proto.UsersPreviewResponse{Users: []*proto.UserPreview{}}, nil
+		return &userpb.UsersPreviewResponse{Users: []*userpb.UserPreview{}}, nil
 	}
-
-	var users []User
-	if err := db.Where("id IN ?", req.UserIds).Find(&users).Error; err != nil {
-		return nil, status.Error(codes.Internal, "failed to get users preview")
-	}
-
-	previews := make([]*proto.UserPreview, 0, len(users))
-	for _, user := range users {
-		previews = append(previews, &proto.UserPreview{
-			Id:   user.ID,
-			Name: user.Name,
-		})
-	}
-
-	return &proto.UsersPreviewResponse{
-		Users: previews,
-	}, nil
-}
-
-func initDB() {
-	dsn := os.Getenv("USER_DATABASE_URL")
-	if dsn == "" {
-		log.Fatalf("USER_DATABASE_URL is not set")
-	}
-
-	var err error
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
-	}
-
-	db.AutoMigrate(&User{}, &Favorite{})
+	return s.service.GetUsersPreview(ctx, req)
 }
 
 func main() {
-	initDB()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
-	grpcPort := os.Getenv("USER_GRPC_PORT")
-	if grpcPort == "" {
-		log.Fatalf("USER_GRPC_PORT is not set")
+	userDsn := utils.MustGetEnv("USER_DATABASE_URL")
+
+	userDB := utils.TryConnectGorm(userDsn, 3, 10)
+	if err := userDB.AutoMigrate(&models.User{}, &models.Favorite{}); err != nil {
+		logger.Error("failed to migrate database", "error", err)
+		return
 	}
 
-	lis, err := net.Listen("tcp", ":"+grpcPort)
-	if err != nil {
-		log.Fatalf("Error on listen: %v", err)
-	}
+	userGrpcPort := utils.MustGetEnv("USER_GRPC_PORT")
+
+	lis := utils.TryListen(userGrpcPort)
 
 	grpcServer := grpc.NewServer()
-	proto.RegisterUserServiceServer(grpcServer, &server{})
+	userSvc := service.NewService(userDB)
+	userpb.RegisterUserServiceServer(grpcServer, &server{service: userSvc})
 
-	healthcheck := health.NewServer()
-	grpc_health_v1.RegisterHealthServer(grpcServer, healthcheck)
-	healthcheck.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	utils.HealthCheck("user.UserService", grpcServer)
 
-	log.Println("User gRPC server is running on " + lis.Addr().String() + "...")
+	logger.Info("User gRPC server is running", "addr", lis.Addr().String())
 
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
+	utils.TryServe(grpcServer, lis)
 }

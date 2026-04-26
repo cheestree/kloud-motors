@@ -7,6 +7,7 @@ RUN go mod download
 
 COPY ./shared ./shared
 COPY ./search ./search
+COPY ./utils ./utils
 
 WORKDIR /app/search
 RUN go build -o search-service main.go

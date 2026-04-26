@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	marketpricepb "services/marketprice/proto"
+	"services/utils"
 )
-
 
 func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -22,10 +22,10 @@ func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 		Model: q.Get(queryModel), // query param: "model"
 	}
 	if s := q.Get(queryYearFrom); s != "" {
-		req.YearFrom = parseInt32(s) // query param: "year_from"
+		req.YearFrom = utils.ParseInt32(s) // query param: "year_from"
 	}
 	if s := q.Get(queryYearTo); s != "" {
-		req.YearTo = parseInt32(s) // query param: "year_to"
+		req.YearTo = utils.ParseInt32(s) // query param: "year_to"
 	}
 
 	resp, err := marketpriceClient.GetAverageMarketPrice(ctx, req)

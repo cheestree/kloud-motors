@@ -14,7 +14,7 @@ import (
 )
 
 type server struct {
-	proto.UnimplementedAuctionServiceServer
+	proto.AuctionServiceServer
 	hub           *ws2.Hub
 	listingClient listingproto.ListingServiceClient
 }
@@ -45,7 +45,7 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 	offset := (page - 1) * limit
 
 	var total int32
-	err := db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
+	err := auctionDB.QueryRowContext(ctx, countQuery, args...).Scan(&total)
 	if err != nil {
 		log.Printf("Erro em ListAuctions (Count): %v", err)
 		return nil, err
@@ -54,7 +54,7 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 	query += fmt.Sprintf(` LIMIT $%d OFFSET $%d`, argId, argId+1)
 	args = append(args, limit, offset)
 
-	rows, err := db.QueryContext(ctx, query, args...)
+	rows, err := auctionDB.QueryContext(ctx, query, args...)
 	if err != nil {
 		log.Printf("Erro em ListAuctions (Query): %v", err)
 		return nil, err
@@ -146,7 +146,7 @@ func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequ
 	}
 
 	var auctionExists bool
-	err = db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM auctions WHERE listing_id = $1 AND (status = 'ACTIVE' OR status = 'COMPLETED'))", req.ListingId).Scan(&auctionExists)
+	err = auctionDB.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM auctions WHERE listing_id = $1 AND (status = 'ACTIVE' OR status = 'COMPLETED'))", req.ListingId).Scan(&auctionExists)
 	if err != nil {
 		log.Printf("Error checking for existing auction: %v", err)
 		return nil, fmt.Errorf("failed to check for existing auction")
@@ -168,7 +168,7 @@ func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequ
 	var newId string
 	var createdAt time.Time
 
-	err = db.QueryRowContext(ctx, query,
+	err = auctionDB.QueryRowContext(ctx, query,
 		req.ListingId,
 		req.SellerId,
 		req.StartingPrice,
@@ -214,7 +214,7 @@ func (s *server) GetAuctionDetails(ctx context.Context, req *proto.GetAuctionReq
 		totalBids           int32
 	)
 
-	err := db.QueryRowContext(ctx, query, req.AuctionId).Scan(
+	err := auctionDB.QueryRowContext(ctx, query, req.AuctionId).Scan(
 		&id, &listingId, &sellerId, &startingPrice, &currentPrice,
 		&status, &endTime, &winnerUserId, &createdAt, &reserveMet, &totalBids,
 	)
@@ -264,7 +264,7 @@ func (s *server) DeleteAuction(ctx context.Context, req *proto.DeleteAuctionRequ
 		id, sellerId string
 	)
 
-	err := db.QueryRowContext(ctx, query, req.AuctionId).Scan(
+	err := auctionDB.QueryRowContext(ctx, query, req.AuctionId).Scan(
 		&id, &sellerId,
 	)
 
@@ -284,7 +284,7 @@ func (s *server) DeleteAuction(ctx context.Context, req *proto.DeleteAuctionRequ
 	}
 
 	// 3. Cancel the auction (soft delete via status)
-	_, err = db.ExecContext(ctx, `UPDATE auctions SET status = 'CANCELLED' WHERE id = $1`, req.AuctionId)
+	_, err = auctionDB.ExecContext(ctx, `UPDATE auctions SET status = 'CANCELLED' WHERE id = $1`, req.AuctionId)
 	if err != nil {
 		log.Printf("Error in DeleteAuction (Update): %v", err)
 		return nil, err
@@ -304,7 +304,7 @@ func (s *server) PlaceBid(ctx context.Context, req *proto.PlaceBidRequest) (*pro
 		endTime       time.Time
 	)
 
-	err := db.QueryRowContext(ctx, query, req.AuctionId).Scan(
+	err := auctionDB.QueryRowContext(ctx, query, req.AuctionId).Scan(
 		&id, &sellerId, &startingPrice, &currentPrice, &endTime,
 	)
 
@@ -332,7 +332,7 @@ func (s *server) PlaceBid(ctx context.Context, req *proto.PlaceBidRequest) (*pro
 		newBidID     string
 		bidTimestamp time.Time
 	)
-	err = db.QueryRowContext(ctx,
+	err = auctionDB.QueryRowContext(ctx,
 		`INSERT INTO bids (id, auction_id, bidder_id, bid_amount, timestamp)
 		 VALUES (gen_random_uuid(), $1, $2, $3, NOW())
 		 RETURNING id, timestamp`,
@@ -344,7 +344,7 @@ func (s *server) PlaceBid(ctx context.Context, req *proto.PlaceBidRequest) (*pro
 	}
 
 	// 4. Update current_price and total_bids in the auctions table
-	_, err = db.ExecContext(ctx,
+	_, err = auctionDB.ExecContext(ctx,
 		`UPDATE auctions SET current_price = $1, total_bids = total_bids + 1 WHERE id = $2`,
 		req.BidAmount, req.AuctionId,
 	)
@@ -387,7 +387,7 @@ func (s *server) GetAuctionBids(ctx context.Context, req *proto.GetAuctionBidsRe
 	// 1. Get total count first
 	countQuery := `SELECT COUNT(*) FROM bids WHERE auction_id = $1`
 	var total int32
-	err := db.QueryRowContext(ctx, countQuery, req.AuctionId).Scan(&total)
+	err := auctionDB.QueryRowContext(ctx, countQuery, req.AuctionId).Scan(&total)
 	if err != nil {
 		log.Printf("Error in GetAuctionBids (Count): %v", err)
 		return nil, err
@@ -406,7 +406,7 @@ func (s *server) GetAuctionBids(ctx context.Context, req *proto.GetAuctionBidsRe
 	// 2. Get all bids for a specific auction, ordered by amount descending
 	query := `SELECT id, auction_id, bidder_id, bid_amount, timestamp FROM bids WHERE auction_id = $1 ORDER BY bid_amount DESC LIMIT $2 OFFSET $3`
 
-	rows, err := db.QueryContext(ctx, query, req.AuctionId, limit, offset)
+	rows, err := auctionDB.QueryContext(ctx, query, req.AuctionId, limit, offset)
 	if err != nil {
 		log.Printf("Error in GetAuctionBids (Query): %v", err)
 		return nil, err

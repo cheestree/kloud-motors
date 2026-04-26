@@ -2,77 +2,51 @@ package main
 
 import (
 	"context"
-	"log"
-	"net"
+	"log/slog"
 	"os"
-	"strconv"
 
 	"google.golang.org/grpc"
 
-	"services/geographic-market-insights/proto"
+	geopb "services/geographic-market-insights/proto"
 	"services/geographic-market-insights/repository"
 	"services/geographic-market-insights/repository/postgres"
 
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
+	"services/utils"
 )
 
 func main() {
-	grpcPort := getenv("GEO_GRPC_PORT", "50053")
-	postgresDSN := getenv("GEO_DATABASE_URL", getenv("LISTING_DATABASE_URL", ""))
-	if postgresDSN == "" {
-		log.Fatal("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	geoGrpcPort := utils.MustGetEnv("GEO_GRPC_PORT")
+	geoDSN := utils.GetEnv("GEO_DATABASE_URL", utils.GetEnv("LISTING_DATABASE_URL", ""))
+	if geoDSN == "" {
+		logger.Error("GEO_DATABASE_URL or LISTING_DATABASE_URL is required")
 	}
 
 	repoConfig := repository.DBConfig{
-		Schema:       getenv("POSTGRES_SCHEMA", "public"),
-		Table:        getenv("POSTGRES_TABLE", "automotive_data"),
-		DefaultLimit: getenvInt("DEFAULT_LIMIT", 20),
-		MaxLimit:     getenvInt("MAX_LIMIT", 100),
-		Dsn:          postgresDSN,
+		Schema:       utils.GetEnv("POSTGRES_SCHEMA", "public"),
+		Table:        utils.GetEnv("POSTGRES_TABLE", "automotive_data"),
+		DefaultLimit: utils.GetEnvInt("DEFAULT_LIMIT", 20),
+		MaxLimit:     utils.GetEnvInt("MAX_LIMIT", 100),
+		Dsn:          geoDSN,
 	}
 
 	repo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
 	if err != nil {
-		log.Fatalf("postgres repo init error: %v", err)
+		logger.Error("postgres repo init error", "error", err)
+		return
 	}
 	defer repo.Close()
 
-	grpcSrv := grpc.NewServer()
-	proto.RegisterGeoMarketInsightsServiceServer(grpcSrv, NewGeoServer(repo))
+	lis := utils.TryListen(geoGrpcPort)
 
-	healthcheck := health.NewServer()
-	grpc_health_v1.RegisterHealthServer(grpcSrv, healthcheck)
-	healthcheck.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	grpcServer := grpc.NewServer()
+	geopb.RegisterGeoMarketInsightsServiceServer(grpcServer, NewGeoServer(repo))
 
-	lis, err := net.Listen("tcp", ":"+grpcPort)
-	if err != nil {
-		log.Fatalf("listen error: %v", err)
-	}
+	utils.HealthCheck("geographic-market-insights.GeoMarketInsightsService", grpcServer)
 
-	log.Printf("geo-market-insights gRPC listening on :%s", grpcPort)
-	if err := grpcSrv.Serve(lis); err != nil {
-		log.Fatalf("grpc serve error: %v", err)
-	}
-}
+	logger.Info("Geo Market Insights gRPC server is running", "addr", lis.Addr().String())
 
-func getenv(key, fallback string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-	return v
-}
-
-func getenvInt(key string, fallback int) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-
-	n, err := strconv.Atoi(v)
-	if err != nil {
-		return fallback
-	}
-	return n
+	utils.TryServe(grpcServer, lis)
 }

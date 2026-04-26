@@ -16,6 +16,7 @@ COPY ./geographic-market-insights/proto ./geographic-market-insights/proto
 COPY ./auction/proto                 ./auction/proto
 COPY ./marketprice/proto             ./marketprice/proto
 COPY ./gateway                       ./gateway
+COPY ./utils ./utils
 
 RUN go build -o gateway/gateway ./gateway
 

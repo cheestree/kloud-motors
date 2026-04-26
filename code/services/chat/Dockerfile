@@ -8,6 +8,7 @@ COPY ./shared ./shared
 COPY ./chat ./chat
 COPY ./listing/proto ./listing/proto
 COPY ./seller/proto ./seller/proto
+COPY ./utils ./utils
 
 WORKDIR /app/chat
 RUN go build -o chat-service .

@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auction
+  name: auction-service
   namespace: vehicles-prod
   labels:
-    app: auction
+    app: auction-service
 spec:
   replicas: 2
   revisionHistoryLimit: 10
@@ -16,15 +16,15 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: auction
+      app: auction-service
   template:
     metadata:
       labels:
-        app: auction
+        app: auction-service
     spec:
       serviceAccountName: vehicles-workload-sa
       containers:
-        - name: auction
+        - name: auction-service
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/auction
           imagePullPolicy: Always
           ports:

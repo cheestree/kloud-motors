@@ -6,6 +6,7 @@ RUN go mod download
 
 COPY ./auth ./auth
 COPY ./user/proto ./user/proto
+COPY ./utils ./utils
 
 WORKDIR /app/auth
 RUN go build -o auth-service main.go

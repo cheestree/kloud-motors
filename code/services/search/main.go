@@ -2,23 +2,19 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"log/slog"
-	"net"
 	"os"
 	"services/search/domain"
 	"services/search/proto"
 	"services/search/repository"
 	"services/search/service"
 	"services/shared"
+	"services/utils"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type server struct {
@@ -101,41 +97,23 @@ func toListingSummary(item shared.ListingSummary) *shared.ListingSummary {
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	databaseURL := os.Getenv("LISTING_DATABASE_URL")
-	if databaseURL == "" {
-		logger.Error("LISTING_DATABASE_URL is not set")
-	}
 
-	db, err := sql.Open("postgres", databaseURL)
-	if err != nil {
-		logger.Error("Failed to open database: %v", err)
-	}
-	if err := db.Ping(); err != nil {
-		logger.Error("Failed to connect to database: %v", err)
-	}
+	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
-	grpcPort := os.Getenv("SEARCH_GRPC_PORT")
-	if grpcPort == "" {
-		logger.Error("SEARCH_GRPC_PORT is not set")
-	}
-	lis, err := net.Listen("tcp", ":"+grpcPort)
-	if err != nil {
-		logger.Error("Error on listen: %v", err)
-	}
+	listingDB := utils.TryConnectDB(listingDsn, 3, 10)
 
-	repo := repository.NewSearchRepository(db)
-	svc := service.NewSearchService(repo)
+	grpcPort := utils.MustGetEnv("SEARCH_GRPC_PORT")
 
-	s := grpc.NewServer()
-	proto.RegisterSearchServiceServer(s, &server{service: svc})
+	lis := utils.TryListen(grpcPort)
 
-	healthcheck := health.NewServer()
-	grpc_health_v1.RegisterHealthServer(s, healthcheck)
-	healthcheck.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	grpcServer := grpc.NewServer()
+	repo := repository.NewSearchRepository(listingDB)
+	searchService := service.NewSearchService(repo)
+	proto.RegisterSearchServiceServer(grpcServer, &server{service: searchService})
 
-	logger.Info("gRPC server is running on " + lis.Addr().String() + "...")
+	utils.HealthCheck("search.SearchService", grpcServer)
 
-	if err := s.Serve(lis); err != nil {
-		logger.Error("Failed to serve: %v", err)
-	}
+	logger.Info("Search gRPC server is running on " + lis.Addr().String() + "...")
+
+	utils.TryServe(grpcServer, lis)
 }

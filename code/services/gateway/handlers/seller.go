@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	sellerpb "services/seller/proto"
+	"services/utils"
 )
 
 func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +22,7 @@ func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	sellerID := parts[3]
 	ctx := context.Background()
-	req := &sellerpb.GetSellerProfileRequest{SellerId: parseInt64(sellerID)}
+	req := &sellerpb.GetSellerProfileRequest{SellerId: utils.ParseInt64(sellerID)}
 	resp, err := sellerClient.GetSellerProfile(ctx, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

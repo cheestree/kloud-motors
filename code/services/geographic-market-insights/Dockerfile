@@ -5,6 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY ./geographic-market-insights ./geographic-market-insights
+COPY ./utils ./utils
 
 WORKDIR /app/geographic-market-insights
 RUN go build -o geographic-market-insights-service .
