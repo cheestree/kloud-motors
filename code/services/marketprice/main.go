@@ -77,9 +77,9 @@ func (s *server) GetAverageMarketPrice(ctx context.Context, req *marketpricepb.A
 }
 
 func initDB() {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("LISTING_DATABASE_URL")
 	if dsn == "" {
-		log.Fatalf("DATABASE_URL is not set")
+		log.Fatalf("LISTING_DATABASE_URL is not set")
 	}
 
 	var err error
@@ -100,9 +100,9 @@ func initDB() {
 func main() {
 	initDB()
 
-	port := getenv("MARKETPRICE_GRPC_PORT", "50055")
+	grpcPort := getenv("MARKETPRICE_GRPC_PORT", "50055")
 
-	lis, err := net.Listen("tcp", ":"+port)
+	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}

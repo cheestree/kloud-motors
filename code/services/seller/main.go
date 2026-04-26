@@ -157,9 +157,9 @@ func (s *server) GetSellersPreview(ctx context.Context, req *proto.SellersPrevie
 }
 
 func initDB() {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("SELLER_DATABASE_URL")
 	if dsn == "" {
-		log.Fatalf("DATABASE_URL is not set")
+		log.Fatalf("SELLER_DATABASE_URL is not set")
 	}
 
 	var err error
@@ -175,7 +175,12 @@ func main() {
 	initDB()
 	initListingDB()
 
-	lis, err := net.Listen("tcp", ":50057")
+	grpcPort := os.Getenv("SELLER_GRPC_PORT")
+	if grpcPort == "" {
+		log.Fatalf("SELLER_GRPC_PORT is not set")
+	}
+
+	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}

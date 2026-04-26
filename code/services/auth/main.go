@@ -137,9 +137,9 @@ func (s *server) Login(ctx context.Context, req *proto.LoginRequest) (*proto.Aut
 }
 
 func initDB() {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("AUTH_DATABASE_URL")
 	if dsn == "" {
-		log.Fatalf("DATABASE_URL is not set")
+		log.Fatalf("AUTH_DATABASE_URL is not set")
 	}
 
 	var err error

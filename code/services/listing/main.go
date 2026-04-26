@@ -284,9 +284,9 @@ func mapListingError(action string, err error) error {
 }
 
 func main() {
-	databaseURL := os.Getenv("DATABASE_URL")
+	databaseURL := os.Getenv("LISTING_DATABASE_URL")
 	if databaseURL == "" {
-		log.Fatal("DATABASE_URL is not set")
+		log.Fatal("LISTING_DATABASE_URL is not set")
 	}
 
 	db, err := sql.Open("postgres", databaseURL)
@@ -297,7 +297,12 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	lis, err := net.Listen("tcp", ":50054")
+	grpc_port := os.Getenv("LISTING_GRPC_PORT")
+	if grpc_port == "" {
+		log.Fatal("LISTING_GRPC_PORT is not set")
+	}
+
+	lis, err := net.Listen("tcp", ":"+grpc_port)
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}

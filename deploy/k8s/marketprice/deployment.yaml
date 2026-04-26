@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: marketprice
+  name: marketprice-service
   namespace: vehicles-prod
   labels:
-    app: marketprice
+    app: marketprice-service
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -16,28 +16,31 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: marketprice
+      app: marketprice-service
   template:
     metadata:
       labels:
-        app: marketprice
+        app: marketprice-service
     spec:
       serviceAccountName: vehicles-workload-sa
       containers:
         - name: marketprice
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/marketprice
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50055
               name: grpc
           env:
             - name: MARKETPRICE_GRPC_PORT
-              value: "50055"
-            - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: marketprice-secrets
-                  key: postgres-dsn
+                  key: MARKETPRICE_GRPC_PORT
+            - name: LISTING_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: marketprice-secrets
+                  key: LISTING_DATABASE_URL
           resources:
             requests:
               cpu: 100m

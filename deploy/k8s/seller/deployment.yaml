@@ -26,12 +26,12 @@ spec:
       containers:
         - name: seller-service
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/seller
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 50057
               name: grpc
           env:
-            - name: DATABASE_URL
+            - name: SELLER_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: seller-secrets
@@ -41,6 +41,11 @@ spec:
                 secretKeyRef:
                   name: seller-secrets
                   key: LISTING_DATABASE_URL
+            - name: SELLER_GRPC_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: seller-secrets
+                  key: SELLER_GRPC_PORT
           resources:
             requests:
               cpu: 100m

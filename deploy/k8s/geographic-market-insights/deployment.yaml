@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: geographic-market-insights
+  name: geographic-market-insights-service
   namespace: vehicles-prod
   labels:
-    app: geographic-market-insights
+    app: geographic-market-insights-service
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: geographic-market-insights
+      app: geographic-market-insights-service
   template:
     metadata:
       labels:
-        app: geographic-market-insights
+        app: geographic-market-insights-service
     spec:
       serviceAccountName: vehicles-workload-sa
       containers:
-        - name: geographic-market-insights
+        - name: geographic-market-insights-service
           image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/geographic-market-insights
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: grpc
               containerPort: 50053

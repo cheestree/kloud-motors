@@ -135,9 +135,9 @@ func (s *server) GetUsersPreview(ctx context.Context, req *proto.UsersPreviewReq
 }
 
 func initDB() {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("USER_DATABASE_URL")
 	if dsn == "" {
-		log.Fatalf("DATABASE_URL is not set")
+		log.Fatalf("USER_DATABASE_URL is not set")
 	}
 
 	var err error
@@ -152,7 +152,12 @@ func initDB() {
 func main() {
 	initDB()
 
-	lis, err := net.Listen("tcp", ":50058")
+	grpcPort := os.Getenv("USER_GRPC_PORT")
+	if grpcPort == "" {
+		log.Fatalf("USER_GRPC_PORT is not set")
+	}
+
+	lis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		log.Fatalf("Error on listen: %v", err)
 	}
