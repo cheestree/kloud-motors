@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seller-config
+  namespace: vehicles-prod
+data:
+  SELLER_GRPC_PORT: "50057"

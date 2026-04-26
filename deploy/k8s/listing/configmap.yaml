@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: listing-config
+  namespace: vehicles-prod
+data:
+  LISTING_GRPC_PORT: "50054"

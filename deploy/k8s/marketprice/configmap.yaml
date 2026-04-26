@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: marketprice-config
+  namespace: vehicles-prod
+data:
+  MARKETPRICE_GRPC_PORT: "50055"

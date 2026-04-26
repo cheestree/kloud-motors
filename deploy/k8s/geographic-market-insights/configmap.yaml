@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: geo-config
+  namespace: vehicles-prod
+data:
+  GEO_GRPC_PORT: "50053"
+  POSTGRES_SCHEMA: "public"
+  POSTGRES_TABLE: "automotive_data"
+  DEFAULT_LIMIT: "20"
+  MAX_LIMIT: "100"

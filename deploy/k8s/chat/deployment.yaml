@@ -26,49 +26,39 @@ spec:
             - name: ws
               containerPort: 8080
           env:
-            - name: POD_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-
             - name: GCP_PROJECT_ID
               valueFrom:
                 secretKeyRef:
                   name: chat-secrets
-                  key: gcp-project-id
-            - name: GCP_PUBSUB_TOPIC
-              value: "chat-events"
-            - name: GCP_PUBSUB_SUBSCRIPTION
-              value: "chat-sub-$(POD_ID)"
-            - name: GCP_PUBSUB_AUTOCREATE
-              value: "true"
-
+                  key: GCP_PROJECT_ID
             - name: FIREBASE_PROJECT_ID
               valueFrom:
                 secretKeyRef:
                   name: chat-secrets
-                  key: gcp-project-id
+                  key: GCP_PROJECT_ID
             - name: FIRESTORE_MESSAGES_COLLECTION
-              value: "messages"
-
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: FTIRESTORE_MESSAGES_COLLECTION
             - name: POSTGRES_DSN
               valueFrom:
                 secretKeyRef:
                   name: chat-secrets
-                  key: postgres-dsn
+                  key: POSTGRES_DSN
             - name: POSTGRES_SCHEMA
-              value: "chat-db"
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: POSTGRES_SCHEMA
             - name: POSTGRES_TABLE
-              value: "chat"
-
-            - name: LISTING_SERVICE_ADDR
-              value: "listing-service:50054"
-            - name: SELLER_SERVICE_ADDR
-              value: "seller-service:50057"
-
-            - name: CHAT_HISTORY_LIMIT
-              value: "50"
-
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: POSTGRES_TABLE
+          envFrom:
+            - configMapRef:
+                name: chat-config
           startupProbe:
             grpc:
               port: 50052

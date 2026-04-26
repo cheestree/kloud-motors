@@ -41,16 +41,9 @@ spec:
                 secretKeyRef:
                   name: auth-secrets
                   key: JWT_PRIVATE_KEY_B64
-            - name: USER_GRPC_ADDR
-              valueFrom:
-                secretKeyRef:
-                  name: auth-secrets
-                  key: USER_GRPC_ADDR
-            - name: AUTH_GRPC_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: auth-secrets
-                  key: AUTH_GRPC_PORT
+          envFrom:
+            - configMapRef:
+                name: auth-config
           resources:
             requests:
               cpu: 100m
