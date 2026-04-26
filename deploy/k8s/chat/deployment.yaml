@@ -38,8 +38,6 @@ spec:
                   key: gcp-project-id
             - name: GCP_PUBSUB_TOPIC
               value: "chat-events"
-            - name: GCP_PUBSUB_SUBSCRIPTION
-              value: "chat-sub-$(POD_ID)"
             - name: GCP_PUBSUB_AUTOCREATE
               value: "true"
 
