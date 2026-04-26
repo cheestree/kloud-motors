@@ -30,43 +30,45 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-
             - name: GCP_PROJECT_ID
               valueFrom:
                 secretKeyRef:
                   name: chat-secrets
-                  key: gcp-project-id
+                  key: GCP_PROJECT_ID
             - name: GCP_PUBSUB_TOPIC
               value: "chat-events"
             - name: GCP_PUBSUB_AUTOCREATE
               value: "true"
-
             - name: FIREBASE_PROJECT_ID
               valueFrom:
                 secretKeyRef:
                   name: chat-secrets
-                  key: gcp-project-id
+                  key: GCP_PROJECT_ID
             - name: FIRESTORE_MESSAGES_COLLECTION
-              value: "messages"
-
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: FTIRESTORE_MESSAGES_COLLECTION
             - name: POSTGRES_DSN
               valueFrom:
                 secretKeyRef:
                   name: chat-secrets
-                  key: postgres-dsn
+                  key: POSTGRES_DSN
             - name: POSTGRES_SCHEMA
-              value: "chat-db"
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: POSTGRES_SCHEMA
             - name: POSTGRES_TABLE
-              value: "chat"
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: POSTGRES_TABLE
 
-            - name: LISTING_SERVICE_ADDR
-              value: "listing-service:50054"
-            - name: SELLER_SERVICE_ADDR
-              value: "seller-service:50057"
-
-            - name: CHAT_HISTORY_LIMIT
-              value: "50"
-
+          envFrom:
+            - configMapRef:
+                name: chat-config
+                
           startupProbe:
             grpc:
               port: 50052

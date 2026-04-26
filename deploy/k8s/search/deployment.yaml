@@ -29,11 +29,9 @@ spec:
                 secretKeyRef:
                   name: search-secrets
                   key: LISTING_DATABASE_URL
-            - name: SEARCH_GRPC_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: search-secrets
-                  key: SEARCH_GRPC_PORT
+          envFrom:
+            - configMapRef:
+                name: search-config
           resources:
             requests:
               cpu: 100m

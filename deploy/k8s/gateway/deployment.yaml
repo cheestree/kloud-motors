@@ -30,31 +30,9 @@ spec:
                   name: gateway-secrets
                   key: JWT_PUBLIC_KEY_B64
 
-            # Endereços gRPC dos microserviços (ClusterIP internos)
-            - name: AUTH_GRPC_ADDR
-              value: "auth-service:50050"
-            - name: AUCTION_GRPC_ADDR
-              value: "auction:50051"
-            - name: CHAT_GRPC_ADDR
-              value: "chat:50052"
-            - name: GEO_GRPC_ADDR
-              value: "geographic-market-insights:50053"
-            - name: LISTING_GRPC_ADDR
-              value: "listing-service:50054"
-            - name: MARKETPRICE_GRPC_ADDR
-              value: "marketprice:50055"
-            - name: SEARCH_GRPC_ADDR
-              value: "search-service:50056"
-            - name: SELLER_GRPC_ADDR
-              value: "seller-service:50057"
-            - name: USER_GRPC_ADDR
-              value: "user-service:50058"
-
-            # Endereço HTTP/WS do chat service e auction service
-            - name: CHAT_WS_ADDR
-              value: "chat:8080"
-            - name: AUCTION_WS_ADDR
-              value: "auction:8081"
+          envFrom:
+            - configMapRef:
+                name: gateway-config
 
           readinessProbe:
             httpGet:

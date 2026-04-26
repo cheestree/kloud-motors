@@ -31,16 +31,14 @@ spec:
             - containerPort: 50055
               name: grpc
           env:
-            - name: MARKETPRICE_GRPC_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: marketprice-secrets
-                  key: MARKETPRICE_GRPC_PORT
             - name: LISTING_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: marketprice-secrets
                   key: LISTING_DATABASE_URL
+          envFrom:
+            - configMapRef:
+                name: marketprice-config
           resources:
             requests:
               cpu: 100m

@@ -36,11 +36,9 @@ spec:
                 secretKeyRef:
                   name: user-secrets
                   key: USER_DATABASE_URL
-            - name: USER_GRPC_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: user-secrets
-                  key: USER_GRPC_PORT
+          envFrom:
+            - configMapRef:
+                name: user-config
           resources:
             requests:
               cpu: 100m

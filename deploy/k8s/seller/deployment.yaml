@@ -41,11 +41,9 @@ spec:
                 secretKeyRef:
                   name: seller-secrets
                   key: LISTING_DATABASE_URL
-            - name: SELLER_GRPC_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: seller-secrets
-                  key: SELLER_GRPC_PORT
+          envFrom:
+            - configMapRef:
+                name: seller-config
           resources:
             requests:
               cpu: 100m

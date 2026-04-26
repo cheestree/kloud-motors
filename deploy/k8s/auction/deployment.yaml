@@ -33,32 +33,19 @@ spec:
             - containerPort: 8081
               name: ws
           env:
-            - name: POD_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
             - name: GCP_PROJECT_ID
               valueFrom:
                 secretKeyRef:
                   name: auction-secrets
-                  key: gcp-project-id
-            - name: AUCTION_PUBSUB_TOPIC
-              value: "auction-events"
-            - name: AUCTION_PUBSUB_SUBSCRIPTION
-              value: "auction-sub-$(POD_ID)"
-            - name: GCP_PUBSUB_AUTOCREATE
-              value: "true"
+                  key: GCP_PROJECT_ID
             - name: AUCTION_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: auction-secrets
-                  key: postgres-dsn
-            - name: LISTING_GRPC_ADDR
-              value: "listing-service:50054"
-            - name: AUCTION_GRPC_PORT
-              value: "50051"
-            - name: AUCTION_WS_PORT
-              value: "8081"
+                  key: AUCTION_DATABASE_URL
+          envFrom:
+            - configMapRef:
+                name: auction-config
           resources:
             requests:
               cpu: 100m

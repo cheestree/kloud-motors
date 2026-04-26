@@ -36,11 +36,9 @@ spec:
                 secretKeyRef:
                   name: listing-secrets
                   key: LISTING_DATABASE_URL
-            - name: LISTING_GRPC_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: listing-secrets
-                  key: LISTING_GRPC_PORT
+          envFrom:
+            - configMapRef:
+                name: listing-config
           resources:
             requests:
               cpu: 100m

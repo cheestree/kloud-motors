@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-config
+  namespace: vehicles-prod
+data:
+  SEARCH_GRPC_PORT: "50056"

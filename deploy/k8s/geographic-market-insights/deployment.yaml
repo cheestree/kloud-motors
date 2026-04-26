@@ -24,22 +24,14 @@ spec:
             - name: grpc
               containerPort: 50053
           env:
-            - name: GEO_GRPC_PORT
-              value: "50053"
             - name: GEO_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: geo-secrets
-                  key: postgres-dsn
-            - name: POSTGRES_SCHEMA
-              value: "public"
-            - name: POSTGRES_TABLE
-              value: "automotive_data"
-            - name: DEFAULT_LIMIT
-              value: "20"
-            - name: MAX_LIMIT
-              value: "100"
-
+                  key: GEO_DATABASE_URL
+          envFrom:
+            - configMapRef:
+                name: geo-config
           startupProbe:
             grpc:
               port: 50053
