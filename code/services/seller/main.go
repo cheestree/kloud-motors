@@ -93,7 +93,7 @@ func main() {
 	lis := utils.TryListen(sellerGrpcPort)
 
 	grpcServer := grpc.NewServer()
-	repo := repository.NewRepository(sellerDB, listingDB)
+	repo := repository.NewRepository(listingDB, sellerDB)
 	sellerSvc := service.NewService(repo)
 	sellerpb.RegisterSellerServiceServer(grpcServer, &server{service: sellerSvc})
 

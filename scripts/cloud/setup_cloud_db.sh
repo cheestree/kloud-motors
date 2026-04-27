@@ -44,11 +44,16 @@ docker run --rm \
                  --rows 1000; \
              fi && \
              echo 'Creating tables...' && \
+             python3 auth-db/init_auth_db.py && \
              python3 setup_auth_db.py && \
+             python3 auth-db/load_auth_users.py \
+                 --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 user-db/prepare_users.py \
                  --dataset '/workspace/code/setup/$(basename $PREPARED_CSV)' \
                  --output '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 user-db/load_users.py \
+                 --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
+             python3 seller-db/load_sellers.py \
                  --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 auction-db/init_auction_db.py && \
              python3 chat-db/init_chat_db.py && \

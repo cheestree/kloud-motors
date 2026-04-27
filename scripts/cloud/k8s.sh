@@ -14,12 +14,13 @@ WITH_INGRESS=false
 
 usage() {
   cat <<EOF
-Usage: ./k8s.sh [up|down|status] [--with-ingress] [--no-wait]
+Usage: ./k8s.sh [up|down|status|restart] [--with-ingress] [--no-wait]
 
 Commands:
   up              Apply Kubernetes manifests (default)
   down            Delete Kubernetes manifests
   status          Show current pod and service status
+  restart         Restart all deployments (rollout restart)
 
 Flags:
   --with-ingress  Also apply/delete deploy/k8s/ingress.yaml
@@ -30,7 +31,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    up|down|status)
+    up|down|status|restart)
       ACTION="$1"
       ;;
     --with-ingress)
@@ -131,6 +132,23 @@ show_status() {
   k -n "$NAMESPACE" get deployments
 }
 
+apply_restart() {
+  echo "Restarting all deployments in namespace $NAMESPACE..."
+  # Restart each deployment individually for better compatibility
+  k -n "$NAMESPACE" get deployments -o name | while read -r deploy; do
+    k -n "$NAMESPACE" rollout restart "$deploy"
+  done
+  
+  if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
+    echo "Waiting for rollout to complete..."
+    k -n "$NAMESPACE" get deployments -o name | while read -r deploy; do
+      k -n "$NAMESPACE" rollout status "$deploy"
+    done
+  fi
+
+  echo "All services restarted."
+}
+
 case "$ACTION" in
   up)
     apply_up
@@ -140,5 +158,8 @@ case "$ACTION" in
     ;;
   status)
     show_status
+    ;;
+  restart)
+    apply_restart
     ;;
 esac

@@ -19,6 +19,8 @@ AUTH_LOAD_SCRIPT="$REPO_ROOT/code/setup/auth-db/load_auth_users.py"
 AUCTION_INIT_SCRIPT="$REPO_ROOT/code/setup/auction-db/init_auction_db.py"
 USER_PREP_SCRIPT="$REPO_ROOT/code/setup/user-db/prepare_users.py"
 USER_LOAD_SCRIPT="$REPO_ROOT/code/setup/user-db/load_users.py"
+SELLER_LOAD_SCRIPT="$REPO_ROOT/code/setup/seller-db/load_sellers.py"
+CHAT_INIT_SCRIPT="$REPO_ROOT/code/setup/chat-db/init_chat_db.py"
 
 ROWS_ARG=""
 if [ -n "$MAX_ROWS" ]; then
@@ -61,6 +63,8 @@ AUTH_LOAD_SCRIPT_NAME="$(basename "$AUTH_LOAD_SCRIPT")"
 AUCTION_INIT_SCRIPT_NAME="$(basename "$AUCTION_INIT_SCRIPT")"
 USER_PREP_SCRIPT_NAME="$(basename "$USER_PREP_SCRIPT")"
 USER_LOAD_SCRIPT_NAME="$(basename "$USER_LOAD_SCRIPT")"
+SELLER_LOAD_SCRIPT_NAME="$(basename "$SELLER_LOAD_SCRIPT")"
+CHAT_INIT_SCRIPT_NAME="$(basename "$CHAT_INIT_SCRIPT")"
 
 echo "Ensuring required DB containers are running..."
 docker compose up -d listing-db user-db auth-db seller-db auction-db
@@ -109,6 +113,9 @@ docker run --rm \
                  --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 user-db/$USER_LOAD_SCRIPT_NAME \
                      --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
+             python3 seller-db/$SELLER_LOAD_SCRIPT_NAME \
+                     --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
+             python3 chat-db/$CHAT_INIT_SCRIPT_NAME && \
              python3 auction-db/$AUCTION_INIT_SCRIPT_NAME"
 
 echo "Dataset prepared at $PREPARED_CSV"

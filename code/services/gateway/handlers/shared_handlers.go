@@ -43,6 +43,7 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 	token, err := jwt.ParseWithClaims(parts[1], claims, func(token *jwt.Token) (interface{}, error) {
 		return pubKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+
 	if err != nil || !token.Valid {
 		return 0, errors.New(errInvalidToken)
 	}

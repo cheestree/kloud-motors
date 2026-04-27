@@ -61,7 +61,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 	}
 
 	if !isSeller.IsSeller {
-		return nil, status.Error(codes.InvalidArgument, "seller not allowed")
+		return nil, status.Error(codes.InvalidArgument, "seller profile not found or invalid")
 	}
 
 	listingID := req.GetListingId()
@@ -72,7 +72,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 		return nil, status.Errorf(codes.Internal, "failed to check listing ownership: %v", err)
 	}
 	if !isListingFromSeller.IsOwner {
-		return nil, status.Error(codes.InvalidArgument, "seller not allowed")
+		return nil, status.Error(codes.InvalidArgument, "listing does not belong to this seller")
 	}
 
 	listing, err := s.listingClient.GetListingSummary(ctx, &listingproto.ListingDetailsRequest{Id: listingID})
@@ -84,6 +84,16 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 	model := listing.Model
 	isSold := listing.IsSold
 
+	if isSold {
+		return nil, status.Error(codes.FailedPrecondition, "listing is already sold")
+	}
+
+
+	existingChats, err := s.indexStore.GetChatsFromListingSeller(ctx, listingID, req.GetUserId())
+	if err == nil && len(existingChats) > 0 {
+		return &proto.OpenChatResponse{ChatId: existingChats[0]}, nil
+	}
+
 	var chatID string
 	if s.indexStore != nil {
 		var err error
@@ -91,7 +101,6 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to index chat participants: %v", err)
 		}
-
 		return &proto.OpenChatResponse{ChatId: chatID, IsChatClosed: isSold}, nil
 	}
 

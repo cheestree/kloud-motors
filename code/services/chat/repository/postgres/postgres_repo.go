@@ -20,7 +20,7 @@ func NewPostgresRepo(ctx context.Context, cfg repository.DBConfig) (*RelationalR
 	}
 
 	if cfg.Schema == "" {
-		cfg.Schema = "chat-db"
+		cfg.Schema = "public"
 	}
 	if cfg.Table == "" {
 		cfg.Table = "chat"
