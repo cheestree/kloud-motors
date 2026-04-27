@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"services/chat/repository"
 	"services/chat/ws"
@@ -22,6 +23,7 @@ type wsServer struct {
 	messageStore  repository.MessageRepo
 	indexStore    repository.ChatIndexRepo
 	listingClient listingproto.ListingServiceClient
+	logger        *slog.Logger
 }
 
 type InboundMessage struct {
@@ -100,7 +102,14 @@ func (s *wsServer) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 func (s *wsServer) onMessage(chatID string, userID int64, raw []byte) {
 	var in InboundMessage
-	if err := json.Unmarshal(raw, &in); err != nil || in.Content == "" {
+	if err := json.Unmarshal(raw, &in); err != nil {
+		// Fallback: if it's not valid JSON, treat the whole raw bytes as the message content.
+		// This is useful for testing with simple WS clients.
+		in.Content = string(raw)
+	}
+
+	if in.Content == "" {
+		s.logger.Warn("received empty message content", "chat_id", chatID, "user_id", userID)
 		return
 	}
 
@@ -112,7 +121,10 @@ func (s *wsServer) onMessage(chatID string, userID int64, raw []byte) {
 		SentAt:   time.Now().UTC(),
 	}
 
+	s.logger.Info("received message via websocket", "chat_id", chatID, "user_id", userID, "msg_id", out.ID)
+
 	if s.messageStore != nil {
+		s.logger.Info("attempting to save message to firestore", "msg_id", out.ID, "chat_id", chatID)
 		err := s.messageStore.SaveMessage(context.Background(), repository.ChatMessage{
 			ID:      out.ID,
 			ChatID:  out.ChatID,
@@ -121,18 +133,24 @@ func (s *wsServer) onMessage(chatID string, userID int64, raw []byte) {
 			Time:    out.SentAt,
 		})
 		if err != nil {
-			log.Printf("save message error chat=%s user=%d err=%v", chatID, userID, err)
+			s.logger.Error("failed to save message to firestore", "error", err, "chat_id", chatID, "user_id", userID)
 			return
 		}
+		s.logger.Info("message saved successfully to firestore", "msg_id", out.ID)
+	} else {
+		s.logger.Warn("messageStore is nil, skipping firestore save", "chat_id", chatID)
 	}
 
 	payload, err := json.Marshal(out)
 	if err != nil {
+		s.logger.Error("failed to marshal outbound message", "error", err)
 		return
 	}
 
 	if err := s.hub.Publish(chatID, payload); err != nil {
-		log.Printf("publish error for chat %s: %v", chatID, err)
+		s.logger.Error("failed to publish message to pubsub", "error", err, "chat_id", chatID)
+	} else {
+		s.logger.Info("message published to pubsub", "chat_id", chatID)
 	}
 }
 

@@ -93,7 +93,7 @@ func main() {
 		logger.Error("grpc setup failed", "error", err)
 	}
 
-	if err := setupHTTPWS(hub, messageRepo, relationalRepo, clients.listingClient); err != nil {
+	if err := setupHTTPWS(logger, hub, messageRepo, relationalRepo, clients.listingClient); err != nil {
 		logger.Error("failed to serve HTTPWS", "error", err)
 	}
 }
@@ -154,8 +154,8 @@ func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIn
 	return nil
 }
 
-func setupHTTPWS(hub *ws2.Hub, messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, listingClient listingproto.ListingServiceClient) error {
-	ws := &wsServer{hub: hub, messageStore: messageStore, indexStore: indexStore, listingClient: listingClient}
+func setupHTTPWS(logger *slog.Logger, hub *ws2.Hub, messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, listingClient listingproto.ListingServiceClient) error {
+	ws := &wsServer{hub: hub, messageStore: messageStore, indexStore: indexStore, listingClient: listingClient, logger: logger}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws/chat/{chatID}", ws.ServeWS)
 

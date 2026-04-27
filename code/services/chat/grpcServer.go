@@ -127,15 +127,21 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 		return &proto.GetChatHistoryResponse{Messages: []*proto.ChatMessage{}}, nil
 	}
 
-	if req.GetLimit() <= 0 || req.GetLimit() > s.historyLimit {
-		return nil, status.Error(codes.InvalidArgument, "invalid limit")
+	limit := req.GetLimit()
+	if limit <= 0 {
+		limit = 20 // Default limit
+	}
+	if limit > s.historyLimit {
+		limit = s.historyLimit // Cap at max allowed
 	}
 
-	if req.GetSkip() < 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid limit")
+	skip := req.GetSkip()
+	if skip < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid skip")
 	}
 
-	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), req.GetLimit(), req.GetSkip())
+	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), limit, skip)
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to load chat history: %v", err)
 	}
