@@ -33,7 +33,7 @@ docker run --rm \
     -v "$REPO_ROOT:/workspace" \
     -w /workspace/code/setup \
     python:3.12-slim \
-    bash -c "pip install pandas faker sqlalchemy python-dotenv psycopg2-binary --quiet && \
+    bash -c "pip install pandas faker sqlalchemy python-dotenv psycopg2-binary bcrypt --quiet && \
              if [ -f '/workspace/code/setup/$(basename $PREPARED_CSV)' ]; then \
                  echo 'Dataset already prepared. Skipping initial cleaning.'; \
              else \
@@ -46,11 +46,11 @@ docker run --rm \
              echo 'Creating tables...' && \
              python3 auth-db/init_auth_db.py && \
              python3 setup_auth_db.py && \
-             python3 auth-db/load_auth_users.py \
-                 --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 user-db/prepare_users.py \
                  --dataset '/workspace/code/setup/$(basename $PREPARED_CSV)' \
                  --output '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
+             python3 auth-db/load_auth_users.py \
+                 --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 user-db/load_users.py \
                  --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 seller-db/load_sellers.py \

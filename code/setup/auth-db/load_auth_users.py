@@ -53,7 +53,8 @@ def sanitize_chunk(chunk: pd.DataFrame) -> pd.DataFrame:
     df["id"] = df["id"].astype(int)
 
     for col in ["email", "password"]:
-        df[col] = df[col].astype("string").str.strip()
+        if col in df.columns:
+            df[col] = df[col].astype("string").str.strip()
 
     df = df[df["email"].notna() & (df["email"] != "")].copy()
     df = df.drop_duplicates(subset=["id"], keep="last")
