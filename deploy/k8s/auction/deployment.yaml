@@ -43,6 +43,12 @@ spec:
                 secretKeyRef:
                   name: auction-secrets
                   key: AUCTION_DATABASE_URL
+            - name: POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PUBSUB_SUBSCRIPTION_ID
+              value: "auction-sub-$(POD_ID)"
           envFrom:
             - configMapRef:
                 name: auction-config
