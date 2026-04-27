@@ -58,6 +58,7 @@ func main() {
 	firestoreRepo, err := firestore.NewFirestoreMessageRepo(
 		ctx,
 		firestoreProjectID,
+		utils.GetEnv("FIRESTORE_DATABASE_ID", "(default)"),
 		utils.GetEnv("FIRESTORE_MESSAGES_COLLECTION", "messages"),
 	)
 	if err != nil {

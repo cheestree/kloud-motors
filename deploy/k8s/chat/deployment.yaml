@@ -48,7 +48,8 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: chat-secrets
-                  key: FTIRESTORE_MESSAGES_COLLECTION
+                  key: FIRESTORE_MESSAGES_COLLECTION
+
             - name: POSTGRES_DSN
               valueFrom:
                 secretKeyRef:
