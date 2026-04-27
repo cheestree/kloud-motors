@@ -25,7 +25,7 @@ spec:
                 port:
                   name: http
 
-          - path: /api/auction/ws/
+          - path: /api/auctions/ws/
             pathType: Prefix
             backend:
               service:
