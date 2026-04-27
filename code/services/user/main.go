@@ -7,6 +7,7 @@ import (
 
 	"services/user/models"
 	userpb "services/user/proto"
+	"services/user/repository"
 	"services/user/service"
 	"services/utils"
 
@@ -17,7 +18,7 @@ import (
 
 type server struct {
 	userpb.UserServiceServer
-	service *service.Service
+	service *service.UserService
 }
 
 func (s *server) CreateUserProfile(ctx context.Context, req *userpb.CreateUserProfileRequest) (*userpb.CreateUserProfileResponse, error) {
@@ -64,7 +65,7 @@ func main() {
 
 	userDsn := utils.MustGetEnv("USER_DATABASE_URL")
 
-	userDB := utils.TryConnectGorm(userDsn, 3, 10)
+	userDB := utils.TryConnectGorm(userDsn, 8, 10)
 	if err := userDB.AutoMigrate(&models.User{}, &models.Favorite{}); err != nil {
 		logger.Error("failed to migrate database", "error", err)
 		return
@@ -75,7 +76,8 @@ func main() {
 	lis := utils.TryListen(userGrpcPort)
 
 	grpcServer := grpc.NewServer()
-	userSvc := service.NewService(userDB)
+	repo := repository.NewRepository(userDB)
+	userSvc := service.NewUserService(repo)
 	userpb.RegisterUserServiceServer(grpcServer, &server{service: userSvc})
 
 	utils.HealthCheck("user.UserService", grpcServer)

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -173,18 +174,29 @@ func TryServe(grpcServer *grpc.Server, lis net.Listener) {
 }
 
 func TryConnectDB(databaseURL string, timeout int, tries int) *sql.DB {
-	db, err := sql.Open("postgres", databaseURL)
+	var db *sql.DB
+	var err error
 
-	for i := range tries {
+	for i := 0; i < tries; i++ {
+		db, err = sql.Open("postgres", databaseURL)
 		if err == nil {
-			if pingErr := db.Ping(); pingErr == nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			err = db.PingContext(ctx)
+			if err == nil {
+				db.SetMaxOpenConns(10)
+				db.SetMaxIdleConns(5)
+				db.SetConnMaxLifetime(5 * time.Minute)
+				db.SetConnMaxIdleTime(2 * time.Minute)
+
 				return db
-			} else {
-				err = pingErr
 			}
+
+			db.Close()
 		}
-		log.Printf("Waiting for database to be ready (attempt %d/%d)", i+1, tries)
-		time.Sleep(time.Duration(timeout) * time.Second)
+
+		logRetry(i, tries, err, timeout)
 	}
 
 	log.Fatalf("Failed to connect to database after %d attempts: %v", tries, err)
@@ -192,29 +204,50 @@ func TryConnectDB(databaseURL string, timeout int, tries int) *sql.DB {
 }
 
 func TryConnectGorm(databaseURL string, timeout int, tries int) *gorm.DB {
-	var db *gorm.DB
 	var err error
 
-	for i := range tries {
-		db, err = gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
-		if err == nil {
-			sqlDB, pingErr := db.DB()
-			if pingErr == nil {
-				if pingErr = sqlDB.Ping(); pingErr == nil {
-					return db
-				} else {
-					err = pingErr
-				}
-			} else {
-				err = pingErr
-			}
+	for i := 0; i < tries; i++ {
+		db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+		if err != nil {
+			logRetry(i, tries, err, timeout)
+			continue
 		}
-		log.Printf("Waiting for database to be ready (attempt %d/%d)", i+1, tries)
-		time.Sleep(time.Duration(timeout) * time.Second)
+
+		sqlDB, err := db.DB()
+		if err != nil {
+			logRetry(i, tries, err, timeout)
+			continue
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		err = sqlDB.PingContext(ctx)
+		cancel()
+
+		if err == nil {
+			sqlDB.SetMaxOpenConns(10)
+			sqlDB.SetMaxIdleConns(5)
+			sqlDB.SetConnMaxLifetime(5 * time.Minute)
+			sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+
+			return db
+		}
+
+		sqlDB.Close()
+		logRetry(i, tries, err, timeout)
 	}
 
 	log.Fatalf("Failed to connect to database after %d attempts: %v", tries, err)
 	return nil
+}
+
+func logRetry(i, tries int, err error, timeout int) {
+	if i < tries-1 {
+		log.Printf(
+			"Database not ready (attempt %d/%d): %v. Retrying in %ds",
+			i+1, tries, err, timeout,
+		)
+		time.Sleep(time.Duration(timeout) * time.Second)
+	}
 }
 
 func HealthCheck(service string, grpcServer *grpc.Server) {

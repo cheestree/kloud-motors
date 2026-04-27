@@ -22,7 +22,7 @@ var auctionDB *sql.DB
 
 func main() {
 	auctionDSN := utils.MustGetEnv("AUCTION_DATABASE_URL")
-	auctionDB = utils.TryConnectDB(auctionDSN, 3, 10)
+	auctionDB = utils.TryConnectDB(auctionDSN, 8, 10)
 
 	listingAddr := utils.GetEnv("LISTING_GRPC_ADDR", "listing:50054")
 	auctionGRPCPort := utils.GetEnv("AUCTION_GRPC_PORT", "50051")

@@ -85,8 +85,8 @@ func main() {
 	sellerDsn := utils.MustGetEnv("SELLER_DATABASE_URL")
 	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
-	sellerDB := utils.TryConnectGorm(sellerDsn, 3, 10)
-	listingDB := utils.TryConnectGorm(listingDsn, 3, 10)
+	sellerDB := utils.TryConnectGorm(sellerDsn, 8, 10)
+	listingDB := utils.TryConnectGorm(listingDsn, 8, 10)
 
 	sellerGrpcPort := utils.MustGetEnv("SELLER_GRPC_PORT")
 

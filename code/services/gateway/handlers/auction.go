@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -197,7 +196,7 @@ func HandleAuctionWebSocket(w http.ResponseWriter, r *http.Request) {
 	clientConn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		_ = upstreamConn.Close()
-		log.Printf("ws upgrade error: %v", err)
+		Logger.Error("auction websocket upgrade failed", "error", err)
 		return
 	}
 

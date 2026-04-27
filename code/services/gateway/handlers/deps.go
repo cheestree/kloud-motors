@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"log/slog"
+
 	auctionpb "services/auction/proto"
 	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
@@ -13,6 +15,7 @@ import (
 )
 
 var (
+	Logger            = slog.Default()
 	authClient        authpb.AuthServiceClient
 	listingClient     listingpb.ListingServiceClient
 	searchClient      searchpb.SearchServiceClient
@@ -24,6 +27,12 @@ var (
 	chatWSUpstream    string
 	marketpriceClient marketpricepb.MarketPriceServiceClient
 )
+
+func SetLogger(l *slog.Logger) {
+	if l != nil {
+		Logger = l
+	}
+}
 
 // SetClients wires service clients from main into the handlers package
 func SetClients(

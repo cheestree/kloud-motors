@@ -2,17 +2,19 @@ package service
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
 	. "services/auth/models"
-	proto "services/auth/proto"
+	authpb "services/auth/proto"
 	"services/auth/repository"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 type AuthService struct {
@@ -44,9 +46,9 @@ func (s *AuthService) GenerateJWT(user *AuthUser) (string, error) {
 	return token.SignedString(s.PrivateKey)
 }
 
-func (s *AuthService) Register(ctx context.Context, req *proto.RegisterRequest) (*proto.AuthResponse, error) {
+func (s *AuthService) Register(ctx context.Context, req *authpb.RegisterRequest) (*authpb.AuthResponse, error) {
 	user, err := s.DB.GetUserByEmail(req.Email)
-	
+
 	if user != nil || err == nil {
 		return nil, status.Error(codes.AlreadyExists, "user with this email already exists")
 	}
@@ -70,17 +72,20 @@ func (s *AuthService) Register(ctx context.Context, req *proto.RegisterRequest) 
 		return nil, status.Error(codes.Internal, "failed to generate token")
 	}
 
-	return &proto.AuthResponse{
+	return &authpb.AuthResponse{
 		UserId: newUser.ID,
 		Token:  token,
 	}, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, req *proto.LoginRequest) (*proto.AuthResponse, error) {
+func (s *AuthService) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.AuthResponse, error) {
 	user, err := s.DB.GetUserByEmail(req.Email)
 
-	if user == nil || err != nil {
-		return nil, status.Error(codes.Unauthenticated, "email not found")
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Error(codes.Internal, "database error")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
@@ -92,7 +97,7 @@ func (s *AuthService) Login(ctx context.Context, req *proto.LoginRequest) (*prot
 		return nil, status.Error(codes.Internal, "failed to generate token")
 	}
 
-	return &proto.AuthResponse{
+	return &authpb.AuthResponse{
 		UserId: user.ID,
 		Token:  token,
 	}, nil

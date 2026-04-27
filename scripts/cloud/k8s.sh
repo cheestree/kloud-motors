@@ -90,6 +90,12 @@ apply_up() {
   echo "Applying manifests with kustomize..."
   k apply -k "$KUSTOMIZE_DIR"
 
+  echo "Restarting deployments so pods pull the latest image..."
+  while IFS= read -r deployment; do
+    [[ -z "$deployment" ]] && continue
+    k -n "$NAMESPACE" rollout restart "$deployment"
+  done < <(k -n "$NAMESPACE" get deployments -o name)
+
   if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
     echo "Waiting for deployments in namespace $NAMESPACE..."
     k -n "$NAMESPACE" wait --for=condition=available deployment --all --timeout=300s

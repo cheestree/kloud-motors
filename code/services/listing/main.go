@@ -210,7 +210,7 @@ func main() {
 
 	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
-	listingDB := utils.TryConnectDB(listingDsn, 3, 10)
+	listingDB := utils.TryConnectDB(listingDsn, 8, 10)
 
 	listingGrpcPort := utils.MustGetEnv("LISTING_GRPC_PORT")
 

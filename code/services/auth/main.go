@@ -49,7 +49,7 @@ func (s *server) Register(ctx context.Context, req *authpb.RegisterRequest) (*au
 
 func (s *server) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.AuthResponse, error) {
 	if req.Email == "" || req.Password == "" {
-		return nil, status.Error(codes.InvalidArgument, "email and password are required")
+		return nil, status.Error(codes.InvalidArgument, "missing credentials")
 	}
 	return s.service.Login(ctx, req)
 }
@@ -62,7 +62,7 @@ func main() {
 
 	authGrpcPort := utils.MustGetEnv("AUTH_GRPC_PORT")
 
-	authDB := utils.TryConnectGorm(authDSN, 3, 10)
+	authDB := utils.TryConnectGorm(authDSN, 8, 10)
 
 	privateKey, err := getPrivateKey()
 	if err != nil {

@@ -1,14 +1,13 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
-
-	"encoding/base64"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -31,18 +30,13 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 	}
 
 	b64Key := os.Getenv("JWT_PUBLIC_KEY_B64")
-	if b64Key == "" {
+	if strings.TrimSpace(b64Key) == "" {
 		return 0, errors.New("JWT_PUBLIC_KEY_B64 is not configured")
 	}
 
-	keyBytes, err := base64.StdEncoding.DecodeString(b64Key)
+	pubKey, err := parseRSAPublicKey(b64Key)
 	if err != nil {
-		return 0, errors.New("failed to decode base64 public key")
-	}
-
-	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(keyBytes)
-	if err != nil {
-		return 0, errors.New("failed to parse RSA public key")
+		return 0, err
 	}
 
 	claims := &UserClaims{}
@@ -65,6 +59,35 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 	}
 
 	return 0, errors.New(errUserIDNotInToken)
+}
+
+func parseRSAPublicKey(value string) (interface{}, error) {
+	trimmed := strings.TrimSpace(value)
+
+	// Support raw PEM in env variable.
+	if strings.Contains(trimmed, "BEGIN PUBLIC KEY") || strings.Contains(trimmed, "BEGIN RSA PUBLIC KEY") {
+		pubKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(trimmed))
+		if err != nil {
+			return nil, errors.New("failed to parse RSA public key")
+		}
+		return pubKey, nil
+	}
+
+	// Support regular base64 and unpadded base64 payloads.
+	decoded, err := base64.StdEncoding.DecodeString(trimmed)
+	if err != nil {
+		decoded, err = base64.RawStdEncoding.DecodeString(trimmed)
+		if err != nil {
+			return nil, errors.New("failed to decode base64 public key")
+		}
+	}
+
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(decoded)
+	if err != nil {
+		return nil, errors.New("failed to parse RSA public key")
+	}
+
+	return pubKey, nil
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
