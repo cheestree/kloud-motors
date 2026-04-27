@@ -2,6 +2,7 @@
 """Load prepared users CSV into the auth_users table in chunks."""
 
 import argparse
+import hashlib
 import os
 import sys
 from typing import Dict, List
@@ -14,13 +15,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 load_dotenv("../../.env")
 
-EXPECTED_COLUMNS: List[str] = ["id", "name", "email", "password"]
+EXPECTED_COLUMNS: List[str] = ["id", "name", "email"]
 
 COLUMN_DTYPES: Dict[str, str] = {
     "id": "Int64",
     "name": "string",
     "email": "string",
-    "password": "string",
 }
 
 
@@ -66,14 +66,19 @@ def upsert_dataframe(df: pd.DataFrame, table: Table, conn) -> int:
 
     records = []
     for row in df.to_dict(orient="records"):
-        pwd = None
-        if not pd.isna(row["password"]):
+        user_id = int(row["id"])
+
+        if "password" in row and not pd.isna(row["password"]):
             pwd_str = str(row["password"])
-            pwd = bcrypt.hashpw(pwd_str.encode("utf-8"), bcrypt.gensalt(rounds=4)).decode("utf-8")
+        else:
+            digest = hashlib.sha256(f"mock-user-{user_id}".encode("utf-8")).hexdigest()
+            pwd_str = f"pw_{digest[:16]}"
+            
+        pwd = bcrypt.hashpw(pwd_str.encode("utf-8"), bcrypt.gensalt(rounds=4)).decode("utf-8")
 
         records.append(
             {
-                "id": int(row["id"]),
+                "id": user_id,
                 "email": None if pd.isna(row["email"]) else str(row["email"]),
                 "password": pwd,
             }

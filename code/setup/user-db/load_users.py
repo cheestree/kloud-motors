@@ -13,13 +13,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 load_dotenv("../../.env")
 
-EXPECTED_COLUMNS: List[str] = ["id", "name", "email", "password"]
+EXPECTED_COLUMNS: List[str] = ["id", "name", "email"]
 
 COLUMN_DTYPES: Dict[str, str] = {
 	"id": "Int64",
 	"name": "string",
 	"email": "string",
-	"password": "string",
 }
 
 
@@ -41,7 +40,6 @@ def define_users_table(table_name: str, metadata: MetaData) -> Table:
 		Column("id", Integer, primary_key=True),
 		Column("name", Text),
 		Column("email", Text, unique=True, index=True),
-		Column("password", Text),
 	)
 
 
@@ -52,7 +50,7 @@ def sanitize_chunk(chunk: pd.DataFrame) -> pd.DataFrame:
 	df = df[df["id"].notna()].copy()
 	df["id"] = df["id"].astype(int)
 
-	for col in ["name", "email", "password"]:
+	for col in ["name", "email"]:
 		df[col] = df[col].astype("string").str.strip()
 
 	# Email is unique in schema; skip rows without valid email.
@@ -74,7 +72,6 @@ def upsert_dataframe(df: pd.DataFrame, table: Table, conn) -> int:
 				"id": int(row["id"]),
 				"name": None if pd.isna(row["name"]) else str(row["name"]),
 				"email": None if pd.isna(row["email"]) else str(row["email"]),
-				"password": None if pd.isna(row["password"]) else str(row["password"]),
 			}
 		)
 
@@ -84,7 +81,6 @@ def upsert_dataframe(df: pd.DataFrame, table: Table, conn) -> int:
 		set_={
 			"name": stmt.excluded.name,
 			"email": stmt.excluded.email,
-			"password": stmt.excluded.password,
 		},
 	)
 	conn.execute(stmt)
