@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type UserClaims struct {
@@ -94,5 +96,18 @@ func parseRSAPublicKey(value string) (interface{}, error) {
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set(headerContentType, contentTypeJSON)
 	w.WriteHeader(status)
+
+	if msg, ok := payload.(proto.Message); ok {
+		marshaler := protojson.MarshalOptions{
+			EmitUnpopulated: true,
+			UseProtoNames:   true,
+		}
+		b, err := marshaler.Marshal(msg)
+		if err == nil {
+			_, _ = w.Write(b)
+			return
+		}
+	}
+
 	_ = json.NewEncoder(w).Encode(payload)
 }
