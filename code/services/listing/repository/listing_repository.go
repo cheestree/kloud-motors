@@ -775,16 +775,42 @@ func (r *ListingRepository) resolveBrandModelIDs(ctx context.Context, makeName s
 		return 0, 0, err
 	}
 
-	modelQuery := `SELECT id FROM model WHERE brand_id = $1 AND LOWER(name) = LOWER($2) LIMIT 1`
-	var modelID int64
-	if err := r.db.QueryRowContext(ctx, modelQuery, brandID, strings.TrimSpace(modelName)).Scan(&modelID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return 0, 0, fmt.Errorf("unknown model for brand: %s/%s", makeName, modelName)
-		}
+	modelID, err := r.ensureModelID(ctx, brandID, modelName)
+	if err != nil {
 		return 0, 0, err
 	}
 
 	return brandID, modelID, nil
+}
+
+func (r *ListingRepository) ensureModelID(ctx context.Context, brandID int64, modelName string) (int64, error) {
+	trimmed := strings.TrimSpace(modelName)
+	if trimmed == "" {
+		return 0, fmt.Errorf("model name is required")
+	}
+
+	modelQuery := `SELECT id FROM model WHERE brand_id = $1 AND LOWER(name) = LOWER($2) LIMIT 1`
+	var modelID int64
+	if err := r.db.QueryRowContext(ctx, modelQuery, brandID, trimmed).Scan(&modelID); err == nil {
+		return modelID, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return 0, err
+	}
+
+	insertQuery := `
+		INSERT INTO model (brand_id, name)
+		VALUES ($1, $2)
+		ON CONFLICT (brand_id, name) DO NOTHING
+		RETURNING id
+	`
+	if err := r.db.QueryRowContext(ctx, insertQuery, brandID, trimmed).Scan(&modelID); err == nil {
+		return modelID, nil
+	}
+
+	if err := r.db.QueryRowContext(ctx, modelQuery, brandID, trimmed).Scan(&modelID); err != nil {
+		return 0, err
+	}
+	return modelID, nil
 }
 
 func (r *ListingRepository) lookupRequiredID(ctx context.Context, tableName string, value string) (int64, error) {
