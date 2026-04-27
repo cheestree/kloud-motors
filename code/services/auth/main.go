@@ -8,6 +8,7 @@ import (
 	"os"
 
 	authpb "services/auth/proto"
+	"services/auth/models"
 	"services/auth/repository"
 	"services/auth/service"
 	"services/utils"
@@ -63,6 +64,10 @@ func main() {
 	authGrpcPort := utils.MustGetEnv("AUTH_GRPC_PORT")
 
 	authDB := utils.TryConnectGorm(authDSN, 8, 10)
+	if err := authDB.AutoMigrate(&models.AuthUser{}); err != nil {
+		logger.Error("failed to migrate auth database", "error", err)
+		return
+	}
 
 	privateKey, err := getPrivateKey()
 	if err != nil {
