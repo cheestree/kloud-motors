@@ -6,6 +6,7 @@ import os
 import sys
 from typing import Dict, List
 
+import bcrypt
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import Column, Integer, MetaData, Table, Text, create_engine
@@ -65,11 +66,16 @@ def upsert_dataframe(df: pd.DataFrame, table: Table, conn) -> int:
 
     records = []
     for row in df.to_dict(orient="records"):
+        pwd = None
+        if not pd.isna(row["password"]):
+            pwd_str = str(row["password"])
+            pwd = bcrypt.hashpw(pwd_str.encode("utf-8"), bcrypt.gensalt(rounds=4)).decode("utf-8")
+
         records.append(
             {
                 "id": int(row["id"]),
                 "email": None if pd.isna(row["email"]) else str(row["email"]),
-                "password": None if pd.isna(row["password"]) else str(row["password"]),
+                "password": pwd,
             }
         )
 

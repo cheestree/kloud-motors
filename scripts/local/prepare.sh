@@ -95,7 +95,7 @@ docker run --rm \
     -v "$REPO_ROOT:/workspace" \
     -w /workspace/code/setup \
     python:3.12-slim \
-    bash -c "pip install pandas faker sqlalchemy python-dotenv psycopg2-binary --quiet && \
+    bash -c "pip install pandas faker sqlalchemy python-dotenv psycopg2-binary bcrypt --quiet && \
                          if [ -f '/workspace/code/setup/$(basename $PREPARED_CSV)' ]; then \
                              echo 'Prepared dataset already exists, skipping prepare_listings.py'; \
                          else \

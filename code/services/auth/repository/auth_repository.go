@@ -7,11 +7,11 @@ import (
 )
 
 type AuthRepository struct {
-	db gorm.DB
+	db *gorm.DB
 }
 
 func NewAuthRepository(db *gorm.DB) *AuthRepository {
-	return &AuthRepository{db: *db}
+	return &AuthRepository{db: db}
 }
 
 func (r *AuthRepository) GetUserByEmail(email string) (*models.AuthUser, error) {
