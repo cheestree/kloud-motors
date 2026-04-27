@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -354,22 +353,9 @@ func (s *server) PlaceBid(ctx context.Context, req *proto.PlaceBidRequest) (*pro
 	}
 
 	// 5. Notify all WebSocket clients watching this auction in real-time
-	type BidEvent struct {
-		AuctionID string  `json:"auction_id"`
-		BidderID  string  `json:"bidder_id"`
-		Amount    float64 `json:"amount"`
-		Timestamp string  `json:"timestamp"`
-	}
-	event := BidEvent{
-		AuctionID: req.AuctionId,
-		BidderID:  req.BidderId,
-		Amount:    req.BidAmount,
-		Timestamp: bidTimestamp.UTC().Format(time.RFC3339),
-	}
-	if payload, err := json.Marshal(event); err == nil {
-		if pubErr := s.hub.Publish(req.AuctionId, payload); pubErr != nil {
-			log.Printf("ws publish error for auction %s: %v", req.AuctionId, pubErr)
-		}
+	msg := fmt.Sprintf("new bid was placed in %s with the amount: %.2f", req.AuctionId, req.BidAmount)
+	if pubErr := s.hub.Publish(req.AuctionId, []byte(msg)); pubErr != nil {
+		log.Printf("ws publish error for auction %s: %v", req.AuctionId, pubErr)
 	}
 
 	return &proto.PlaceBidResponse{
