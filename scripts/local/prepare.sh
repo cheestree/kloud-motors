@@ -67,7 +67,7 @@ SELLER_LOAD_SCRIPT_NAME="$(basename "$SELLER_LOAD_SCRIPT")"
 CHAT_INIT_SCRIPT_NAME="$(basename "$CHAT_INIT_SCRIPT")"
 
 echo "Ensuring required DB containers are running..."
-docker compose up -d listing-db user-db auth-db seller-db auction-db
+docker compose up -d listing-db user-db auth-db seller-db auction-db chat-db
 
 echo "Waiting for user-db to be ready..."
 until docker exec user-db pg_isready -U ${USER_POSTGRES_USER} -d ${USER_POSTGRES_DB}; do
@@ -86,6 +86,11 @@ done
 
 echo "Waiting for auction-db to be ready..."
 until docker exec auction-db pg_isready -U ${AUCTION_POSTGRES_USER} -d ${AUCTION_POSTGRES_DB}; do
+    sleep 2
+done
+
+echo "Waiting for chat-db to be ready..."
+until docker exec chat-db pg_isready -U ${CHAT_POSTGRES_USER} -d ${CHAT_POSTGRES_DB}; do
     sleep 2
 done
 
