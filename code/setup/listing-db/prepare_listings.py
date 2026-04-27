@@ -45,6 +45,74 @@ COLUMN_MAP: Dict[str, str] = {
 # Canonical output column order
 OUTPUT_COLUMNS: List[str] = list(COLUMN_MAP.values()) + ["district", "city", "country", "state"]
 
+DRIVE_TYPE_MAP = {
+    "2wd/4wd": "2WD/4WD",
+    "2wd": "2WD",
+    "4wd": "4WD",
+    "4wd/4-wheel drive/4x4": "4WD",
+    "4x2": "4x2",
+    "awd": "AWD",
+    "awd/all wheel drive": "AWD",
+    "fwd": "FWD",
+    "fwd/front wheel drive": "FWD",
+    "rwd": "RWD",
+    "rwd/ rear wheel drive": "RWD",
+}
+
+TRANSMISSION_STYLE_MAP = {
+    "automated manual transmission (amt)": "AMT",
+    "amt": "AMT",
+    "automatic": "Automatic",
+    "continuously variable transmission (cvt)": "CVT",
+    "cvt": "CVT",
+    "dual-clutch transmission (dct)": "DCT",
+    "dct": "DCT",
+    "electronic continuously variable (e-cvt)": "e-CVT",
+    "e-cvt": "e-CVT",
+    "manual/standard": "Manual",
+    "manual": "Manual",
+}
+
+ELECTRIFICATION_LEVEL_MAP = {
+    "bev (battery electric vehicle)": "BEV",
+    "mild hev (hybrid electric vehicle)": "MHEV",
+    "phev (plug-in hybrid electric vehicle)": "PHEV",
+    "strong hev (hybrid electric vehicle)": "HEV",
+}
+
+
+def normalize_drive_type(value: object) -> object:
+    if value is None or pd.isna(value):
+        return pd.NA
+
+    text = str(value).strip()
+    if not text:
+        return pd.NA
+
+    return DRIVE_TYPE_MAP.get(text.casefold(), text)
+
+
+def normalize_transmission_style(value: object) -> object:
+    if value is None or pd.isna(value):
+        return pd.NA
+
+    text = str(value).strip()
+    if not text:
+        return pd.NA
+
+    return TRANSMISSION_STYLE_MAP.get(text.casefold(), text)
+
+
+def normalize_electrification_level(value: object) -> object:
+    if value is None or pd.isna(value):
+        return pd.NA
+
+    text = str(value).strip()
+    if not text:
+        return pd.NA
+
+    return ELECTRIFICATION_LEVEL_MAP.get(text.casefold(), text)
+
 
 def build_output_path(dataset_path: str, rows: Optional[int]) -> str:
     source = Path(dataset_path)
@@ -73,6 +141,16 @@ def rename_and_select(df: pd.DataFrame, faker: Optional[Faker] = None) -> pd.Dat
             if pd.notna(v)
             else False
         )
+
+    if "drive_type" in out.columns:
+        out["drive_type"] = out["drive_type"].map(normalize_drive_type)
+
+    if "transmission_style" in out.columns:
+        out["transmission_style"] = out["transmission_style"].map(normalize_transmission_style)
+
+    if "electrification_level" in out.columns:
+        out["electrification_level"] = out["electrification_level"].map(normalize_electrification_level)
+
     if faker is not None:
         districts = []
         cities = []
