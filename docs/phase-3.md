@@ -1,207 +1,174 @@
-# Functional requirements and Application architecture
+# Functional requirements and application architecture
 
 ## Functional requirements
 
 ### Use case 1 - Market Price Analysis
 
-1. **Statistical Price Analysis**
-    The system shall allow any user (authenticated or not) to request market price statistics for a car by specifying at least the brand and model.
+1. The system shall expose a public endpoint to retrieve average market price information for a vehicle based on `brand` and `model`.
+2. The request may optionally include `year_from` and `year_to` filters.
+3. The response shall be computed from marketplace listings stored in the listing data store.
+4. Invalid HTTP methods shall return `405 Method Not Allowed`.
+5. Service or repository failures shall be surfaced by the gateway as server-side errors.
 
-2. **Filtering Options**
-    The user may optionally filter the price analysis by year range (from/to) and location. If no filters are applied, the system shall return statistics for all listings of that make/model.
+### Use case 2 - Filtered Search
 
-3. **Response Format**
-    The system shall compute and return this statistics based on matching listings: average price, minimum price, maximum price, total number of listings used in the calculation
+1. The system shall expose a public search endpoint for car listings.
+2. The implemented search filters shall include `make`, `model`, `year`, `minPrice`, `maxPrice`, `maxMileage`, `fuelType`, `page`, `pageSize`, and `includeSold`.
+3. Search results shall be paginated.
+4. The system shall also expose a public endpoint that returns general listing pages without requiring detailed filters.
+5. The search capability shall use the search microservice backed by listing data stored in PostgreSQL.
 
-4. **Public Accessibility**
-    Market price analysis endpoints shall be publicly accessible without requiring user authentication.
+### Use case 3 - Geographical Market Insights
 
-5. **Input Validation**
-    The system shall validate all input parameters. Invalid or missing mandatory parameters shall result in an HTTP 400 response with a descriptive error message.
+1. The system shall expose a public endpoint to compare prices by `district`, `city`, or `country` for a given `brand` and `model`.
+2. The price-comparison endpoint shall support optional `sort_by`, `order`, `limit`, and `skip` parameters.
+3. The system shall expose a public aggregates endpoint that supports configurable metrics, location grouping, optional location filters, year range filters, fuel type filters, and pagination controls.
+4. The system shall expose a public endpoint for location-specific statistics that returns price information for a selected market.
+5. Geographical insights shall be served by a dedicated microservice connected to the listing database.
 
-### Use Case 2 - Filtered Search
+### Use case 4 - Seller Management and Profiling
 
-1. **Search by Multiple Criteria**
-    The system shall allow users to search for car listings by specifying any combination of the following criteria: brand, model, year range (from/to), price range (min/max), fuel type, and location (country/district/city). The system shall return listings that match all provided criteria.
+1. The system shall expose a public endpoint to retrieve seller profile information by seller identifier.
+2. Seller information shall be served by a dedicated seller service.
+3. The platform may expose preview endpoints to support seller summary retrieval in upstream experiences.
 
-2. **Pagination Support**
-    The search results shall be paginated. The user may specify the page number and page size. The response shall include the total number of matching listings and the total number of pages based on the page size.
+### Use case 5 - Buyer-Seller Communication
 
-3. **Sorting Options**
-    The user shall be able to sort search results by price (ascending/descending) or by year (newest/oldest). If no sorting option is specified, results shall be returned in a default order (e.g., most recent listings first).
+1. Only authenticated users shall be allowed to open chat sessions, list their chats, retrieve chat history, or connect to the chat WebSocket endpoint.
+2. A chat session shall be associated with a marketplace listing and the corresponding buyer and seller.
+3. The system shall expose a REST operation to open a chat or reuse an existing one.
+4. The system shall expose a WebSocket endpoint that proxies authenticated traffic from the gateway to the chat service.
+5. Chat history shall be persisted and retrievable through the chat history endpoint.
+6. The chat service shall support horizontal scaling by propagating real-time events through Google Pub/Sub.
+7. The implementation shall support cloud message persistence through Firestore in addition to chat indexing data.
 
-4. **Public Accessibility**
-    The search endpoint shall be publicly accessible without requiring user authentication.
+### Use case 6 - Visitor and User Registration
 
-### Use Case 3 - Geographical Market Insights
+1. The system shall allow visitors to register with `name`, `email`, and `password`.
+2. The system shall allow registered users to log in and obtain an authentication token.
+3. Authenticated users shall be able to retrieve their list of favorite listings.
+4. Authenticated users shall be able to add a listing to favorites.
+5. Authenticated users shall be able to remove a listing from favorites.
+6. Authentication shall be enforced at gateway level through JWT validation before protected routes are forwarded to downstream services.
 
-1. **Price Comparison Across Locations**
-    The system shall allow any user (authenticated or not) to query the average listing price of a specific car make and model grouped by country, district, or city. The user must supply at minimum the make and model; grouping granularity (country / district / city) is a required parameter. The response shall include the location label, the average price, and the total number of listings that contributed to that average, sorted by price in ascending or descending order as requested by the user.
+### Use case 7 - Auction Module
 
-2. **Aggregated Market Metrics per Location**
-    The system shall expose aggregated market metrics for a given car make and model filtered by one or more specific locations. Supported metrics shall include: average price, median price, and listing count. The user may additionally filter results by year range (from/to) and fuel type. Each location in the response shall include only the metrics the user explicitly requested.
+1. The system shall expose a public endpoint to list auctions with pagination and optional status filtering.
+2. The system shall expose a public endpoint to retrieve auction details and a public endpoint to retrieve auction bids.
+3. Only authenticated users shall be allowed to create auctions, delete their auctions, place bids, or connect to the auction WebSocket endpoint.
+4. Auction creation and bidding shall be handled by a dedicated auction service.
+5. The system shall expose a WebSocket endpoint for live auction updates through the gateway.
+6. The auction service shall support horizontal scaling by propagating auction events through Google Pub/Sub.
 
-3. **Detailed Price Statistics for a Single Location**
-    The system shall allow the user to obtain price statistics for a specific car make/model restricted to a single location. The response shall include the minimum price, maximum price, average price, and median price of matching listings. The user may additionally filter by year range and fuel type. This requirement supports scenarios where a user wants a complete price distribution picture for a specific market (e.g., "What does a 2018 Toyota Corolla cost in Lisbon?").
+### Use case 8 - Listing details and comparison
 
-4. **Public Accessibility**
-    All geographical insights endpoints shall be publicly accessible without authentication, so that anonymous visitors can explore market trends before registering.
+1. The system shall expose a public endpoint to retrieve detailed information for an individual listing.
+2. The system shall expose a public endpoint to compare multiple listings using a list of listing identifiers.
+3. Authenticated users shall be able to create, update, and delete listings through the gateway.
+4. Listing and comparison operations shall be served by the listing service, while search-oriented retrieval shall be served by the search service.
 
-5. **Input Validation**
-    The system shall validate that the brand and model parameters are present for all insights queries. If they are absent or malformed, the system shall return an HTTP 400 response with a human-readable error message. Year range values must be positive integers and year_from must not exceed year_to.
+### Cross-cutting platform requirements
 
-### Use Case 4 - Seller Management & Profiling
-
-1. **Seller Type Classification**
-    The system shall classify each seller as `professional_dealer` or `private_seller` and expose that categorization through the seller profile endpoint.
-
-2. **Seller Profile Retrieval**
-    The system shall expose a public endpoint to retrieve a seller profile by seller_id. The response should include seller_id, name, seller_type and may include contact_info and rating. If the seller_id does not exist, the system shall return an HTTP 404 response.
-
-3. **Input Validation**
-    The system shall validate the seller_id parameter and return an HTTP 400 response when it is missing or malformed.
-
-### Use Case 5 - Buyer–Seller Communication
-
-1. **Chat Session Initiation**
-    An authenticated buyer shall be able to open a chat session with the seller of a specific listing by submitting the listing identifier. If a chat session between that buyer and that seller for that listing already exists, the system shall return the existing session rather than creating a duplicate.
-
-2. **Authentication Requirement**
-    Only authenticated users (holding a valid JWT or session cookie) shall be permitted to initiate or participate in a chat session. Unauthenticated requests to any chat endpoint shall receive an HTTP 401 response.
-
-3. **Real-Time Messaging via WebSocket**
-    Once a chat session is open, both the buyer and the seller shall be able to send and receive text messages in real time through a persistent WebSocket connection (/ws/chat/{chat_id}). The WebSocket upgrade shall require a valid authentication token. Messages shall be delivered to the other party immediately if they are connected; if the recipient is offline, the message shall be persisted and delivered when they reconnect.
-
-4. **Message Persistence and Chat History**
-    All messages sent within a chat session shall be persisted in a dedicated store. An authenticated participant of a session shall be able to retrieve the full message history for that session via a REST endpoint (GET /api/chat/{chat_id}). The history response shall include each message's content, sender identifier, and timestamp.
-
-5. **Access Control**
-    A user may only read or write in chat sessions in which they are a participant (either as the buyer or the seller of the associated listing). Any attempt to access a chat session by a user who is not a participant shall result in an HTTP 403 response.
-
-6. **Chat Session Identification**
-    Each chat session shall be uniquely identified by a chat_id returned at session creation. This identifier shall be used in all subsequent REST and WebSocket interactions related to that session.
-
-7. **Connection Lifecycle**
-    The system shall handle WebSocket disconnections gracefully. If a client disconnects unexpectedly, the session shall remain open server-side and the client shall be able to reconnect and resume the conversation without data loss.
-
-### Use Case 6 - Visitor & User Registration
-
-1. **User Registration**
-    The system shall allow a visitor to create an account by providing, at minimum, an email and password. Email addresses must be unique and attempts to register an existing email shall return an HTTP 409 response. Invalid input shall return an HTTP 400 response.
-
-2. **User Login**
-    The system shall allow a registered user to authenticate via email and password. On success, the system shall issue a JWT or session cookie. Invalid credentials shall return an HTTP 401 response, and invalid input shall return an HTTP 400 response.
-
-3. **Save Listing to Favorites**
-    An authenticated user shall be able to save a listing to their favorites by providing the listing identifier. If the listing does not exist, the system shall return an HTTP 404 response; if the listing is already in favorites, it shall return an HTTP 409 response. Unauthenticated requests shall return an HTTP 401 response.
-
-4. **Remove Listing from Favorites**
-    An authenticated user shall be able to remove a listing from their favorites. If the listing is not found, the system shall return an HTTP 404 response. Unauthenticated requests shall return an HTTP 401 response.
-
-5. **Favorites Retrieval**
-    An authenticated user shall be able to retrieve their saved listings. The response shall include a list of saved listing identifiers. Unauthenticated requests shall return an HTTP 401 response.
-
-### Use Case 7 - Auction Module
-
-1. **Auction Creation**
-    The system shall allow authenticated sellers to create an auction for an existing car listing.
-
-2. **Auction Configuration**
-    When creating an auction, the seller must specify the starting price, the optional reserve price, and auction duration (start and end time).
-
-3. **Auction Display**
-    The system shall allow users to retrieve a list of auctions, filterable by: auction status (active, ended), car brand and model, and location.
-
-4. **Bid Placement**
-    The system shall allow authenticated users to place bids on active auctions.
-
-5. **Bid Validation**
-    The system shall validate that each bid is higher than the current highest bid before accepting it.
-
-6. **Auction Conclusion**
-    The system shall automatically determine the outcome of an auction when the configured end time is reached.
-
-7. **Real-Time Auction Updates**
-    The system shall notify connected clients in real time when a new bid is placed on an active auction and when an auction ends. These notifications shall be delivered using WebSocket connections.
-
-### Use Case 8 - Listing details and comparison*
-
-1. **Listing Details Retrieval**
-    The system shall allow users to retrieve detailed information about a specific car listing by providing its unique identifier. The response shall include all relevant attributes of the listing, such as brand, model, year, price, fuel type, location, and seller information.
-
-2. **Listing Comparison**
-    The system shall allow users to compare multiple car listings by providing a list of their unique identifiers. The response shall return the details of each listing side by side, enabling users to easily compare attributes such as price, year, and location.
-
-3. **Public Accessibility**
-    Both the listing details and comparison endpoints shall be publicly accessible without requiring user authentication.
+1. The platform shall expose a REST gateway as the single public HTTP entry point for local and Kubernetes deployments.
+2. The gateway shall translate HTTP requests into gRPC calls to the internal services.
+3. The platform shall expose a health endpoint for readiness and liveness checks.
+4. Local execution shall be supported through Docker Compose.
+5. Cloud execution shall be supported through Kubernetes manifests, namespace-scoped configuration, services, deployments, and horizontal pod autoscalers.
 
 ## Application architecture
 
+The current project is organized as a Go microservices platform with a REST and WebSocket gateway in front of internal gRPC services. Locally, the stack runs with Docker Compose. In the cloud, the same services are deployed to Kubernetes under the `vehicles-prod` namespace, fronted by an NGINX ingress and configured for autoscaling.
+
+### Main runtime components
+
+- **Gateway service**: Single HTTP entry point. Exposes REST routes under `/api`, validates JWTs for protected endpoints, and proxies chat and auction WebSocket traffic.
+- **Listing service**: Handles listing detail retrieval, comparison, and authenticated listing lifecycle operations.
+- **Search service**: Handles paginated listing search based on marketplace filters.
+- **Market Price service**: Computes average market price for a brand and model.
+- **Geographic Market Insights service**: Produces price comparisons, aggregate metrics, and by-location statistics.
+- **Auth service**: Registers users and issues authentication tokens.
+- **User service**: Manages user profiles and favorite listings.
+- **Seller service**: Serves seller profile data and seller previews.
+- **Chat service**: Manages buyer-seller chat creation, chat history, and live messaging.
+- **Auction service**: Manages auction creation, deletion, bidding, bid retrieval, and live updates.
+
+### Data and messaging
+
+- **Listing PostgreSQL database**: Shared source of truth for listing, search, market price, and geographic insights operations.
+- **Auth PostgreSQL database**: Stores authentication data.
+- **User PostgreSQL database**: Stores user profiles and favorites.
+- **Seller PostgreSQL database**: Stores seller-facing data.
+- **Chat PostgreSQL database**: Stores chat participant and chat index data.
+- **Auction PostgreSQL database**: Stores auctions and bids.
+- **Firestore**: Used by the chat service for message persistence in cloud-oriented flows.
+- **Google Pub/Sub**: Used by chat and auction services so real-time events can be broadcast consistently across multiple replicas.
+
+### Deployment model
+
+- **Local environment**: `scripts/local/prepare.sh`, `scripts/local/start.sh`, and `scripts/local/seed.sh` prepare the dataset, start containers, and load seed data.
+- **Cloud environment**: `scripts/cloud/bootstrap_env.sh` prepares Google Cloud tooling and Cloud SQL Proxy support, while `scripts/cloud/k8s.sh` applies, removes, checks, or restarts the Kubernetes deployment.
+- **Ingress**: The Kubernetes ingress routes `/api/`, `/api/chat/ws/`, and `/api/auctions/ws/` traffic to the gateway service.
+- **Autoscaling**: Dedicated HPA manifests exist for scalable services such as listing, search, chat, auth, user, seller, marketprice, auction, and geographic market insights.
+
 ```mermaid
 graph LR
-    CLIENT([Client])
-    API[API Gateway]
+    CLIENT["Client applications"]
+    INGRESS["NGINX Ingress"]
+    GATEWAY["Gateway service\nREST + WebSocket proxy"]
 
-    AUTH[Auth Service]
-    AUTH_DB[(Auth Database)]
-    
-    CHAT[Chat Service]
-    CHAT_DB[(Chat Database)]
-    MESSAGE_BROKER[[Message Broker<br/>Pub/Sub]]
-    
-    GEO_MARKET[Geographic Market Insights Service]
-    
-    MARKET_PRICE[Market Price Analysis Service]
-    
-    USERS[Users Service]
-    USERS_DB[(Users Database)]
+    AUTH["Auth service"]
+    USER["User service"]
+    SELLER["Seller service"]
+    LISTING["Listing service"]
+    SEARCH["Search service"]
+    MARKET["Market Price service"]
+    GEO["Geographic Market Insights service"]
+    CHAT["Chat service"]
+    AUCTION["Auction service"]
 
-    SELLERS[Sellers Service]
+    AUTHDB[("Auth PostgreSQL")]
+    USERDB[("User PostgreSQL")]
+    SELLERDB[("Seller PostgreSQL")]
+    LISTINGDB[("Listing PostgreSQL")]
+    CHATDB[("Chat PostgreSQL")]
+    AUCTIONDB[("Auction PostgreSQL")]
+    FIRESTORE[("Firestore")]
+    PUBSUB[["Google Pub/Sub"]]
 
-    AUCTION[Auction Service]
-    AUCTION_DB[(Auctions Database)]
+    CLIENT -->|HTTP / WebSocket| INGRESS
+    INGRESS --> GATEWAY
 
-    LISTINGS[Listings Service]
-    SEARCH[Search Service]
+    GATEWAY -->|gRPC| AUTH
+    GATEWAY -->|gRPC| USER
+    GATEWAY -->|gRPC| SELLER
+    GATEWAY -->|gRPC| LISTING
+    GATEWAY -->|gRPC| SEARCH
+    GATEWAY -->|gRPC| MARKET
+    GATEWAY -->|gRPC| GEO
+    GATEWAY -->|gRPC| CHAT
+    GATEWAY -->|gRPC| AUCTION
 
-    DB[(Listings Database)]
+    GATEWAY -->|WS proxy| CHAT
+    GATEWAY -->|WS proxy| AUCTION
 
-    CLIENT -- REST / HTTPS --> API
-    CLIENT -- WebSocket / WSS --> API
+    AUTH --> AUTHDB
+    USER --> USERDB
+    SELLER --> SELLERDB
 
-    API -- gRPC --> AUTH
+    LISTING --> LISTINGDB
+    SEARCH --> LISTINGDB
+    MARKET --> LISTINGDB
+    GEO --> LISTINGDB
 
-    API -- gRPC --> CHAT
-    API -- WebSocket --> CHAT
+    CHAT --> CHATDB
+    CHAT --> FIRESTORE
+    CHAT <-->|events| PUBSUB
 
-    API -- gRPC --> GEO_MARKET
-    API -- gRPC --> MARKET_PRICE
+    AUCTION --> AUCTIONDB
+    AUCTION <-->|events| PUBSUB
 
-    API -- gRPC --> USERS
-    API -- gRPC --> SELLERS
-    
-    API -- gRPC --> AUCTION
-    API -- WebSocket --> AUCTION
-
-    API -- gRPC --> LISTINGS
-    API -- gRPC --> SEARCH
-
-    AUTH -- SQL / TCP --> AUTH_DB
-
-    MESSAGE_BROKER -- Pub/Sub --> CHAT
-    CHAT -- Push --> MESSAGE_BROKER
-    CHAT -- gRPC --> AUTH
-    USERS -- gRPC --> AUTH
-    SELLERS -- gRPC --> AUTH
-
-    GEO_MARKET -- SQL / TCP --> DB
-    MARKET_PRICE -- SQL / TCP --> DB
-    USERS -- SQL / TCP --> USERS_DB
-    SELLERS -- SQL / TCP --> DB
-
-    CHAT -- SQL / TCP --> CHAT_DB
-    AUCTION -- SQL / TCP --> AUCTION_DB
-
-    LISTINGS -- SQL / TCP --> DB
-    SEARCH -- SQL / TCP --> DB
+    AUTH --> USER
+    CHAT --> LISTING
+    CHAT --> SELLER
+    AUCTION --> LISTING
 ```
