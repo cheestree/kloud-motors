@@ -82,8 +82,12 @@ The deployment plan will involve the following steps:
 - **Francisco Encarnação**
 
 - **Daniel Carvalho**
+  - Use Case 2 - Cluster Monitoring
+  - Use Case 6 - Service Resilience
 
 - **Daniel Nunes**
+  - Use Case 1 - Privacy and Data Protection
+  - Use Case 3 - Data Backup and Recovery
 
 - **Daniel Sousa**
   - Use Case 4 - Automated Deployment
