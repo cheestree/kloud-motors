@@ -80,6 +80,8 @@ The deployment plan will involve the following steps:
 ## Student Distribution
 
 - **Francisco Encarnação**
+  - Use Case 5 - Distributed Caching
+  - Use Case 8 - Infrastructure Reproducibility
 
 - **Daniel Carvalho**
   - Use Case 2 - Cluster Monitoring
