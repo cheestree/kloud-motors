@@ -1,9 +1,9 @@
 package firestore
 
 import (
-	"services/chat/repository"
 	"context"
 	"fmt"
+	"services/chat/repository"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -14,7 +14,7 @@ type MessageRepo struct {
 	collection string
 }
 
-func NewFirestoreMessageRepo(ctx context.Context, projectID, collection string) (*MessageRepo, error) {
+func NewFirestoreMessageRepo(ctx context.Context, projectID, databaseID, collection string) (*MessageRepo, error) {
 	if projectID == "" {
 		return nil, fmt.Errorf("missing firestore/firestore project id")
 	}
@@ -22,9 +22,13 @@ func NewFirestoreMessageRepo(ctx context.Context, projectID, collection string) 
 		collection = "messages"
 	}
 
-	client, err := firestore.NewClient(ctx, projectID)
+	if databaseID == "" {
+		databaseID = "(default)"
+	}
+
+	client, err := firestore.NewClientWithDatabase(ctx, projectID, databaseID)
 	if err != nil {
-		return nil, fmt.Errorf("create firestore client: %w", err)
+		return nil, fmt.Errorf("create firestore client with database %s: %w", databaseID, err)
 	}
 
 	return &MessageRepo{client: client, collection: collection}, nil

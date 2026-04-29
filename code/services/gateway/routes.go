@@ -10,8 +10,9 @@ const (
 	routePrefixMarket   = routeBaseAPI + "/market"
 	routePrefixAuctions = routeBaseAPI + "/auctions"
 	routePrefixAuth     = routeBaseAPI + "/auth"
-	routePrefixUsersMe  = routeBaseAPI + "/users/me"
+	routePrefixUsers    = routeBaseAPI + "/users"
 	routePrefixSellers  = routeBaseAPI + "/sellers"
+	routePrefixHealth   = routeBaseAPI + "/health"
 )
 
 const (
@@ -19,19 +20,23 @@ const (
 	routeListingsSearch          = routePrefixListings + "/search"
 	routeListingsCompare         = routePrefixListings + "/compare"
 	routeListingsByID            = routePrefixListings + "/"
+	routeGetChats                = routePrefixChat
 	routeChatOpen                = routePrefixChat + "/open"
-	routeChatByID                = routePrefixChat + "/"
+	routeChatWS                  = routePrefixChat + "/ws/{chatID}"
+	routeChatByID                = routePrefixChat + "/{chatID}"
 	routeMarketAggregates        = routePrefixMarket + "/insights/aggregates"
 	routeMarketPriceComparison   = routePrefixMarket + "/price-comparison"
 	routeListingsStatsByLocation = routePrefixListings + "/stats/by-location"
 	routeMarketAveragePrice      = routePrefixMarket + "/average-price"
 	routeAuctions                = routePrefixAuctions
+	routeAuctionWS               = routePrefixAuctions + "/ws/{auctionID}"
 	routeAuctionByID             = routePrefixAuctions + "/"
 	routeAuthRegister            = routePrefixAuth + "/register"
 	routeAuthLogin               = routePrefixAuth + "/login"
-	routeFavorites               = routePrefixUsersMe + "/favorites"
-	routeFavoriteByListingID     = routePrefixUsersMe + "/favorites/"
+	routeFavorites               = routePrefixUsers + "/me/favorites"
+	routeFavoriteByListingID     = routePrefixUsers + "/me/favorites/"
 	routeSellerByID              = routePrefixSellers + "/"
-	routeUsersPreview            = routeBaseAPI + "/users/preview"
+	routeUsersPreview            = routePrefixUsers + "/preview"
 	routeSellersPreview          = routePrefixSellers + "/preview"
+	routeHealth                  = routePrefixHealth
 )

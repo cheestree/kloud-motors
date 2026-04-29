@@ -10,7 +10,7 @@ from typing import Dict, List, Set
 import pandas as pd
 
 EXPECTED_SOURCE_COLUMN = "dealer_id"
-OUTPUT_COLUMNS: List[str] = ["id", "name", "email", "password"]
+OUTPUT_COLUMNS: List[str] = ["id", "name", "email"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,12 +22,6 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument("--chunk-size", type=int, default=16384)
 	parser.add_argument("--max-users", type=int, default=None)
 	return parser.parse_args()
-
-
-def stable_password_for_id(user_id: int) -> str:
-	# Deterministic mock password so repeated runs are reproducible.
-	digest = hashlib.sha256(f"mock-user-{user_id}".encode("utf-8")).hexdigest()
-	return f"pw_{digest[:16]}"
 
 
 def normalize_id(value) -> int | None:
@@ -47,7 +41,6 @@ def to_user_row(user_id: int) -> Dict[str, object]:
 		"id": user_id,
 		"name": f"Seller {user_id}",
 		"email": f"seller{user_id}@mock.local",
-		"password": stable_password_for_id(user_id),
 	}
 
 

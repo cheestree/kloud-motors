@@ -2,51 +2,52 @@
 
 ## Dataset
 
-- **URL**: <https://www.kaggle.com/datasets/cisautomotiveapi/large-car-dataset>
-- **Topic**: Car listings. Detailed information on used and new cars for sale
-- **Size**: 5.3 GB
-- **Release date**: 2020 (Last updated in 2021)
+- **Primary dataset**: [Large Car Dataset on Kaggle](https://www.kaggle.com/datasets/cisautomotiveapi/large-car-dataset)
+- **Domain**: Used and new car marketplace listings
+- **Approximate size**: 5.3 GB
+- **Release window**: Published in 2020 and updated in 2021
+- **Project usage**: The dataset is prepared locally through the scripts under `scripts/local/` and loaded into the listing-related services and databases used by the platform.
 
 ## Business capabilities
 
-- **Market Price Analysis**: Calculate the average price of cars based on brand, model, year, and location.
-- **Filtered Search**: Allow users to search for cars based on specific criteria(make, model, year, price range, mileage, fuel type, location).
-- **Geographical Market Insights**: Analyze car availability and price variations across different regions.
-- **Seller Management & Profiling**: Distinguish between professional dealers and private sellers.
-- **Buyer–Seller Communication**: Enable real-time messaging between the buyer and the seller of a specific listing.
-- **Visitor & User Registration**: Track and register platform visitors, registered users can save favourite listings.
-- **Auction Module**: Allow sellers to list cars under an auction format.
-- **Listing details and comparison**: Provide detailed information on each listing and allow users to compare multiple listings side by side based on price, mileage, year and location.
+- **Listing catalog and details**: Expose detailed vehicle listings and allow side-by-side comparison of multiple cars.
+- **Filtered search**: Search listings using the implemented filters available in the gateway, namely make, model, year, price range, mileage, fuel type, pagination, and sold-state inclusion.
+- **Market price analysis**: Calculate average market price information for a given brand and model, with optional year range filters.
+- **Geographical market insights**: Compare prices by district, city, or country and retrieve aggregate metrics or location-specific statistics.
+- **Seller management and profiling**: Retrieve seller profiles and distinguish marketplace actors at seller level.
+- **User registration and favorites**: Register users, authenticate them with JWT, and allow them to manage favorite listings.
+- **Buyer-seller communication**: Open chat sessions tied to listings and exchange real-time messages over WebSockets.
+- **Auction module**: Create auctions for listings, place bids, retrieve bids, and receive real-time auction updates.
+- **Listing lifecycle management**: Support authenticated listing creation, update, and deletion through the gateway in addition to read-only marketplace operations.
 
-## Use Cases
+## Use cases
 
-- **Use Case 1 - Market Price Analysis**: A user wants to know the average price of a car in New York. The system will analyze the dataset to provide an average price based on similar listings in that location.
-- **Use Case 2 - Filtered Search**: A user is looking for a used car with less than 50,000 miles and a price range of 10,000 to 15,000$. The system will filter the dataset to show relevant listings that match these criteria.
-- **Use Case 3 - Geographical Market Insights**: A user wants to compare the average price of a specific car model in different cities. The system will analyze the dataset to provide insights into price variations across locations.
-- **Use Case 4 - Seller Management & Profiling**: A user wants to know if a listing is from a professional dealer or a private seller. The system will analyze the dataset to categorize listings accordingly.
-- **Use Case 5 - Buyer–Seller Communication**: A user is interested in a specific car listing and wants to ask the seller a question. The system will enable real-time messaging between the buyer and the seller.
-- **Use Case 6 - Visitor & User Registration**: A user visits the platform and wants to save a listing for later. The system will prompt the user to register or log in to save the listing to their profile.
-- **Use Case 7 - Auction Module**: A seller wants to list a car for auction. The system will allow the seller to create an auction listing, and buyers can place bids on the car until the auction ends.
-- **Use Case 8 - Listing details and comparison**: A user wants to compare multiple car listings side by side based on price, mileage, year and location. The system will retrieve and present a comparison of the selected listings.
+- **Use Case 1 - Market Price Analysis**: A visitor wants to know the average market price for a specific vehicle model. The platform returns aggregated price information for the selected brand and model, optionally constrained by a year interval.
+- **Use Case 2 - Filtered Search**: A visitor searches the catalog using filters such as make, model, year, price range, mileage, and fuel type, and receives paginated matching listings.
+- **Use Case 3 - Geographical Market Insights**: A visitor compares how the same vehicle model behaves across districts, cities, or countries, using aggregate metrics and location-specific statistics.
+- **Use Case 4 - Seller Management and Profiling**: A visitor opens a listing and wants to inspect the seller profile associated with it.
+- **Use Case 5 - Buyer-Seller Communication**: An authenticated user opens a chat for a specific listing and exchanges messages with the seller in real time.
+- **Use Case 6 - Visitor and User Registration**: A visitor registers, logs in, and saves or removes favorite listings from their profile.
+- **Use Case 7 - Auction Module**: An authenticated seller creates an auction for a listing, while authenticated buyers place bids and subscribed clients receive live auction updates.
+- **Use Case 8 - Listing Details and Comparison**: A visitor views a single listing in detail or compares several selected listings side by side.
 
-## Contribution Plan
+## Contribution plan
 
-- Francisco Encarnação:
-  - Use Case 1 – Market Price Analysis
-  - Use Case 7 – Auction Module
-- Daniel Carvalho:
-  - Use Case 2 – Filtered Search
-  - Use Case 8 – Listing Comparison
-- Daniel Nunes:
-  - Use Case 6 – Visitor & User Registration
-  - Use Case 4 – Seller Management & Profiling
-- Daniel Sousa:
-  - Use Case 5 – Buyer–Seller Communication
-  - Use Case 3 – Geographical Market Insights
+- **Francisco Encarnação**
+  - Use Case 1 - Market Price Analysis
+  - Use Case 7 - Auction Module
+- **Daniel Carvalho**
+  - Use Case 2 - Filtered Search
+  - Use Case 8 - Listing Details and Comparison
+- **Daniel Nunes**
+  - Use Case 6 - Visitor and User Registration
+  - Use Case 4 - Seller Management and Profiling
+- **Daniel Sousa**
+  - Use Case 5 - Buyer-Seller Communication
+  - Use Case 3 - Geographical Market Insights
 
-## Possible Extensions
+## Possible extensions
 
-The following extensions may be incorporated into the project if approved.
-
-- **Visual Search via Vision API**: Integration of a Vision API (e.g. Google Vision or a similar service) to allow users to upload a photo of a car and automatically find equal or similar models in the dataset.
-- **Car Image Dataset**: Integration of a secondary dataset of labelled car images to enrich listings with reference images grouped by make, model, and year.
+- **Visual search**: Allow users to upload a vehicle photo and retrieve similar listings by integrating a computer vision API.
+- **Image enrichment**: Attach external labeled car image datasets to listings so each vehicle record can be complemented with reference imagery.
+- **Cloud-native observability**: Extend the current Kubernetes deployment with centralized metrics, tracing, and alerting for gateway and service-level behavior.

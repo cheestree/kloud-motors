@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-config
+  namespace: vehicles-prod
+data:
+  USER_GRPC_PORT: "50058"

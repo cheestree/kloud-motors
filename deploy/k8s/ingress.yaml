@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: main-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  # tls:
+  #   - hosts:
+  #       - api.exemplo.com
+  #     secretName: tls-secret
+  rules:
+    - host: api.exemplo.com
+      http:
+        paths:
+          - path: /api/chat/ws/
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway-service
+                port:
+                  name: http
+
+          - path: /api/auctions/ws/
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway-service
+                port:
+                  name: http
+
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway-service
+                port:
+                  name: http

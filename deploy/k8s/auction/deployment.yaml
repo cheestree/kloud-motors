@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auction-service
+  namespace: vehicles-prod
+  labels:
+    app: auction-service
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 300
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: auction-service
+  template:
+    metadata:
+      labels:
+        app: auction-service
+    spec:
+      serviceAccountName: vehicles-workload-sa
+      containers:
+        - name: auction-service
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/auction
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50051
+              name: grpc
+            - containerPort: 8081
+              name: ws
+          env:
+            - name: GCP_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: auction-secrets
+                  key: GCP_PROJECT_ID
+            - name: AUCTION_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: auction-secrets
+                  key: AUCTION_DATABASE_URL
+            - name: POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PUBSUB_SUBSCRIPTION_ID
+              value: "auction-sub-$(POD_ID)"
+          envFrom:
+            - configMapRef:
+                name: auction-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          startupProbe:
+            grpc:
+              port: 50051
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--health-check"
+            - "--http-address=0.0.0.0"
+            - "$(CLOUD_SQL_INSTANCE)"
+          env:
+            - name: CLOUD_SQL_INSTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-config
+                  key: instance-connection-name
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          startupProbe:
+            httpGet:
+              path: /startup
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /liveness
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3

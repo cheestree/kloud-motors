@@ -3,7 +3,16 @@ kind: Kustomization
 namespace: vehicles-prod
 resources:
   - common/namespace.yaml
-  - common/secrets.yaml
-  - common/postgres.yaml
+  - common/serviceaccount.yaml
+  - common/cloudsql-config.yaml
   - listing
   - search
+  - chat
+  - geographic-market-insights
+  - auth
+  - user
+  - seller
+  - marketprice
+  - auction
+  - gateway
+  - ingress.yaml

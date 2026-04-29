@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"services/shared"
+	"services/utils"
 
 	"github.com/lib/pq"
 )
@@ -387,24 +388,24 @@ func (r *ListingRepository) CreateListing(ctx context.Context, listing ListingMu
 	var id int64
 	err = r.db.QueryRowContext(ctx, query,
 		normalizeVIN(listing.Vin),
-		nullableInt64(int64(listing.Price)),
-		nullableInt32(listing.Mileage),
-		nullableInt32(listing.Year),
-		nullableString(listing.Trim),
-		nullableString(listing.City),
-		nullableString(listing.District),
-		nullableString(listing.State),
-		nullableString(listing.Country),
-		nullableString(listing.Color),
+		utils.NullableInt64(int64(listing.Price)),
+		utils.NullableInt32(listing.Mileage),
+		utils.NullableInt32(listing.Year),
+		utils.NullableString(listing.Trim),
+		utils.NullableString(listing.City),
+		utils.NullableString(listing.District),
+		utils.NullableString(listing.State),
+		utils.NullableString(listing.Country),
+		utils.NullableString(listing.Color),
 		listing.DealerID,
 		listing.IsNew,
 		listing.IsSold,
 		brandID,
 		modelID,
-		nullableInt64Ptr(fuelTypeID),
-		nullableInt64Ptr(transmissionID),
-		nullableInt64Ptr(bodyClassID),
-		nullableInt64Ptr(driveTypeID),
+		utils.NullableInt64Ptr(fuelTypeID),
+		utils.NullableInt64Ptr(transmissionID),
+		utils.NullableInt64Ptr(bodyClassID),
+		utils.NullableInt64Ptr(driveTypeID),
 		now,
 		now,
 	).Scan(&id)
@@ -469,22 +470,22 @@ func (r *ListingRepository) UpdateListing(ctx context.Context, id int64, listing
 		id,
 		listing.DealerID,
 		normalizeVIN(listing.Vin),
-		nullableInt64(int64(listing.Price)),
-		nullableInt32(listing.Mileage),
-		nullableInt32(listing.Year),
-		nullableString(listing.Trim),
-		nullableString(listing.City),
-		nullableString(listing.District),
-		nullableString(listing.State),
-		nullableString(listing.Country),
-		nullableString(listing.Color),
+		utils.NullableInt64(int64(listing.Price)),
+		utils.NullableInt32(listing.Mileage),
+		utils.NullableInt32(listing.Year),
+		utils.NullableString(listing.Trim),
+		utils.NullableString(listing.City),
+		utils.NullableString(listing.District),
+		utils.NullableString(listing.State),
+		utils.NullableString(listing.Country),
+		utils.NullableString(listing.Color),
 		listing.IsNew,
 		brandID,
 		modelID,
-		nullableInt64Ptr(fuelTypeID),
-		nullableInt64Ptr(transmissionID),
-		nullableInt64Ptr(bodyClassID),
-		nullableInt64Ptr(driveTypeID),
+		utils.NullableInt64Ptr(fuelTypeID),
+		utils.NullableInt64Ptr(transmissionID),
+		utils.NullableInt64Ptr(bodyClassID),
+		utils.NullableInt64Ptr(driveTypeID),
 		now,
 	).Scan(&updatedID)
 	if err != nil {
@@ -774,16 +775,42 @@ func (r *ListingRepository) resolveBrandModelIDs(ctx context.Context, makeName s
 		return 0, 0, err
 	}
 
-	modelQuery := `SELECT id FROM model WHERE brand_id = $1 AND LOWER(name) = LOWER($2) LIMIT 1`
-	var modelID int64
-	if err := r.db.QueryRowContext(ctx, modelQuery, brandID, strings.TrimSpace(modelName)).Scan(&modelID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return 0, 0, fmt.Errorf("unknown model for brand: %s/%s", makeName, modelName)
-		}
+	modelID, err := r.ensureModelID(ctx, brandID, modelName)
+	if err != nil {
 		return 0, 0, err
 	}
 
 	return brandID, modelID, nil
+}
+
+func (r *ListingRepository) ensureModelID(ctx context.Context, brandID int64, modelName string) (int64, error) {
+	trimmed := strings.TrimSpace(modelName)
+	if trimmed == "" {
+		return 0, fmt.Errorf("model name is required")
+	}
+
+	modelQuery := `SELECT id FROM model WHERE brand_id = $1 AND LOWER(name) = LOWER($2) LIMIT 1`
+	var modelID int64
+	if err := r.db.QueryRowContext(ctx, modelQuery, brandID, trimmed).Scan(&modelID); err == nil {
+		return modelID, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return 0, err
+	}
+
+	insertQuery := `
+		INSERT INTO model (brand_id, name)
+		VALUES ($1, $2)
+		ON CONFLICT (brand_id, name) DO NOTHING
+		RETURNING id
+	`
+	if err := r.db.QueryRowContext(ctx, insertQuery, brandID, trimmed).Scan(&modelID); err == nil {
+		return modelID, nil
+	}
+
+	if err := r.db.QueryRowContext(ctx, modelQuery, brandID, trimmed).Scan(&modelID); err != nil {
+		return 0, err
+	}
+	return modelID, nil
 }
 
 func (r *ListingRepository) lookupRequiredID(ctx context.Context, tableName string, value string) (int64, error) {
@@ -833,33 +860,4 @@ func queryForLookupTable(tableName string) (string, error) {
 
 func normalizeVIN(vin string) string {
 	return strings.ToUpper(strings.TrimSpace(vin))
-}
-
-func nullableString(value string) interface{} {
-	trimmed := strings.TrimSpace(value)
-	if trimmed == "" {
-		return nil
-	}
-	return trimmed
-}
-
-func nullableInt32(value int32) interface{} {
-	if value <= 0 {
-		return nil
-	}
-	return value
-}
-
-func nullableInt64(value int64) interface{} {
-	if value <= 0 {
-		return nil
-	}
-	return value
-}
-
-func nullableInt64Ptr(value *int64) interface{} {
-	if value == nil {
-		return nil
-	}
-	return *value
 }

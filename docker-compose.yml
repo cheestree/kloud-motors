@@ -5,7 +5,7 @@ services:
       context: ./code/services
       dockerfile: gateway/Dockerfile
     ports:
-      - "8080:8080"
+      - "${GATEWAY_HOST_PORT}:8080"
     environment:
       - LISTING_GRPC_ADDR=${LISTING_GRPC_ADDR}
       - SEARCH_GRPC_ADDR=${SEARCH_GRPC_ADDR}
@@ -15,10 +15,15 @@ services:
       - CHAT_GRPC_ADDR=${CHAT_GRPC_ADDR}
       - GEO_GRPC_ADDR=${GEO_GRPC_ADDR}
       - AUCTION_GRPC_ADDR=${AUCTION_GRPC_ADDR}
+      - MARKETPRICE_GRPC_ADDR=${MARKETPRICE_GRPC_ADDR}
+      - AUCTION_WS_ADDR=ws://auction:8081
       - JWT_PUBLIC_KEY_B64=${JWT_PUBLIC_KEY_B64}
     depends_on:
       - listing
       - search
+      - chat
+      - geo
+      - marketprice
   search:
     container_name: search-service
     build:
@@ -26,9 +31,58 @@ services:
       dockerfile: search/Dockerfile
     restart: on-failure
     ports:
-      - "${SEARCH_HOST_PORT:-50056}:50056"
+      - "${SEARCH_HOST_PORT}:50056"
     environment:
-      DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+      SEARCH_GRPC_PORT: ${SEARCH_GRPC_PORT}
+    depends_on:
+      listing-db:
+        condition: service_healthy
+
+  chat:
+    container_name: chat-service
+    build:
+      context: ./code/services
+      dockerfile: chat/Dockerfile
+    restart: on-failure
+    ports:
+      - "${CHAT_GRPC_HOST_PORT}:${CHAT_GRPC_PORT}"
+      - "${CHAT_WS_HOST_PORT}:${CHAT_WS_PORT}"
+    environment:
+      POSTGRES_DSN: ${CHAT_DATABASE_URL}
+      POSTGRES_SCHEMA: public
+      POSTGRES_TABLE: chat
+      LISTING_SERVICE_ADDR: ${LISTING_GRPC_ADDR}
+      SELLER_SERVICE_ADDR: ${SELLER_GRPC_ADDR}
+      CHAT_GRPC_PORT: ${CHAT_GRPC_PORT}
+      CHAT_WS_PORT: ${CHAT_WS_PORT}
+      POD_ID: ${POD_ID}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+      GCP_PUBSUB_TOPIC: ${GCP_PUBSUB_TOPIC}
+      GCP_PUBSUB_SUBSCRIPTION: ${GCP_PUBSUB_SUBSCRIPTION}
+      GCP_PUBSUB_AUTOCREATE: ${GCP_PUBSUB_AUTOCREATE}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIRESTORE_MESSAGES_COLLECTION: ${FIRESTORE_MESSAGES_COLLECTION}
+      CHAT_HISTORY_LIMIT: ${CHAT_HISTORY_LIMIT}
+    depends_on:
+      chat-db:
+        condition: service_healthy
+
+  geo:
+    container_name: geo-service
+    build:
+      context: ./code/services
+      dockerfile: geographic-market-insights/Dockerfile
+    restart: on-failure
+    ports:
+      - "${GEO_GRPC_HOST_PORT}:${GEO_GRPC_PORT}"
+    environment:
+      GEO_DATABASE_URL: ${LISTING_DATABASE_URL}
+      GEO_GRPC_PORT: ${GEO_GRPC_PORT}
+      POSTGRES_SCHEMA: ${GEO_POSTGRES_SCHEMA}
+      POSTGRES_TABLE: ${GEO_POSTGRES_TABLE}
+      DEFAULT_LIMIT: ${GEO_DEFAULT_LIMIT}
+      MAX_LIMIT: ${GEO_MAX_LIMIT}
     depends_on:
       listing-db:
         condition: service_healthy
@@ -40,21 +94,25 @@ services:
       dockerfile: listing/Dockerfile
     restart: on-failure
     ports:
-      - "50054:50054"
+      - "${LISTING_HOST_PORT}:50054"
     environment:
-      DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_GRPC_PORT: ${LISTING_GRPC_PORT}
     depends_on:
       listing-db:
         condition: service_healthy
 
   marketprice:
     container_name: marketprice-service
-    build: ./code/services/marketprice
+    build:
+      context: ./code/services
+      dockerfile: marketprice/Dockerfile
     restart: on-failure
     ports:
-      - "50055:50055"
+      - "${MARKETPRICE_HOST_PORT}:50055"
     environment:
-      DATABASE_URL: ${LISTING_DATABASE_URL}
+      LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+      MARKETPRICE_GRPC_PORT: ${MARKETPRICE_GRPC_PORT}
     depends_on:
       listing-db:
         condition: service_healthy
@@ -66,8 +124,8 @@ services:
       dockerfile: auction/Dockerfile
     restart: on-failure
     ports:
-      - "${AUCTION_GRPC_PORT}:${AUCTION_GRPC_PORT}"
-      - "${AUCTION_WS_PORT}:${AUCTION_WS_PORT}"
+      - "${AUCTION_GRPC_HOST_PORT}:${AUCTION_GRPC_PORT}"
+      - "${AUCTION_WS_HOST_PORT}:${AUCTION_WS_PORT}"
     environment:
       AUCTION_DATABASE_URL: ${AUCTION_DATABASE_URL}
       LISTING_GRPC_ADDR: ${LISTING_GRPC_ADDR}
@@ -85,7 +143,7 @@ services:
       POSTGRES_PASSWORD: ${LISTING_POSTGRES_PASSWORD}
       POSTGRES_DB: ${LISTING_POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${LISTING_DB_HOST_PORT}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -102,9 +160,10 @@ services:
       dockerfile: user/Dockerfile
     restart: on-failure
     ports:
-      - "50058:50058"
+      - "${USER_HOST_PORT}:50058"
     environment:
-      DATABASE_URL: ${USER_DATABASE_URL}
+      USER_DATABASE_URL: ${USER_DATABASE_URL}
+      USER_GRPC_PORT: ${USER_GRPC_PORT}
     depends_on:
       user-db:
         condition: service_healthy
@@ -115,11 +174,12 @@ services:
       context: ./code/services
       dockerfile: auth/Dockerfile
     ports:
-      - "50053:50053"
+      - "${AUTH_HOST_PORT}:50050"
     environment:
-      DATABASE_URL: ${AUTH_DATABASE_URL}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL}
       JWT_PRIVATE_KEY_B64: ${JWT_PRIVATE_KEY_B64}
       USER_GRPC_ADDR: ${USER_GRPC_ADDR}
+      AUTH_GRPC_PORT: ${AUTH_GRPC_PORT}
     depends_on:
       auth-db:
         condition: service_healthy
@@ -131,15 +191,34 @@ services:
       dockerfile: seller/Dockerfile
     restart: on-failure
     ports:
-      - "50057:50057"
+      - "${SELLER_HOST_PORT}:50057"
     environment:
-      DATABASE_URL: ${SELLER_DATABASE_URL}
+      SELLER_DATABASE_URL: ${SELLER_DATABASE_URL}
       LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
+      SELLER_GRPC_PORT: ${SELLER_GRPC_PORT}
     depends_on:
       seller-db:
         condition: service_healthy
       listing-db:
         condition: service_healthy
+
+  auth-db:
+    container_name: auth-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+    ports:
+      - "${AUTH_DB_HOST_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
 
   user-db:
     container_name: user-db
@@ -149,7 +228,7 @@ services:
       POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
       POSTGRES_DB: ${USER_POSTGRES_DB}
     ports:
-      - "5438:5432"
+      - "${USER_DB_HOST_PORT}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -167,7 +246,7 @@ services:
       POSTGRES_PASSWORD: ${SELLER_POSTGRES_PASSWORD}
       POSTGRES_DB: ${SELLER_POSTGRES_DB}
     ports:
-      - "5437:5432"
+      - "${SELLER_DB_HOST_PORT}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -185,7 +264,7 @@ services:
       POSTGRES_PASSWORD: ${CHAT_POSTGRES_PASSWORD}
       POSTGRES_DB: ${CHAT_POSTGRES_DB}
     ports:
-      - "5434:5432"
+      - "${CHAT_DB_HOST_PORT}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -195,24 +274,6 @@ services:
     volumes:
       - chat_postgres_data:/var/lib/postgresql/data
 
-  geo-db:
-    container_name: geo-db
-    image: postgres:16
-    environment:
-      POSTGRES_USER: ${GEO_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${GEO_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${GEO_POSTGRES_DB}
-    ports:
-      - "5435:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
-    volumes:
-      - geo_postgres_data:/var/lib/postgresql/data
-
   auction-db:
     container_name: auction-db
     image: postgres:16
@@ -221,7 +282,7 @@ services:
       POSTGRES_PASSWORD: ${AUCTION_POSTGRES_PASSWORD}
       POSTGRES_DB: ${AUCTION_POSTGRES_DB}
     ports:
-      - "5436:5432"
+      - "${AUCTION_DB_HOST_PORT}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -237,5 +298,4 @@ volumes:
   auth_postgres_data:
   seller_postgres_data:
   chat_postgres_data:
-  geo_postgres_data:
   auction_postgres_data:

@@ -2,16 +2,14 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"log"
-	"net"
+	"log/slog"
 	"os"
-	"services/search/proto"
-
 	"services/search/domain"
+	"services/search/proto"
 	"services/search/repository"
 	"services/search/service"
 	"services/shared"
+	"services/utils"
 
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -97,33 +95,25 @@ func toListingSummary(item shared.ListingSummary) *shared.ListingSummary {
 }
 
 func main() {
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		log.Fatal("DATABASE_URL is not set")
-	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
-	db, err := sql.Open("postgres", databaseURL)
-	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
-	}
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
+	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
-	lis, err := net.Listen("tcp", ":50056")
-	if err != nil {
-		log.Fatalf("Error on listen: %v", err)
-	}
+	listingDB := utils.TryConnectDB(listingDsn, 8, 10)
 
-	repo := repository.NewSearchRepository(db)
-	svc := service.NewSearchService(repo)
+	grpcPort := utils.MustGetEnv("SEARCH_GRPC_PORT")
 
-	s := grpc.NewServer()
-	proto.RegisterSearchServiceServer(s, &server{service: svc})
+	lis := utils.TryListen(grpcPort)
 
-	log.Println("gRPC server is running on " + lis.Addr().String() + "...")
+	grpcServer := grpc.NewServer()
+	repo := repository.NewSearchRepository(listingDB)
+	searchService := service.NewSearchService(repo)
+	proto.RegisterSearchServiceServer(grpcServer, &server{service: searchService})
 
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
+	utils.HealthCheck("search.SearchService", grpcServer)
+
+	logger.Info("Search gRPC server is running on " + lis.Addr().String() + "...")
+
+	utils.TryServe(grpcServer, lis)
 }

@@ -1,10 +1,10 @@
 package postgres
 
 import (
-	"services/chat/repository"
 	"context"
 	"fmt"
 	"regexp"
+	"services/chat/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -20,7 +20,7 @@ func NewPostgresRepo(ctx context.Context, cfg repository.DBConfig) (*RelationalR
 	}
 
 	if cfg.Schema == "" {
-		cfg.Schema = "chat-db"
+		cfg.Schema = "public"
 	}
 	if cfg.Table == "" {
 		cfg.Table = "chat"
@@ -51,20 +51,29 @@ func (s *RelationalRepo) UpsertChatParticipant(ctx context.Context, userID, sell
 		VALUES ($1, $2, $3, $4, $5)
 	`, s.qualifiedTable())
 
-	if err := s.pool.QueryRow(ctx, sellerQuery, sellerId, listingID, brand, model, chatID); err != nil {
+	if _, err := s.pool.Exec(ctx, sellerQuery, sellerId, listingID, brand, model, chatID); err != nil {
 		return "", fmt.Errorf("insert chat participant: %w", err)
 	}
 
 	return chatID, nil
 }
 
-func (s *RelationalRepo) UserCanAccessChat(ctx context.Context, userID int64, listingID string) (bool, error) {
-	q := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM %s WHERE user_id = $1 AND listing_id = $2);`, s.qualifiedTable())
+func (s *RelationalRepo) UserCanAccessChat(ctx context.Context, userID int64, chatID string) (bool, error) {
+	q := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM %s WHERE user_id = $1 AND chat_id = $2);`, s.qualifiedTable())
 	var allowed bool
-	if err := s.pool.QueryRow(ctx, q, userID, listingID).Scan(&allowed); err != nil {
+	if err := s.pool.QueryRow(ctx, q, userID, chatID).Scan(&allowed); err != nil {
 		return false, fmt.Errorf("check chat access: %w", err)
 	}
 	return allowed, nil
+}
+
+func (s *RelationalRepo) GetListingIDByChat(ctx context.Context, userID int64, chatID string) (int64, error) {
+	q := fmt.Sprintf(`SELECT listing_id FROM %s WHERE user_id = $1 AND chat_id = $2 LIMIT 1;`, s.qualifiedTable())
+	var listingID int64
+	if err := s.pool.QueryRow(ctx, q, userID, chatID).Scan(&listingID); err != nil {
+		return 0, fmt.Errorf("get listing id by chat: %w", err)
+	}
+	return listingID, nil
 }
 
 func (s *RelationalRepo) ListUserChats(ctx context.Context, userID int64) ([]repository.ChatSummary, error) {
@@ -95,6 +104,30 @@ func (s *RelationalRepo) ListUserChats(ctx context.Context, userID int64) ([]rep
 	}
 
 	return chats, nil
+}
+
+func (s *RelationalRepo) GetChatsFromListingSeller(ctx context.Context, listingID, sellerId int64) ([]string, error) {
+	q := fmt.Sprintf(`SELECT DISTINCT chat_id FROM %s WHERE listing_id = $1 AND user_id = $2;`, s.qualifiedTable())
+	rows, err := s.pool.Query(ctx, q, listingID, sellerId)
+	if err != nil {
+		return nil, fmt.Errorf("check if chat exists: %w", err)
+	}
+	defer rows.Close()
+
+	chatIDs := make([]string, 0)
+	for rows.Next() {
+		var chatID string
+		if err := rows.Scan(&chatID); err != nil {
+			return nil, fmt.Errorf("scan chat id: %w", err)
+		}
+		chatIDs = append(chatIDs, chatID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate chat ids: %w", err)
+	}
+
+	return chatIDs, nil
 }
 
 var identRx = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)

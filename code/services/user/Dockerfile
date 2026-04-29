@@ -5,6 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY ./user ./user
+COPY ./utils ./utils
 
 WORKDIR /app/user
 RUN go build -o user-service main.go

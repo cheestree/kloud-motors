@@ -31,6 +31,32 @@ tags:
     description: Filtered car search and listing comparison
 
 paths:
+  /api/chat:
+    get:
+      tags: [Chat]
+      summary: Get user chats
+      description: Retrieve a list of all active chat sessions for the authenticated user.
+      operationId: getChats
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of chats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chats:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatPreview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /api/chat/open:
     post:
       tags: [Chat]
@@ -57,10 +83,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -88,14 +110,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /ws/chat/{chat_id}:
+  /api/chat/ws/{chat_id}:
     get:
       tags: [Chat]
       summary: WebSocket chat endpoint
@@ -113,10 +133,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -228,7 +244,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/BrandQuery'
         - $ref: '#/components/parameters/ModelQuery'
-        - $ref: '#/components/parameters/LocationQuery'
         - $ref: '#/components/parameters/YearFromQuery'
         - $ref: '#/components/parameters/YearToQuery'
       responses:
@@ -253,9 +268,6 @@ paths:
       operationId: listAuctions
       parameters:
         - $ref: '#/components/parameters/AuctionStatusQuery'
-        - $ref: '#/components/parameters/BrandQueryOptional'
-        - $ref: '#/components/parameters/ModelQueryOptional'
-        - $ref: '#/components/parameters/LocationQuery'
         - $ref: '#/components/parameters/PageQuery'
         - $ref: '#/components/parameters/PageSizeQuery'
       responses:
@@ -382,6 +394,8 @@ paths:
       operationId: getAuctionBids
       parameters:
         - $ref: '#/components/parameters/AuctionIdPath'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
       responses:
         '200':
           description: List of bids
@@ -395,6 +409,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+          
+  /api/auctions/ws/{auction_id}:
+    get:
+      tags: [Auction]
+      summary: Ligar ao WebSocket do leilão
+      description: Endpoint para receber as atualizações de licitações em tempo real para um leilão específico. Requer o upgrade de protocolo para WebSocket (ws://).
+      operationId: connectAuctionWebSocket
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: O ID único do leilão
+      responses:
+        '101':
+          description: Switching Protocols (WebSocket upgrade efetuado com sucesso)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -489,6 +529,10 @@ paths:
       responses:
         '200':
           description: Listing saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteMutationResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -516,12 +560,40 @@ paths:
       responses:
         '200':
           description: Listing removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteMutationResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/users/preview:
+    post:
+      tags: [Users]
+      summary: Get user previews
+      description: Retrieve basic user info (name) for a list of user IDs.
+      operationId: getUsersPreview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsersPreviewRequest'
+      responses:
+        '200':
+          description: User previews retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPreviewResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -547,6 +619,42 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/sellers/preview:
+    post:
+      tags: [Sellers]
+      summary: Get sellers preview
+      description: Retrieve basic profile information for a batch of seller IDs.
+      operationId: getSellersPreview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+      responses:
+        '200':
+          description: List of seller previews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sellers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SellerPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
   /api/listings/search:
     get:
       tags: [Listings]
@@ -554,6 +662,7 @@ paths:
       description: Search for car listings using filters such as mileage, price range, make, model, year, and fuel type.
       operationId: searchCars
       parameters:
+        - $ref: '#/components/parameters/IncludeSoldQuery'
         - name: make
           in: query
           description: Car manufacturer (e.g. Toyota, Ford)
@@ -617,12 +726,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  total:
+                  total_count:
                     type: integer
                     description: Total number of matching listings
-                  page:
+                  current_page:
                     type: integer
-                  pageSize:
+                  total_pages:
                     type: integer
                   listings:
                     type: array
@@ -630,29 +739,6 @@ paths:
                       $ref: '#/components/schemas/CarSummary'
         '400':
           description: Invalid query parameters
-
-  /api/listings/{id}:
-    get:
-      tags: [Listings]
-      summary: Get listing details
-      description: Retrieve full details for a specific car listing.
-      operationId: getCarById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique listing identifier
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Full details of the car listing
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CarListing'
-        '404':
-          description: Listing not found
 
   /api/listings/compare:
     get:
@@ -684,7 +770,129 @@ paths:
           description: Missing or invalid IDs parameter
         '404':
           description: One or more listings not found
+  /api/listings:
+    post:
+      tags: [Listings]
+      summary: Create a new listing
+      description: Create a new car listing.
+      operationId: createListing
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarListing'
+      responses:
+        '201':
+          description: Listing created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags: [Listings]
+      summary: Get all listings
+      description: Retrieve a paginated list of all listings.
+      operationId: getListings
+      parameters:
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+        - $ref: '#/components/parameters/IncludeSoldQuery'
+      responses:
+        '200':
+          description: A paginated list of car listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  listings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CarSummary'
 
+  /api/listings/{id}:
+    get:
+      tags: [Listings]
+      summary: Get listing details
+      description: Retrieve full details for a specific car listing.
+      operationId: getCarById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique listing identifier
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Full details of the car listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarListing'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Listings]
+      summary: Update a listing
+      description: Update an existing car listing.
+      operationId: updateListing
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarListing'
+      responses:
+        '200':
+          description: Listing updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags: [Listings]
+      summary: Delete a listing
+      description: Delete a specific car listing.
+      operationId: deleteListing
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Listing deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     bearerAuth:
@@ -702,7 +910,8 @@ components:
       in: path
       required: true
       schema:
-        type: string
+        type: integer
+        format: int64
       description: Car listing ID
 
     SellerIdPath:
@@ -710,7 +919,8 @@ components:
       in: path
       required: true
       schema:
-        type: string
+        type: integer
+        format: int64
       description: Seller ID
 
     ChatIdPath:
@@ -880,7 +1090,7 @@ components:
       required: false
       schema:
         type: string
-        enum: [active, completed, cancelled]
+        enum: [ACTIVE, COMPLETED, CANCELLED]
       description: Filter by auction status
 
     PageQuery:
@@ -903,6 +1113,14 @@ components:
         minimum: 1
         maximum: 100
       description: Number of results per page
+
+    IncludeSoldQuery:
+      name: includeSold
+      in: query
+      required: false
+      schema:
+        type: boolean
+      description: Indicates whether to include sold vehicles in the search results
 
   responses:
     BadRequest:
@@ -970,7 +1188,8 @@ components:
       required: [user_id, token]
       properties:
         user_id:
-          type: string
+          type: integer
+          format: int64
         token:
           type: string
           description: JWT access token
@@ -982,38 +1201,80 @@ components:
         favorites:
           type: array
           items:
-            type: string
-            description: Car listing ID or detailed listing schema
+            type: integer
+            format: int64
+            description: Car listing ID
+
+    FavoriteMutationResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    UsersPreviewRequest:
+      type: object
+      required: [user_ids]
+      properties:
+        user_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+
+    UsersPreviewResponse:
+      type: object
+      required: [users]
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id:
+                type: integer
+                format: int64
+              name:
+                type: string
 
     SellerProfileResponse:
       type: object
-      required: [seller_id, name, seller_type]
+      required: [seller_id, name, is_seller]
       properties:
         seller_id:
-          type: string
+          type: integer
+          format: int64
         name:
           type: string
-        seller_type:
-          type: string
-          enum: [professional_dealer, private_seller]
-          description: Categorization of the seller
-        contact_info:
-          type: string
-          description: Optional contact information
-        rating:
-          type: number
-          format: float
-          description: Optional seller rating
+        is_seller:
+          type: boolean
+          description: Indicates if the seller is a professional dealer
 
+    SellerPreview:
+      type: object
+      required: [id, name, is_seller]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        is_seller:
+          type: boolean
     OpenChatRequest:
       type: object
       required: [seller_id, listing_id]
       properties:
         seller_id:
-          type: string
+          type: integer
+          format: int64
           description: Seller ID
         listing_id:
-          type: string
+          type: integer
+          format: int64
           description: Car listing ID
 
     OpenChatResponse:
@@ -1023,18 +1284,51 @@ components:
         chat_id:
           type: string
           description: Chat session ID
+        is_chat_closed:
+          type: boolean
+          description: Indicates if the chat session has been closed by the seller
+
+    ChatPreview:
+      type: object
+      properties:
+        chat_id:
+          type: string
+        other_user_id:
+          type: integer
+          format: int64
+        other_user_name:
+          type: string
+        listing_id:
+          type: integer
+          format: int64
+        last_message:
+          type: string
+        updated_at:
+          type: integer
+          format: int64
+          description: Timestamp in Unix milliseconds
+        unread:
+          type: boolean
 
     Message:
       type: object
-      required: [sender_id, message_text, timestamp]
+      required: [message_id, chat_id, sender_id, content, timestamp]
       properties:
-        sender_id:
+        message_id:
           type: string
-        message_text:
+        chat_id:
+          type: string
+        sender_id:
+          type: integer
+          format: int64
+        content:
           type: string
         timestamp:
-          type: string
-          format: date-time
+          type: integer
+          format: int64
+          description: Timestamp in Unix milliseconds
+        is_read:
+          type: boolean
 
     ChatHistoryResponse:
       type: object
@@ -1044,30 +1338,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Message'
-        pagination:
-          $ref: '#/components/schemas/PaginationMetadata'
-
-    GeoInsight:
-      type: object
-      required: [location, average_price, price_trend]
-      properties:
-        location:
-          type: string
-        average_price:
-          type: number
-          format: float
-        price_trend:
-          type: string
-          description: Trend label or direction in this location
-
-    GeoInsightsResponse:
-      type: object
-      required: [insights, pagination]
-      properties:
-        insights:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeoInsight'
         pagination:
           $ref: '#/components/schemas/PaginationMetadata'
 
@@ -1177,8 +1447,6 @@ components:
           type: string
         model:
           type: string
-        location:
-          type: string
         average_price:
           type: number
           format: float
@@ -1200,8 +1468,13 @@ components:
       required: [listing_id, starting_price, end_time]
       properties:
         listing_id:
-          type: string
+          type: integer
+          format: int64
           description: ID of the existing car listing to auction
+        seller_id:
+          type: integer
+          format: int64
+          description: Optional seller ID (calculated from auth if omitted)
         starting_price:
           type: number
           format: float
@@ -1231,18 +1504,27 @@ components:
         auctions:
           type: array
           items:
-            $ref: '#/components/schemas/AuctionResponse'
+            $ref: '#/components/schemas/Auction'
 
     AuctionResponse:
       type: object
-      required: [auction_id, listing_id, seller_id, starting_price, current_price, status, end_time]
+      required: [auction]
+      properties:
+        auction:
+          $ref: '#/components/schemas/Auction'
+
+    Auction:
+      type: object
+      required: [auction_id, listing_id, seller_id, starting_price, status, end_time, created_at, reserve_met, total_bids]
       properties:
         auction_id:
           type: string
         listing_id:
-          type: string
+          type: integer
+          format: int64
         seller_id:
-          type: string
+          type: integer
+          format: int64
         starting_price:
           type: number
           format: float
@@ -1258,7 +1540,7 @@ components:
           type: integer
         status:
           type: string
-          enum: [active, completed, cancelled]
+          enum: [ACTIVE, COMPLETED, CANCELLED]
         end_time:
           type: string
           format: date-time
@@ -1266,11 +1548,17 @@ components:
           type: string
           nullable: true
           description: Winning bidder user ID, populated only after auction ends
+        created_at:
+          type: string
+          format: date-time
 
     BidRequest:
       type: object
       required: [bid_amount]
       properties:
+        bidder_id:
+          type: string
+          description: Optional bidder ID (calculated from auth if omitted)
         bid_amount:
           type: number
           format: float
@@ -1279,15 +1567,24 @@ components:
 
     BidResponse:
       type: object
-      required: [bid_id, bid_amount, bidder_id, timestamp]
+      required: [bid]
+      properties:
+        bid:
+          $ref: '#/components/schemas/Bid'
+
+    Bid:
+      type: object
+      required: [bid_id, auction_id, bidder_id, bid_amount, timestamp]
       properties:
         bid_id:
+          type: string
+        auction_id:
+          type: string
+        bidder_id:
           type: string
         bid_amount:
           type: number
           format: float
-        bidder_id:
-          type: string
         timestamp:
           type: string
           format: date-time
@@ -1305,13 +1602,14 @@ components:
         bids:
           type: array
           items:
-            $ref: '#/components/schemas/BidResponse'
+            $ref: '#/components/schemas/Bid'
 
     CarSummary:
       type: object
       properties:
         id:
-          type: string
+          type: integer
+          format: int64
         make:
           type: string
         model:
@@ -1319,13 +1617,13 @@ components:
         year:
           type: integer
         price:
-          type: number
-          format: float
+          type: integer
+          format: int64
         mileage:
           type: integer
         location:
           type: string
-        fuelType:
+        fuel_type:
           type: string
 
     CarListing:
@@ -1333,8 +1631,6 @@ components:
         - $ref: '#/components/schemas/CarSummary'
         - type: object
           properties:
-            trim:
-              type: string
             transmission:
               type: string
               enum: [automatic, manual]
@@ -1348,6 +1644,13 @@ components:
             listedAt:
               type: string
               format: date-time
+            is_sold:
+              type: boolean
+              description: Indicates if the car has already been sold
+            dealer_id:
+              type: integer
+              format: int64
+              description: The ID of the seller/dealer
 
     ErrorResponse:
       type: object

@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: vehicles-prod
+  labels:
+    app: chat-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      serviceAccountName: vehicles-workload-sa
+      containers:
+        - name: chat-service
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/chat
+          imagePullPolicy: Always
+          ports:
+            - name: grpc
+              containerPort: 50052
+            - name: ws
+              containerPort: 8080
+          env:
+            - name: POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: GCP_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: GCP_PROJECT_ID
+            - name: GCP_PUBSUB_TOPIC
+              value: "chat-events"
+            - name: GCP_PUBSUB_AUTOCREATE
+              value: "true"
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: GCP_PROJECT_ID
+            - name: FIRESTORE_MESSAGES_COLLECTION
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: FIRESTORE_MESSAGES_COLLECTION
+
+            - name: POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: POSTGRES_DSN
+            - name: POSTGRES_SCHEMA
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: POSTGRES_SCHEMA
+            - name: POSTGRES_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: chat-secrets
+                  key: POSTGRES_TABLE
+
+          envFrom:
+            - configMapRef:
+                name: chat-config
+                
+          startupProbe:
+            grpc:
+              port: 50052
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 30
+
+          readinessProbe:
+            grpc:
+              port: 50052
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            grpc:
+              port: 50052
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--health-check"
+            - "--http-address=0.0.0.0"
+            - "$(CLOUD_SQL_INSTANCE)"
+          env:
+            - name: CLOUD_SQL_INSTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-config
+                  key: instance-connection-name
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          startupProbe:
+            httpGet:
+              path: /startup
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /liveness
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3

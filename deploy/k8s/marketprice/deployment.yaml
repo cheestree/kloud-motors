@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marketprice-service
+  namespace: vehicles-prod
+  labels:
+    app: marketprice-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 300
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: marketprice-service
+  template:
+    metadata:
+      labels:
+        app: marketprice-service
+    spec:
+      serviceAccountName: vehicles-workload-sa
+      containers:
+        - name: marketprice
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/marketprice
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50055
+              name: grpc
+          env:
+            - name: LISTING_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: marketprice-secrets
+                  key: LISTING_DATABASE_URL
+          envFrom:
+            - configMapRef:
+                name: marketprice-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            grpc:
+              port: 50055
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            grpc:
+              port: 50055
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "$(CLOUD_SQL_INSTANCE)"
+          env:
+            - name: CLOUD_SQL_INSTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-config
+                  key: instance-connection-name
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

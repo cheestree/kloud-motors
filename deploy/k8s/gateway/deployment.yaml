@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  labels:
+    app: gateway-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      serviceAccountName: vehicles-workload-sa
+      containers:
+        - name: gateway-service
+          image: europe-central2-docker.pkg.dev/cn-project-491618/vehicles/gateway
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # JWT — segredo partilhado com o auth service
+            - name: JWT_PUBLIC_KEY_B64
+              valueFrom:
+                secretKeyRef:
+                  name: gateway-secrets
+                  key: JWT_PUBLIC_KEY_B64
+
+          envFrom:
+            - configMapRef:
+                name: gateway-config
+
+          readinessProbe:
+            httpGet:
+              path: api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

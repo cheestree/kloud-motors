@@ -9,6 +9,7 @@ import (
 
 	listingpb "services/listing/proto"
 	searchpb "services/search/proto"
+	"services/utils"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -25,8 +26,8 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
-			Page:        parseInt32WithDefault(q.Get(queryPage), 1),
-			PageSize:    parseInt32WithDefault(q.Get(queryPageSizeV2), 20),
+			Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
+			PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSizeV2), 20),
 			IncludeSold: includeSold,
 		})
 		if err != nil {
@@ -75,13 +76,13 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
 		Make:        q.Get(queryMake),
 		Model:       q.Get(queryModel),
-		Year:        parseInt32(q.Get(queryYear)),
-		MinPrice:    parseInt64(q.Get(queryMinPrice)),
-		MaxPrice:    parseInt64(q.Get(queryMaxPrice)),
-		MaxMileage:  parseInt32(q.Get(queryMaxMileage)),
+		Year:        utils.ParseInt32(q.Get(queryYear)),
+		MinPrice:    utils.ParseInt64(q.Get(queryMinPrice)),
+		MaxPrice:    utils.ParseInt64(q.Get(queryMaxPrice)),
+		MaxMileage:  utils.ParseInt32(q.Get(queryMaxMileage)),
 		FuelType:    q.Get(queryFuelTypeV2),
-		Page:        parseInt32WithDefault(q.Get(queryPage), 1),
-		PageSize:    parseInt32WithDefault(q.Get(queryPageSizeV2), 20),
+		Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
+		PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSizeV2), 20),
 		IncludeSold: includeSold,
 	})
 	if err != nil {
@@ -115,7 +116,7 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 		if s == "" {
 			continue
 		}
-		ids = append(ids, parseInt64(s))
+		ids = append(ids, utils.ParseInt64(s))
 	}
 	ctx := context.Background()
 	resp, err := listingClient.CompareListings(ctx, &listingpb.CompareListingsRequest{Ids: ids})
@@ -132,7 +133,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing listing id", http.StatusBadRequest)
 		return
 	}
-	id := parseInt64(parts[3])
+	id := utils.ParseInt64(parts[3])
 	ctx := context.Background()
 
 	switch r.Method {

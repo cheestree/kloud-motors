@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"os"
 	"services/search/domain"
-	"strconv"
-	"strings"
+	"services/utils"
 
 	"services/search/repository"
 )
@@ -30,9 +28,9 @@ const (
 func NewSearchService(repository *repository.SearchRepository) *SearchService {
 	return &SearchService{
 		repository:      repository,
-		defaultPage:     getEnvInt32(envSearchDefaultPage, fallbackDefaultPage),
-		defaultPageSize: getEnvInt32(envSearchDefaultPageSize, fallbackDefaultPageSize),
-		maxPageSize:     getEnvInt32(envSearchMaxPageSize, fallbackMaxPageSize),
+		defaultPage:     utils.GetEnvInt32(envSearchDefaultPage, fallbackDefaultPage),
+		defaultPageSize: utils.GetEnvInt32(envSearchDefaultPageSize, fallbackDefaultPageSize),
+		maxPageSize:     utils.GetEnvInt32(envSearchMaxPageSize, fallbackMaxPageSize),
 	}
 }
 
@@ -81,18 +79,4 @@ func (s *SearchService) Search(ctx context.Context, params domain.SearchParams) 
 		PageSize: pageSize,
 		Listings: listings,
 	}, nil
-}
-
-func getEnvInt32(key string, fallback int32) int32 {
-	raw := strings.TrimSpace(os.Getenv(key))
-	if raw == "" {
-		return fallback
-	}
-
-	parsed, err := strconv.Atoi(raw)
-	if err != nil || parsed <= 0 {
-		return fallback
-	}
-
-	return int32(parsed)
 }

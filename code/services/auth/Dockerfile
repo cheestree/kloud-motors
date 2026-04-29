@@ -6,6 +6,7 @@ RUN go mod download
 
 COPY ./auth ./auth
 COPY ./user/proto ./user/proto
+COPY ./utils ./utils
 
 WORKDIR /app/auth
 RUN go build -o auth-service main.go
@@ -13,5 +14,5 @@ RUN go build -o auth-service main.go
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/auth/auth-service .
-EXPOSE 50053
+EXPOSE 50050
 CMD ["./auth-service"]

@@ -5,6 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY ./seller ./seller
+COPY ./utils ./utils
 
 WORKDIR /app/seller
 RUN go build -o seller-service .

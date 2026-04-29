@@ -17,3 +17,7 @@ go.work.sum
 
 # Proto files
 *.pb.go
+
+# Cloud Proxy
+cloud-sql-proxy
+proxy.log

@@ -32,7 +32,6 @@ def main():
         Column("id", Integer, primary_key=True, autoincrement=True),
         Column("name", Text),
         Column("email", Text, unique=True, index=True),
-        Column("password", Text),
     )
 
     # Define Favorite table

@@ -1,22 +1,42 @@
 #!/bin/bash
 set -e
 
-
 SERVICES_ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-if ! command -v proto-gen &> /dev/null; then
-    echo "Error: proto-gen binary not found in PATH."
+# Check if protoc is installed
+if ! command -v protoc &> /dev/null; then
+    echo "Error: protoc not found in PATH."
+    echo "Install it with: brew install protobuf (macOS) or apt-get install protobuf-compiler (Linux)"
     exit 1
 fi
 
-proto-gen --out_shared "$SERVICES_ROOT/shared/" \
-    --out_listing "$SERVICES_ROOT/listing/proto/" \
-    --out_search "$SERVICES_ROOT/search/proto/" \
-    --out_chat "$SERVICES_ROOT/chat/proto/" \
-    --out_seller "$SERVICES_ROOT/seller/proto/" \
-    --out_user "$SERVICES_ROOT/user/proto/" \
-    --out_auth "$SERVICES_ROOT/auth/proto/" \
-    --out_geo "$SERVICES_ROOT/geographic-maket-insights/proto/" \
-    --out_auction "$SERVICES_ROOT/auction/proto/"
+# Check if Go protobuf plugins are installed
+if ! command -v protoc-gen-go &> /dev/null; then
+    echo "Installing protoc-gen-go..."
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+fi
 
-echo "Protobuf generation complete (local binary)."
+if ! command -v protoc-gen-go-grpc &> /dev/null; then
+    echo "Installing protoc-gen-go-grpc..."
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+fi
+
+echo "Generating protobuf files..."
+
+protoc \
+    --proto_path="$SERVICES_ROOT" \
+    --go_out="$SERVICES_ROOT" \
+    --go-grpc_out="$SERVICES_ROOT" \
+    --go_opt=paths=source_relative \
+    --go-grpc_opt=paths=source_relative \
+    "$SERVICES_ROOT/shared/shared.proto" \
+    "$SERVICES_ROOT/listing/proto/listing.proto" \
+    "$SERVICES_ROOT/search/proto/search.proto" \
+    "$SERVICES_ROOT/chat/proto/chat.proto" \
+    "$SERVICES_ROOT/seller/proto/seller.proto" \
+    "$SERVICES_ROOT/user/proto/user.proto" \
+    "$SERVICES_ROOT/auth/proto/auth.proto" \
+    "$SERVICES_ROOT/geographic-market-insights/proto/geo-market-insights.proto" \
+    "$SERVICES_ROOT/auction/proto/auction.proto"
+
+echo "Protobuf generation complete (local)."

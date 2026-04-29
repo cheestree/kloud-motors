@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	geopb "services/geographic-maket-insights/proto"
+	geopb "services/geographic-market-insights/proto"
+	"services/utils"
 )
 
 func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
@@ -47,19 +48,19 @@ func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 
 	var yearFrom, yearTo, limit, skip *int32
 	if s := q.Get(queryYearFrom); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		yearFrom = &v
 	}
 	if s := q.Get(queryYearTo); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		yearTo = &v
 	}
 	if s := q.Get(queryLimit); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		limit = &v
 	}
 	if s := q.Get(querySkip); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		skip = &v
 	}
 
@@ -130,11 +131,11 @@ func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 
 	var limit, skip *int32
 	if s := q.Get(queryLimit); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		limit = &v
 	}
 	if s := q.Get(querySkip); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		skip = &v
 	}
 	req := &geopb.PriceComparisonRequest{
@@ -167,11 +168,11 @@ func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 	}
 	var yearFrom, yearTo *int32
 	if s := q.Get(queryYearFrom); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		yearFrom = &v
 	}
 	if s := q.Get(queryYearTo); s != "" {
-		v := parseInt32(s)
+		v := utils.ParseInt32(s)
 		yearTo = &v
 	}
 	var fuelType *string
@@ -187,51 +188,6 @@ func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 		FuelType: fuelType,
 	}
 	resp, err := geoClient.ByLocation(ctx, req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, http.StatusOK, resp)
-}
-
-func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
-		return
-	}
-	q := r.URL.Query()
-	ctx := context.Background()
-
-	var groupBy geopb.GroupBy
-	switch strings.ToLower(q.Get(queryLocation)) {
-	case groupByDistrict:
-		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
-	case groupByCity:
-		groupBy = geopb.GroupBy_GROUP_BY_CITY
-	case groupByCountry:
-		groupBy = geopb.GroupBy_GROUP_BY_COUNTRY
-	default:
-		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
-	}
-	var yearFrom, yearTo *int32
-	if s := q.Get(queryYearFrom); s != "" {
-		v := parseInt32(s)
-		yearFrom = &v
-	}
-	if s := q.Get(queryYearTo); s != "" {
-		v := parseInt32(s)
-		yearTo = &v
-	}
-	metrics := []geopb.MetricType{geopb.MetricType_METRIC_TYPE_AVG_PRICE}
-	req := &geopb.AggregatesRequest{
-		Brand:    q.Get(queryBrand),
-		Model:    q.Get(queryModel),
-		GroupBy:  groupBy,
-		YearFrom: yearFrom,
-		YearTo:   yearTo,
-		Metrics:  metrics,
-	}
-	resp, err := geoClient.Aggregates(ctx, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

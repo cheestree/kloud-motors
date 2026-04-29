@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudsql-config
+  namespace: vehicles-prod
+type: Opaque
+stringData:
+  instance-connection-name: cn-project-491618:europe-central2:cn-db-instance

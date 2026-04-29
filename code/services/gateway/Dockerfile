@@ -12,9 +12,11 @@ COPY ./seller/proto                  ./seller/proto
 COPY ./user/proto                    ./user/proto
 COPY ./auth/proto                    ./auth/proto
 COPY ./chat/proto                    ./chat/proto
-COPY ./geographic-maket-insights/proto ./geographic-maket-insights/proto
+COPY ./geographic-market-insights/proto ./geographic-market-insights/proto
 COPY ./auction/proto                 ./auction/proto
+COPY ./marketprice/proto             ./marketprice/proto
 COPY ./gateway                       ./gateway
+COPY ./utils ./utils
 
 RUN go build -o gateway/gateway ./gateway
 

@@ -21,13 +21,13 @@ type grpcServer struct {
 	sellerClient  sellerproto.SellerServiceClient
 }
 
-func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveChatsRequest) (*proto.GetActiveChatsResponse, error) {
+func (s *grpcServer) GetChats(ctx context.Context, req *proto.GetChatsRequest) (*proto.GetChatsResponse, error) {
 	if req.GetUserId() < 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
 	}
 
 	if s.indexStore == nil {
-		return &proto.GetActiveChatsResponse{Chats: []*proto.ChatsSummary{}}, nil
+		return &proto.GetChatsResponse{Chats: []*proto.ChatsSummary{}}, nil
 	}
 
 	chats, err := s.indexStore.ListUserChats(ctx, req.GetUserId())
@@ -45,7 +45,7 @@ func (s *grpcServer) GetActiveChats(ctx context.Context, req *proto.GetActiveCha
 		})
 	}
 
-	return &proto.GetActiveChatsResponse{Chats: protoChats}, nil
+	return &proto.GetChatsResponse{Chats: protoChats}, nil
 }
 
 func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (*proto.OpenChatResponse, error) {
@@ -61,7 +61,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 	}
 
 	if !isSeller.IsSeller {
-		return nil, status.Error(codes.InvalidArgument, "seller not allowed")
+		return nil, status.Error(codes.InvalidArgument, "seller profile not found or invalid")
 	}
 
 	listingID := req.GetListingId()
@@ -72,7 +72,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 		return nil, status.Errorf(codes.Internal, "failed to check listing ownership: %v", err)
 	}
 	if !isListingFromSeller.IsOwner {
-		return nil, status.Error(codes.InvalidArgument, "seller not allowed")
+		return nil, status.Error(codes.InvalidArgument, "listing does not belong to this seller")
 	}
 
 	listing, err := s.listingClient.GetListingSummary(ctx, &listingproto.ListingDetailsRequest{Id: listingID})
@@ -82,6 +82,17 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 
 	brand := listing.Make
 	model := listing.Model
+	isSold := listing.IsSold
+
+	if isSold {
+		return nil, status.Error(codes.FailedPrecondition, "listing is already sold")
+	}
+
+
+	existingChats, err := s.indexStore.GetChatsFromListingSeller(ctx, listingID, req.GetUserId())
+	if err == nil && len(existingChats) > 0 {
+		return &proto.OpenChatResponse{ChatId: existingChats[0]}, nil
+	}
 
 	var chatID string
 	if s.indexStore != nil {
@@ -90,11 +101,10 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to index chat participants: %v", err)
 		}
-
-		return &proto.OpenChatResponse{ChatId: chatID}, nil
-	} else {
-		return nil, status.Errorf(codes.Internal, "failed to index chat participants")
+		return &proto.OpenChatResponse{ChatId: chatID, IsChatClosed: isSold}, nil
 	}
+
+	return nil, status.Errorf(codes.Internal, "failed to index chat participants")
 }
 
 func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHistoryRequest) (*proto.GetChatHistoryResponse, error) {
@@ -117,15 +127,21 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 		return &proto.GetChatHistoryResponse{Messages: []*proto.ChatMessage{}}, nil
 	}
 
-	if req.GetLimit() <= 0 || req.GetLimit() > s.historyLimit {
-		return nil, status.Error(codes.InvalidArgument, "invalid limit")
+	limit := req.GetLimit()
+	if limit <= 0 {
+		limit = 20 // Default limit
+	}
+	if limit > s.historyLimit {
+		limit = s.historyLimit // Cap at max allowed
 	}
 
-	if req.GetSkip() < 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid limit")
+	skip := req.GetSkip()
+	if skip < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid skip")
 	}
 
-	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), req.GetLimit(), req.GetSkip())
+	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), limit, skip)
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to load chat history: %v", err)
 	}
