@@ -35,10 +35,13 @@ services:
     environment:
       LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
       SEARCH_GRPC_PORT: ${SEARCH_GRPC_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     depends_on:
       listing-db:
         condition: service_healthy
-
+      redis-cache:
+        condition: service_healthy
   chat:
     container_name: chat-service
     build:
@@ -98,8 +101,12 @@ services:
     environment:
       LISTING_DATABASE_URL: ${LISTING_DATABASE_URL}
       LISTING_GRPC_PORT: ${LISTING_GRPC_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     depends_on:
       listing-db:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
 
   marketprice:
@@ -291,6 +298,19 @@ services:
       start_period: 10s
     volumes:
       - auction_postgres_data:/var/lib/postgresql/data
+      
+  redis-cache:
+    container_name: redis-cache
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
 
 volumes:
   listing_postgres_data:

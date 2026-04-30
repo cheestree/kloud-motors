@@ -2,14 +2,19 @@ package service
 
 import (
 	"context"
-	"services/search/domain"
-	"services/utils"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 
+	"services/search/domain"
 	"services/search/repository"
+	"services/shared/cache"
+	"services/utils"
 )
 
 type SearchService struct {
 	repository      *repository.SearchRepository
+	redisCache      *cache.RedisCache
 	defaultPage     int32
 	defaultPageSize int32
 	maxPageSize     int32
@@ -25,9 +30,10 @@ const (
 	fallbackMaxPageSize     int32 = 100
 )
 
-func NewSearchService(repository *repository.SearchRepository) *SearchService {
+func NewSearchService(repository *repository.SearchRepository, redisCache *cache.RedisCache) *SearchService {
 	return &SearchService{
 		repository:      repository,
+		redisCache:      redisCache,
 		defaultPage:     utils.GetEnvInt32(envSearchDefaultPage, fallbackDefaultPage),
 		defaultPageSize: utils.GetEnvInt32(envSearchDefaultPageSize, fallbackDefaultPageSize),
 		maxPageSize:     utils.GetEnvInt32(envSearchMaxPageSize, fallbackMaxPageSize),
@@ -68,15 +74,33 @@ func (s *SearchService) Search(ctx context.Context, params domain.SearchParams) 
 		IncludeSold:  params.IncludeSold,
 	}
 
+	var cacheKey string
+	if s.redisCache != nil {
+		filtersBytes, _ := json.Marshal(filters)
+		hash := sha256.Sum256(filtersBytes)
+		cacheKey = "search:query:" + hex.EncodeToString(hash[:])
+
+		var cachedResult domain.SearchResult
+		if err := s.redisCache.Get(ctx, cacheKey, &cachedResult); err == nil {
+			return &cachedResult, nil
+		}
+	}
+
 	listings, total, err := s.repository.Search(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
 
-	return &domain.SearchResult{
+	result := &domain.SearchResult{
 		Total:    total,
 		Page:     page,
 		PageSize: pageSize,
 		Listings: listings,
-	}, nil
+	}
+
+	if s.redisCache != nil {
+		_ = s.redisCache.Set(ctx, cacheKey, result)
+	}
+
+	return result, nil
 }

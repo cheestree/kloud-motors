@@ -4,12 +4,15 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"strconv"
+	"time"
 
 	models "services/listing/models"
 	listingpb "services/listing/proto"
 	"services/listing/repository"
 	"services/listing/service"
 	"services/shared"
+	"services/shared/cache"
 	"services/utils"
 
 	_ "github.com/lib/pq"
@@ -218,7 +221,14 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	repo := repository.NewListingRepository(listingDB)
-	listingSvc := service.NewListingService(repo)
+	
+	redisHost := utils.GetEnv("REDIS_HOST", "redis-cache")
+	redisPort := utils.GetEnv("REDIS_PORT", "6379")
+	ttlStr := utils.GetEnv("CACHE_TTL_SECONDS", "3600")
+	ttlSeconds, _ := strconv.Atoi(ttlStr)
+	redisCache := cache.NewRedisCache(redisHost, redisPort, time.Duration(ttlSeconds)*time.Second)
+
+	listingSvc := service.NewListingService(repo, redisCache)
 	listingpb.RegisterListingServiceServer(grpcServer, &server{service: listingSvc})
 
 	utils.HealthCheck("listing.ListingService", grpcServer)

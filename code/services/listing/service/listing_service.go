@@ -9,28 +9,52 @@ import (
 
 	"services/listing/repository"
 	"services/shared"
+	"services/shared/cache"
 )
 
 type ListingService struct {
 	repository *repository.ListingRepository
+	redisCache *cache.RedisCache
 }
 
-func NewListingService(repository *repository.ListingRepository) *ListingService {
-	return &ListingService{repository: repository}
+func NewListingService(repository *repository.ListingRepository, redisCache *cache.RedisCache) *ListingService {
+	return &ListingService{repository: repository, redisCache: redisCache}
+}
+
+func (s *ListingService) invalidateListingCache(ctx context.Context, id int64) {
+	if s.redisCache != nil {
+		_ = s.redisCache.Delete(ctx, fmt.Sprintf("listing:details:%d", id))
+		_ = s.redisCache.Delete(ctx, fmt.Sprintf("listing:summary:%d", id))
+	}
 }
 
 func (s *ListingService) GetListingDetails(ctx context.Context, id int64) (*shared.ListingDetails, error) {
 	if id <= 0 {
 		return nil, fmt.Errorf("invalid ID: must be a positive integer")
 	}
-	listing, err := s.repository.GetListingDetails(ctx, id)
+
+	var listing shared.ListingDetails
+	cacheKey := fmt.Sprintf("listing:details:%d", id)
+	if s.redisCache != nil {
+		err := s.redisCache.Get(ctx, cacheKey, &listing)
+		if err == nil {
+			return &listing, nil // Cache hit
+		}
+	}
+
+	repoListing, err := s.repository.GetListingDetails(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if listing == nil {
+	if repoListing == nil {
 		return nil, ErrListingNotFound
 	}
-	return listing, nil
+
+	if s.redisCache != nil {
+		_ = s.redisCache.Set(ctx, cacheKey, repoListing)
+	}
+
+	return repoListing, nil
 }
 
 func (s *ListingService) CreateListing(ctx context.Context, listing repository.ListingMutation) (*shared.ListingDetails, error) {
@@ -63,6 +87,7 @@ func (s *ListingService) UpdateListing(ctx context.Context, id int64, listing re
 	if updated == nil {
 		return nil, ErrListingNotFound
 	}
+	s.invalidateListingCache(ctx, id)
 	return updated, nil
 }
 
@@ -80,6 +105,7 @@ func (s *ListingService) SetListingSoldStatus(ctx context.Context, id int64, dea
 	if updated == nil {
 		return nil, ErrListingNotFound
 	}
+	s.invalidateListingCache(ctx, id)
 	return updated, nil
 }
 
@@ -97,6 +123,7 @@ func (s *ListingService) DeleteListing(ctx context.Context, id int64, dealerID i
 	if !deleted {
 		return false, ErrListingNotFound
 	}
+	s.invalidateListingCache(ctx, id)
 	return true, nil
 }
 
@@ -133,14 +160,29 @@ func (s *ListingService) GetListingSummary(ctx context.Context, id int64) (*shar
 	if id <= 0 {
 		return nil, fmt.Errorf("invalid ID: must be a positive integer")
 	}
-	summary, err := s.repository.GetListingSummary(ctx, id)
+
+	var summary shared.ListingSummary
+	cacheKey := fmt.Sprintf("listing:summary:%d", id)
+	if s.redisCache != nil {
+		err := s.redisCache.Get(ctx, cacheKey, &summary)
+		if err == nil {
+			return &summary, nil // Cache hit
+		}
+	}
+
+	repoSummary, err := s.repository.GetListingSummary(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if summary == nil {
+	if repoSummary == nil {
 		return nil, ErrListingNotFound
 	}
-	return summary, nil
+
+	if s.redisCache != nil {
+		_ = s.redisCache.Set(ctx, cacheKey, repoSummary)
+	}
+
+	return repoSummary, nil
 }
 
 func (s *ListingService) GetListingSummaries(ctx context.Context, ids []int64) ([]*shared.ListingSummary, error) {
