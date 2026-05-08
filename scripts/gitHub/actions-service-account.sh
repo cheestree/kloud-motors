@@ -32,6 +32,18 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member=serviceAccount:$SA_EMAIL \
   --role=roles/iam.serviceAccountUser
 
+# Create a minimal custom IAM role to allow patching ValidatingWebhookConfigurations
+# (permission required so the deploy SA can apply nginx ingress webhook patches)
+gcloud iam roles create webhookPatchRole --project="$PROJECT_ID" \
+  --title="Webhook Patch Role" \
+  --permissions="container.validatingWebhookConfigurations.update" \
+  --stage="GA" || echo "webhookPatchRole already exists or creation failed, continuing"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member=serviceAccount:$SA_EMAIL \
+  --role="projects/${PROJECT_ID}/roles/webhookPatchRole" || echo "binding webhookPatchRole failed or already exists"
+
+# Create and download a key for the service account
 gcloud iam service-accounts keys create ./gcp-sa-key.json \
   --iam-account=$SA_EMAIL
 

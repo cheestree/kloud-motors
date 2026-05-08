@@ -113,7 +113,7 @@ apply_up() {
 
   if [[ "$WITH_INGRESS" == true ]]; then
     echo "Applying ingress manifest..."
-    k apply -f "$INGRESS_MANIFEST"
+    k -n "$NAMESPACE" apply -f "$INGRESS_MANIFEST"
   fi
 
   echo "Restarting deployments so pods pull the latest image..."
@@ -134,7 +134,7 @@ apply_down() {
   echo "Deleting manifests..."
 
   if [[ "$WITH_INGRESS" == true ]]; then
-    k delete -f "$INGRESS_MANIFEST" --ignore-not-found
+    k -n "$NAMESPACE" delete -f "$INGRESS_MANIFEST" --ignore-not-found
     k delete -f "$INGRESS_CONTROLLER_MANIFEST" --ignore-not-found
   fi
 
