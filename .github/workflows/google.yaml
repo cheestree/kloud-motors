@@ -58,13 +58,20 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Generate gRPC sources
+        working-directory: code/services
+        run: bash gen_proto.sh
+
       - name: Configure Docker
-        run: gcloud auth configure-docker $ARTIFACT_REGISTRY_HOST --quiet
+        run: |
+          HOST="${ARTIFACT_REGISTRY_HOST:-europe-central2-docker.pkg.dev}"
+          gcloud auth configure-docker "$HOST" --quiet
 
       - name: Build Docker image
         working-directory: code/services
         run: |
-          IMAGE_URI="$ARTIFACT_REGISTRY_HOST/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/${{ matrix.service }}:latest"
+          HOST="${ARTIFACT_REGISTRY_HOST:-europe-central2-docker.pkg.dev}"
+          IMAGE_URI="$HOST/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/${{ matrix.service }}:latest"
           docker build -f "${{ matrix.dockerfile }}" -t "$IMAGE_URI" .
           docker push "$IMAGE_URI"
 
