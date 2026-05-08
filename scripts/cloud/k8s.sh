@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 K8S_DIR="$ROOT_DIR/deploy/k8s"
 KUSTOMIZE_DIR="$K8S_DIR"
+INGRESS_CONTROLLER_MANIFEST="$K8S_DIR/nginx-controller.yaml"
 GATEWAY_MANIFEST="$K8S_DIR/gateway/gateway.yaml"
 INGRESS_MANIFEST="$K8S_DIR/ingress.yaml"
 NAMESPACE_FILE="$K8S_DIR/common/namespace.yaml"
@@ -88,8 +89,21 @@ if ! k cluster-info >/dev/null 2>&1; then
 fi
 
 apply_up() {
-  echo "Applying manifests with kustomize..."
+  if [[ "$WITH_INGRESS" == true ]]; then
+    echo "Applying ingress controller manifest..."
+    k apply -f "$INGRESS_CONTROLLER_MANIFEST"
+
+    echo "Waiting for ingress controller rollout..."
+    k -n ingress-nginx rollout status deployment/ingress-nginx-controller --timeout=600s
+  fi
+
+  echo "Applying application manifests with kustomize..."
   k apply -k "$KUSTOMIZE_DIR"
+
+  if [[ "$WITH_INGRESS" == true ]]; then
+    echo "Applying ingress manifest..."
+    k apply -f "$INGRESS_MANIFEST"
+  fi
 
   echo "Restarting deployments so pods pull the latest image..."
   while IFS= read -r deployment; do
@@ -107,6 +121,12 @@ apply_up() {
 
 apply_down() {
   echo "Deleting manifests..."
+
+  if [[ "$WITH_INGRESS" == true ]]; then
+    k delete -f "$INGRESS_MANIFEST" --ignore-not-found
+    k delete -f "$INGRESS_CONTROLLER_MANIFEST" --ignore-not-found
+  fi
+
   k delete -k "$KUSTOMIZE_DIR" --ignore-not-found
 
   echo "Kubernetes deployment removed."
