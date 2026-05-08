@@ -14,4 +14,4 @@ resources:
   - marketprice
   - auction
   - gateway
-  - ingress.yaml
+  - ingress_vehicles_prod.yaml

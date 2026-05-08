@@ -6,6 +6,8 @@ metadata:
 data:
   GCP_PUBSUB_AUTOCREATE: "true"
   GCP_PUBSUB_TOPIC: chat-events
+  POSTGRES_SCHEMA: "chat-db"
+  POSTGRES_TABLE: "chat"
   FIRESTORE_DATABASE_ID: message-db
   FIRESTORE_MESSAGES_COLLECTION: messages
   LISTING_SERVICE_ADDR: listing-service:50054

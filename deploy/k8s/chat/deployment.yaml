@@ -6,7 +6,7 @@ metadata:
   labels:
     app: chat-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: chat-service
@@ -46,8 +46,8 @@ spec:
                   key: GCP_PROJECT_ID
             - name: FIRESTORE_MESSAGES_COLLECTION
               valueFrom:
-                secretKeyRef:
-                  name: chat-secrets
+                configMapKeyRef:
+                  name: chat-config
                   key: FIRESTORE_MESSAGES_COLLECTION
 
             - name: POSTGRES_DSN
@@ -57,13 +57,13 @@ spec:
                   key: POSTGRES_DSN
             - name: POSTGRES_SCHEMA
               valueFrom:
-                secretKeyRef:
-                  name: chat-secrets
+                configMapKeyRef:
+                  name: chat-config
                   key: POSTGRES_SCHEMA
             - name: POSTGRES_TABLE
               valueFrom:
-                secretKeyRef:
-                  name: chat-secrets
+                configMapKeyRef:
+                  name: chat-config
                   key: POSTGRES_TABLE
 
           envFrom:
