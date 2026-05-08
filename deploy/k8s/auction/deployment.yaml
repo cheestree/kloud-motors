@@ -6,7 +6,7 @@ metadata:
   labels:
     app: auction-service
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 300
   strategy:

@@ -120,6 +120,9 @@ apply_up() {
   while IFS= read -r deployment; do
     [[ -z "$deployment" ]] && continue
     k -n "$NAMESPACE" rollout restart "$deployment"
+    if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
+      k -n "$NAMESPACE" rollout status "$deployment" --timeout=300s
+    fi
   done < <(k -n "$NAMESPACE" get deployments -o name)
 
   if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
