@@ -11,6 +11,9 @@ spec:
       app: gateway-service
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
       labels:
         app: gateway-service
     spec:

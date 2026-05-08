@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"encoding/base64"
-
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
