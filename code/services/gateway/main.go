@@ -16,6 +16,7 @@ import (
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -168,6 +169,8 @@ func main() {
 	handlers.SetAuctionWSUpstream(os.Getenv("AUCTION_WS_ADDR"))
 
 	registerRoutes()
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	Logger.Info("Gateway listening on :8080...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
