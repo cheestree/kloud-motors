@@ -2,6 +2,9 @@
 code/setup/data/*.csv
 venv/
 .env
+.env.secrets
+.env.variables
+
 *.csv
 
 # Go Binaries
@@ -21,3 +24,5 @@ go.work.sum
 # Cloud Proxy
 cloud-sql-proxy
 proxy.log
+gcp-sa-key.json
+

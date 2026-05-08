@@ -47,7 +47,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: PUBSUB_SUBSCRIPTION_ID
+            - name: AUCTION_PUBSUB_SUBSCRIPTION
               value: "auction-sub-$(POD_ID)"
           envFrom:
             - configMapRef:
