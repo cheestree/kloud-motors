@@ -9,7 +9,6 @@ resources:
   - search
   - chat
   - geographic-market-insights
-  - auth
   - user
   - seller
   - marketprice
