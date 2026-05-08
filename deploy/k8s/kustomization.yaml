@@ -15,4 +15,3 @@ resources:
   - marketprice
   - auction
   - gateway
-  - ingress.yaml

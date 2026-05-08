@@ -48,23 +48,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Generate gRPC sources
+        working-directory: code/services
+        run: bash gen_proto.sh
 
       - name: Configure Docker
-        run: gcloud auth configure-docker $ARTIFACT_REGISTRY_HOST --quiet
+        run: |
+          HOST="${ARTIFACT_REGISTRY_HOST:-europe-central2-docker.pkg.dev}"
+          gcloud auth configure-docker "$HOST" --quiet
 
       - name: Build Docker image
         working-directory: code/services
         run: |
-          IMAGE_URI="$ARTIFACT_REGISTRY_HOST/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/${{ matrix.service }}:latest"
+          HOST="${ARTIFACT_REGISTRY_HOST:-europe-central2-docker.pkg.dev}"
+          IMAGE_URI="$HOST/$PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/${{ matrix.service }}:latest"
           docker build -f "${{ matrix.dockerfile }}" -t "$IMAGE_URI" .
           docker push "$IMAGE_URI"
 
@@ -75,33 +82,22 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@v2
+        uses: google-github-actions/get-gke-credentials@v3
         with:
           cluster_name: ${{ env.GKE_CLUSTER }}
           location: ${{ env.GKE_ZONE }}
 
-      - name: Apply Kubernetes manifests
-        run: kubectl apply -k deploy/k8s
 
       - name: Deploy to GKE
-        run: |
-          kubectl -n "$K8S_NAMESPACE" get deployments -o name | while read -r deployment; do
-            kubectl -n "$K8S_NAMESPACE" rollout restart "$deployment"
-          done
-
-      - name: Wait for rollout
-        run: |
-          kubectl -n "$K8S_NAMESPACE" get deployments -o name | while read -r deployment; do
-            kubectl -n "$K8S_NAMESPACE" rollout status "$deployment" --timeout=600s
-          done
+        run: bash scripts/cloud/k8s.sh up --with-ingress

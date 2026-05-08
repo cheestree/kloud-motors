@@ -7,8 +7,8 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: auction
-  minReplicas: 2
+    name: auction-service
+  minReplicas: 1
   maxReplicas: 8
   behavior:
     scaleUp:
