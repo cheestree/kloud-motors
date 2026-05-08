@@ -70,13 +70,24 @@ if [[ -z "$NAMESPACE" ]]; then
   exit 1
 fi
 
-KUBECONFIG_FILE="$K8S_DIR/kubeconfig"
+KUBECONFIG_FILE=""
 KUBE_ARGS=()
-if [[ -f "$KUBECONFIG_FILE" ]]; then
+
+# Prefer KUBECONFIG env var (set by GitHub Actions get-gke-credentials)
+if [[ -n "${KUBECONFIG:-}" ]] && [[ -f "$KUBECONFIG" ]]; then
+  KUBECONFIG_FILE="$KUBECONFIG"
+  echo "Using kubeconfig from KUBECONFIG env var: $KUBECONFIG_FILE"
+# Fall back to project kubeconfig for local runs
+elif [[ -f "$K8S_DIR/kubeconfig" ]]; then
+  KUBECONFIG_FILE="$K8S_DIR/kubeconfig"
   KUBE_ARGS+=(--kubeconfig="$KUBECONFIG_FILE")
   echo "Using project kubeconfig: $KUBECONFIG_FILE"
 else
   echo "Using default kubeconfig (~/.kube/config)"
+fi
+
+if [[ -n "$KUBECONFIG_FILE" ]]; then
+  KUBE_ARGS+=(--kubeconfig="$KUBECONFIG_FILE")
 fi
 
 k() {
