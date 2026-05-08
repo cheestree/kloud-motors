@@ -17,6 +17,9 @@ services:
       - MARKETPRICE_GRPC_ADDR=${MARKETPRICE_GRPC_ADDR}
       - AUCTION_WS_ADDR=ws://auction:8081
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/service-account.json
+    volumes:
+      - ./service-account.json:/app/service-account.json
     depends_on:
       - listing
       - search
@@ -66,6 +69,9 @@ services:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       FIRESTORE_MESSAGES_COLLECTION: ${FIRESTORE_MESSAGES_COLLECTION}
       CHAT_HISTORY_LIMIT: ${CHAT_HISTORY_LIMIT}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/service-account.json
+    volumes:
+      - ./service-account.json:/app/service-account.json
     depends_on:
       chat-db:
         condition: service_healthy

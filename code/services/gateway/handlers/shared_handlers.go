@@ -1,24 +1,17 @@
 package handlers
 
 import (
-	"encoding/base64"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
+	userpb "services/user/proto"
+
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
-
-type UserClaims struct {
-	UserID int64  `json:"user_id"`
-	Email  string `json:"email"`
-	jwt.RegisteredClaims
-}
 
 func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 	authHeader := strings.TrimSpace(r.Header.Get(headerAuth))
@@ -31,66 +24,34 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 		return 0, errors.New(errInvalidAuthHeader)
 	}
 
-	b64Key := os.Getenv("JWT_PUBLIC_KEY_B64")
-	if strings.TrimSpace(b64Key) == "" {
-		return 0, errors.New("JWT_PUBLIC_KEY_B64 is not configured")
+	idToken := parts[1]
+
+	if firebaseAuthClient == nil {
+		return 0, errors.New("firebase auth client not initialised")
 	}
 
-	pubKey, err := parseRSAPublicKey(b64Key)
+	token, err := firebaseAuthClient.VerifyIDToken(context.Background(), idToken)
 	if err != nil {
-		return 0, err
-	}
-
-	claims := &UserClaims{}
-	token, err := jwt.ParseWithClaims(parts[1], claims, func(token *jwt.Token) (interface{}, error) {
-		return pubKey, nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
-
-	if err != nil || !token.Valid {
+		println("Firebase token verification failed:", err.Error())
 		return 0, errors.New(errInvalidToken)
 	}
 
-	if claims.UserID > 0 {
-		return claims.UserID, nil
-	}
+	firebaseUID := token.UID
 
-	if claims.Subject != "" {
-		userID, err := strconv.ParseInt(claims.Subject, 10, 64)
-		if err == nil && userID > 0 {
-			return userID, nil
-		}
-	}
+	email, _ := token.Claims["email"].(string)
+	name, _ := token.Claims["name"].(string)
 
-	return 0, errors.New(errUserIDNotInToken)
-}
-
-func parseRSAPublicKey(value string) (interface{}, error) {
-	trimmed := strings.TrimSpace(value)
-
-	// Support raw PEM in env variable.
-	if strings.Contains(trimmed, "BEGIN PUBLIC KEY") || strings.Contains(trimmed, "BEGIN RSA PUBLIC KEY") {
-		pubKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(trimmed))
-		if err != nil {
-			return nil, errors.New("failed to parse RSA public key")
-		}
-		return pubKey, nil
-	}
-
-	// Support regular base64 and unpadded base64 payloads.
-	decoded, err := base64.StdEncoding.DecodeString(trimmed)
+	resp, err := userClient.GetOrCreateByFirebaseUID(context.Background(), &userpb.GetOrCreateByFirebaseUIDRequest{
+		FirebaseUid: firebaseUID,
+		Email:       email,
+		Name:        name,
+	})
 	if err != nil {
-		decoded, err = base64.RawStdEncoding.DecodeString(trimmed)
-		if err != nil {
-			return nil, errors.New("failed to decode base64 public key")
-		}
+		println("Failed to resolve user id via user-service:", err.Error())
+		return 0, errors.New("failed to resolve user id")
 	}
 
-	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(decoded)
-	if err != nil {
-		return nil, errors.New("failed to parse RSA public key")
-	}
-
-	return pubKey, nil
+	return resp.UserId, nil
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {

@@ -5,6 +5,7 @@ import (
 	"services/user/models"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -28,6 +29,31 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*models.
 
 	if err != nil {
 		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *Repository) GetOrCreateByFirebaseUID(ctx context.Context, firebaseUID, email, name string) (*models.User, error) {
+	user := models.User{
+		FirebaseUID: firebaseUID,
+		Email:       email,
+		Name:        name,
+	}
+
+	result := r.db.WithContext(ctx).
+		Where(models.User{FirebaseUID: firebaseUID}).
+		Attrs(models.User{Email: email, Name: name}).
+		FirstOrCreate(&user)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		r.db.WithContext(ctx).Model(&user).
+			Clauses(clause.OnConflict{DoNothing: true}).
+			Updates(map[string]interface{}{"email": email, "name": name})
 	}
 
 	return &user, nil
