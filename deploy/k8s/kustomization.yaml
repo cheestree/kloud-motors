@@ -9,7 +9,6 @@ resources:
   - search
   - chat
   - geographic-market-insights
-  - auth
   - user
   - seller
   - marketprice
@@ -17,3 +16,4 @@ resources:
   - gateway
   - redis
   - ingress.yaml
+  - ingress_vehicles_prod.yaml

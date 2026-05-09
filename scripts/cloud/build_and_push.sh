@@ -21,7 +21,7 @@ SERVICES=(
   "user"
 )
 
-echo "🛠️ A iniciar Build e Push para o GCP Artifact Registry..."
+echo "🛠️ Initiating Build and Push to GCP Artifact Registry..."
 
 for SERVICE in "${SERVICES[@]}"; do
   echo "---------------------------------------------------"

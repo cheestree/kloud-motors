@@ -4,7 +4,7 @@ metadata:
   name: auction-config
   namespace: vehicles-prod
 data:
-  PUBSUB_TOPIC_ID: "auction-events"
+  AUCTION_PUBSUB_TOPIC: "auction-events"
   LISTING_GRPC_ADDR: "listing-service:50054"
   AUCTION_GRPC_PORT: "50051"
   AUCTION_WS_PORT: "8081"

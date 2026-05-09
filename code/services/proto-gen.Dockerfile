@@ -28,7 +28,6 @@ RUN protoc \
     chat/proto/chat.proto \
     seller/proto/seller.proto \
     user/proto/user.proto \
-    auth/proto/auth.proto \
     geographic-market-insights/proto/geo-market-insights.proto \
     auction/proto/auction.proto \
     marketprice/proto/marketprice.proto

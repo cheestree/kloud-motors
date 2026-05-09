@@ -4,9 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 K8S_DIR="$ROOT_DIR/deploy/k8s"
 KUSTOMIZE_DIR="$K8S_DIR"
-INGRESS_CONTROLLER_MANIFEST="$K8S_DIR/nginx-controller.yaml"
 GATEWAY_MANIFEST="$K8S_DIR/gateway/gateway.yaml"
-INGRESS_MANIFEST="$K8S_DIR/ingress.yaml"
+INGRESS_MANIFEST="$K8S_DIR/ingress_vehicles_prod.yaml"
 NAMESPACE_FILE="$K8S_DIR/common/namespace.yaml"
 
 ACTION="up"
@@ -24,7 +23,7 @@ Commands:
   restart         Restart all deployments (rollout restart)
 
 Flags:
-  --with-ingress  Also apply/delete deploy/k8s/ingress.yaml
+  --with-ingress  Also apply/delete deploy/k8s/ingress_vehicles_prod.yaml
   --no-wait       Do not wait for deployments to become available (up only)
   -h, --help      Show this help
 EOF
@@ -70,24 +69,13 @@ if [[ -z "$NAMESPACE" ]]; then
   exit 1
 fi
 
-KUBECONFIG_FILE=""
+KUBECONFIG_FILE="$K8S_DIR/kubeconfig"
 KUBE_ARGS=()
-
-# Prefer KUBECONFIG env var (set by GitHub Actions get-gke-credentials)
-if [[ -n "${KUBECONFIG:-}" ]] && [[ -f "$KUBECONFIG" ]]; then
-  KUBECONFIG_FILE="$KUBECONFIG"
-  echo "Using kubeconfig from KUBECONFIG env var: $KUBECONFIG_FILE"
-# Fall back to project kubeconfig for local runs
-elif [[ -f "$K8S_DIR/kubeconfig" ]]; then
-  KUBECONFIG_FILE="$K8S_DIR/kubeconfig"
+if [[ -f "$KUBECONFIG_FILE" ]]; then
   KUBE_ARGS+=(--kubeconfig="$KUBECONFIG_FILE")
   echo "Using project kubeconfig: $KUBECONFIG_FILE"
 else
   echo "Using default kubeconfig (~/.kube/config)"
-fi
-
-if [[ -n "$KUBECONFIG_FILE" ]]; then
-  KUBE_ARGS+=(--kubeconfig="$KUBECONFIG_FILE")
 fi
 
 k() {
@@ -100,29 +88,13 @@ if ! k cluster-info >/dev/null 2>&1; then
 fi
 
 apply_up() {
-  if [[ "$WITH_INGRESS" == true ]]; then
-    echo "Applying ingress controller manifest..."
-    k apply -f "$INGRESS_CONTROLLER_MANIFEST"
-
-    echo "Waiting for ingress controller rollout..."
-    k -n ingress-nginx rollout status deployment/ingress-nginx-controller --timeout=600s
-  fi
-
-  echo "Applying application manifests with kustomize..."
+  echo "Applying manifests with kustomize..."
   k apply -k "$KUSTOMIZE_DIR"
-
-  if [[ "$WITH_INGRESS" == true ]]; then
-    echo "Applying ingress manifest..."
-    k -n "$NAMESPACE" apply -f "$INGRESS_MANIFEST"
-  fi
 
   echo "Restarting deployments so pods pull the latest image..."
   while IFS= read -r deployment; do
     [[ -z "$deployment" ]] && continue
     k -n "$NAMESPACE" rollout restart "$deployment"
-    if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
-      k -n "$NAMESPACE" rollout status "$deployment" --timeout=300s
-    fi
   done < <(k -n "$NAMESPACE" get deployments -o name)
 
   if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
@@ -135,12 +107,6 @@ apply_up() {
 
 apply_down() {
   echo "Deleting manifests..."
-
-  if [[ "$WITH_INGRESS" == true ]]; then
-    k -n "$NAMESPACE" delete -f "$INGRESS_MANIFEST" --ignore-not-found
-    k delete -f "$INGRESS_CONTROLLER_MANIFEST" --ignore-not-found
-  fi
-
   k delete -k "$KUSTOMIZE_DIR" --ignore-not-found
 
   echo "Kubernetes deployment removed."

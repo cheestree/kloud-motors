@@ -6,7 +6,7 @@ metadata:
   labels:
     app: auction-service
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 300
   strategy:
@@ -47,7 +47,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: PUBSUB_SUBSCRIPTION_ID
+            - name: AUCTION_PUBSUB_SUBSCRIPTION
               value: "auction-sub-$(POD_ID)"
           envFrom:
             - configMapRef:

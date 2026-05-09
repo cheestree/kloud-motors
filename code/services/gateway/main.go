@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
 
+	firebase "firebase.google.com/go/v4"
 	auctionpb "services/auction/proto"
-	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"
 	geopb "services/geographic-market-insights/proto"
@@ -16,6 +17,8 @@ import (
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
 
+	"google.golang.org/api/option"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -28,7 +31,6 @@ func registerRoutes() {
 	registerChatRoutes()
 	registerMarketRoutes()
 	registerAuctionRoutes()
-	registerAuthRoutes()
 	registerUserRoutes()
 	registerSellerRoutes()
 }
@@ -60,11 +62,6 @@ func registerAuctionRoutes() {
 	http.HandleFunc(routeAuctionByID, handlers.HandleAuctionByIDRoutes)
 }
 
-func registerAuthRoutes() {
-	http.HandleFunc(routeAuthRegister, handlers.HandleRegisterUser)
-	http.HandleFunc(routeAuthLogin, handlers.HandleLoginUser)
-}
-
 func registerUserRoutes() {
 	http.HandleFunc(routeFavorites, handlers.HandleGetFavorites)
 	http.HandleFunc(routeFavoriteByListingID, handlers.HandleFavoriteListing)
@@ -80,13 +77,27 @@ func main() {
 	slog.SetDefault(Logger)
 	handlers.SetLogger(Logger)
 
-	authConn, err := grpc.NewClient(os.Getenv("AUTH_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	firebaseProjectID := os.Getenv("FIREBASE_PROJECT_ID")
+
+	var firebaseOpts []option.ClientOption
+	if credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); credFile != "" {
+		firebaseOpts = append(firebaseOpts, option.WithCredentialsFile(credFile))
+	}
+
+	fbApp, err := firebase.NewApp(context.Background(), &firebase.Config{
+		ProjectID: firebaseProjectID,
+	}, firebaseOpts...)
 	if err != nil {
-		Logger.Error("failed to connect to auth service", "error", err)
+		Logger.Error("failed to initialise Firebase app", "error", err)
 		return
 	}
-	defer authConn.Close()
-	authClient := authpb.NewAuthServiceClient(authConn)
+
+	fbAuthClient, err := fbApp.Auth(context.Background())
+	if err != nil {
+		Logger.Error("failed to create Firebase Auth client", "error", err)
+		return
+	}
+	handlers.SetFirebaseAuthClient(fbAuthClient)
 
 	listingConn, err := grpc.NewClient(os.Getenv("LISTING_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -153,7 +164,6 @@ func main() {
 	marketpriceClient := marketpricepb.NewMarketPriceServiceClient(marketpriceConn)
 
 	handlers.SetClients(
-		authClient,
 		listingClient,
 		searchClient,
 		userClient,
@@ -168,6 +178,8 @@ func main() {
 	handlers.SetAuctionWSUpstream(os.Getenv("AUCTION_WS_ADDR"))
 
 	registerRoutes()
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	Logger.Info("Gateway listening on :8080...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

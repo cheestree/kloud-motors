@@ -19,6 +19,14 @@ func NewUserService(repo *repository.Repository) *UserService {
 	return &UserService{repo: repo}
 }
 
+func (s *UserService) GetOrCreateByFirebaseUID(ctx context.Context, req *proto.GetOrCreateByFirebaseUIDRequest) (*proto.GetOrCreateByFirebaseUIDResponse, error) {
+	user, err := s.repo.GetOrCreateByFirebaseUID(ctx, req.FirebaseUid, req.Email, req.Name)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get or create user by firebase uid")
+	}
+	return &proto.GetOrCreateByFirebaseUIDResponse{UserId: user.ID}, nil
+}
+
 func (s *UserService) CreateUserProfile(ctx context.Context, req *proto.CreateUserProfileRequest) (*proto.CreateUserProfileResponse, error) {
 	user := &User{
 		ID:    req.UserId,

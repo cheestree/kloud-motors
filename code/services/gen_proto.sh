@@ -11,7 +11,6 @@ docker cp proto-gen-container:/workspace/search/proto/. "$SERVICES_ROOT/search/p
 docker cp proto-gen-container:/workspace/chat/proto/. "$SERVICES_ROOT/chat/proto/"
 docker cp proto-gen-container:/workspace/seller/proto/. "$SERVICES_ROOT/seller/proto/"
 docker cp proto-gen-container:/workspace/user/proto/. "$SERVICES_ROOT/user/proto/"
-docker cp proto-gen-container:/workspace/auth/proto/. "$SERVICES_ROOT/auth/proto/"
 docker cp proto-gen-container:/workspace/geographic-market-insights/proto/. "$SERVICES_ROOT/geographic-market-insights/proto/"
 docker cp proto-gen-container:/workspace/auction/proto/. "$SERVICES_ROOT/auction/proto/"
 docker cp proto-gen-container:/workspace/marketprice/proto/. "$SERVICES_ROOT/marketprice/proto/"

@@ -3,8 +3,9 @@ package handlers
 import (
 	"log/slog"
 
+	firebaseauth "firebase.google.com/go/v4/auth"
+
 	auctionpb "services/auction/proto"
-	authpb "services/auth/proto"
 	chatpb "services/chat/proto"
 	geopb "services/geographic-market-insights/proto"
 	listingpb "services/listing/proto"
@@ -15,17 +16,17 @@ import (
 )
 
 var (
-	Logger            = slog.Default()
-	authClient        authpb.AuthServiceClient
-	listingClient     listingpb.ListingServiceClient
-	searchClient      searchpb.SearchServiceClient
-	userClient        userpb.UserServiceClient
-	sellerClient      sellerpb.SellerServiceClient
-	chatClient        chatpb.ChatServiceClient
-	geoClient         geopb.GeoMarketInsightsServiceClient
-	auctionClient     auctionpb.AuctionServiceClient
-	chatWSUpstream    string
-	marketpriceClient marketpricepb.MarketPriceServiceClient
+	Logger             = slog.Default()
+	firebaseAuthClient *firebaseauth.Client
+	listingClient      listingpb.ListingServiceClient
+	searchClient       searchpb.SearchServiceClient
+	userClient         userpb.UserServiceClient
+	sellerClient       sellerpb.SellerServiceClient
+	chatClient         chatpb.ChatServiceClient
+	geoClient          geopb.GeoMarketInsightsServiceClient
+	auctionClient      auctionpb.AuctionServiceClient
+	chatWSUpstream     string
+	marketpriceClient  marketpricepb.MarketPriceServiceClient
 )
 
 func SetLogger(l *slog.Logger) {
@@ -34,9 +35,12 @@ func SetLogger(l *slog.Logger) {
 	}
 }
 
+func SetFirebaseAuthClient(c *firebaseauth.Client) {
+	firebaseAuthClient = c
+}
+
 // SetClients wires service clients from main into the handlers package
 func SetClients(
-	auth authpb.AuthServiceClient,
 	listing listingpb.ListingServiceClient,
 	search searchpb.SearchServiceClient,
 	user userpb.UserServiceClient,
@@ -46,7 +50,6 @@ func SetClients(
 	auction auctionpb.AuctionServiceClient,
 	marketprice marketpricepb.MarketPriceServiceClient,
 ) {
-	authClient = auth
 	listingClient = listing
 	searchClient = search
 	userClient = user
