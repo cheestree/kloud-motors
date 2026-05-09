@@ -8,7 +8,7 @@ import (
 
 	"services/search/domain"
 	"services/search/repository"
-	"services/shared/cache"
+	"services/redis/cache"
 	"services/utils"
 )
 

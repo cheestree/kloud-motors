@@ -5,3 +5,5 @@ metadata:
   namespace: vehicles-prod
 data:
   LISTING_GRPC_PORT: "50054"
+  REDIS_HOST: "redis-cache"
+  REDIS_PORT: "6379"

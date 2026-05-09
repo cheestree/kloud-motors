@@ -9,7 +9,7 @@ import (
 
 	"services/listing/repository"
 	"services/shared"
-	"services/shared/cache"
+	"services/redis/cache"
 )
 
 type ListingService struct {

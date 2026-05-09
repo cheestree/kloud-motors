@@ -15,4 +15,5 @@ resources:
   - marketprice
   - auction
   - gateway
+  - redis
   - ingress.yaml

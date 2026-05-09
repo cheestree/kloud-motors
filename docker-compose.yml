@@ -301,7 +301,9 @@ services:
       
   redis-cache:
     container_name: redis-cache
-    image: redis:alpine
+    build:
+      context: ./code/services
+      dockerfile: redis/Dockerfile
     ports:
       - "6379:6379"
     healthcheck:

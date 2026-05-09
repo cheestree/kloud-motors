@@ -12,7 +12,7 @@ import (
 	"services/listing/repository"
 	"services/listing/service"
 	"services/shared"
-	"services/shared/cache"
+	"services/redis/cache"
 	"services/utils"
 
 	_ "github.com/lib/pq"
