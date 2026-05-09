@@ -1,6 +1,5 @@
 databases = [
   "listing_db",
-  "auth_db",
   "user_db",
   "seller_db",
   "auction_db",

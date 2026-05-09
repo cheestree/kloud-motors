@@ -16,4 +16,4 @@ resources:
   - gateway
   - redis
   - ingress.yaml
-  - ingress_vehicles_prod.yaml
+# - ingress_vehicles_prod.yaml
