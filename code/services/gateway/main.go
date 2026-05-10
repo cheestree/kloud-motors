@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 
-	firebase "firebase.google.com/go/v4"
 	auctionpb "services/auction/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"
@@ -17,8 +16,10 @@ import (
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
 
-	"google.golang.org/api/option"
+	firebase "firebase.google.com/go/v4"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -181,8 +182,12 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 
+	RegisterMetrics()
+	mux := http.DefaultServeMux
+	handler := MetricsMiddleware(mux)
+
 	Logger.Info("Gateway listening on :8080...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", handler); err != nil {
 		Logger.Error("failed to start HTTP server", "error", err)
 	}
 }
