@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cloudsql-backup
+  namespace: vehicles-prod
+spec:
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: vehicles-workload-sa
+          restartPolicy: OnFailure
+          containers:
+            - name: cloudsql-backup
+              image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: GCP_PROJECT_ID
+                  value: cn-project-491618
+                - name: BACKUP_BUCKET
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: BACKUP_BUCKET
+                - name: CLOUD_SQL_INSTANCE
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: CLOUD_SQL_INSTANCE
+                - name: DATABASES
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: DATABASES
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  timestamp="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
+                  IFS=',' read -r -a databases <<< "$DATABASES"
+
+                  for database in "${databases[@]}"; do
+                      uri="gs://${BACKUP_BUCKET}/cloudsql/${database}/${timestamp}.sql.gz"
+                      echo "Exporting ${database} to ${uri}"
+                      gcloud sql export sql "$CLOUD_SQL_INSTANCE" "$uri" \
+                          --project="$GCP_PROJECT_ID" \
+                          --database="$database" \
+                          --offload
+                  done
