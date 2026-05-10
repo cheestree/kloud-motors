@@ -21,6 +21,13 @@ type server struct {
 	service *service.UserService
 }
 
+func (s *server) GetOrCreateByFirebaseUID(ctx context.Context, req *userpb.GetOrCreateByFirebaseUIDRequest) (*userpb.GetOrCreateByFirebaseUIDResponse, error) {
+	if req.FirebaseUid == "" {
+		return nil, status.Error(codes.InvalidArgument, "firebase_uid is required")
+	}
+	return s.service.GetOrCreateByFirebaseUID(ctx, req)
+}
+
 func (s *server) CreateUserProfile(ctx context.Context, req *userpb.CreateUserProfileRequest) (*userpb.CreateUserProfileResponse, error) {
 	if req.UserId <= 0 || req.Name == "" || req.Email == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id, name, and email are required")

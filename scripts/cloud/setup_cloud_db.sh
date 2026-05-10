@@ -24,16 +24,17 @@ sleep 10
 echo "Proxy running (PID: $PROXY_PID). Starting data preparation..."
 docker run --rm \
     --add-host host.docker.internal:host-gateway \
-    -e AUTH_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/auth_db" \
     -e USER_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/user_db" \
     -e SELLER_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/seller_db" \
     -e AUCTION_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/auction_db" \
     -e LISTING_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/listing_db" \
     -e CHAT_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/chat_db" \
+    -e FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID} \
+    -e GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS} \
     -v "$REPO_ROOT:/workspace" \
     -w /workspace/code/setup \
     python:3.12-slim \
-    bash -c "pip install pandas faker sqlalchemy python-dotenv psycopg2-binary bcrypt --quiet && \
+    bash -c "pip install pandas faker sqlalchemy python-dotenv psycopg2-binary firebase-admin --quiet && \
              if [ -f '/workspace/code/setup/$(basename $PREPARED_CSV)' ]; then \
                  echo 'Dataset already prepared. Skipping initial cleaning.'; \
              else \
@@ -44,13 +45,9 @@ docker run --rm \
                  --rows 1000; \
              fi && \
              echo 'Creating tables...' && \
-             python3 auth-db/init_auth_db.py && \
-             python3 setup_auth_db.py && \
              python3 user-db/prepare_users.py \
                  --dataset '/workspace/code/setup/$(basename $PREPARED_CSV)' \
                  --output '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
-             python3 auth-db/load_auth_users.py \
-                 --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 user-db/load_users.py \
                  --dataset '/workspace/code/setup/$(basename $USERS_PREPARED_CSV)' && \
              python3 seller-db/load_sellers.py \

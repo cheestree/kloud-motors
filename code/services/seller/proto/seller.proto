@@ -74,16 +74,3 @@ message SellerPreview {
 message SellersPreviewResponse {
   repeated SellerPreview sellers = 1;
 }
-
-message SellersPreviewRequest {
-    repeated int64 seller_ids = 1;
-}
-
-message SellerPreview {
-    int64 id = 1;
-    string name = 2;
-}
-
-message SellersPreviewResponse {
-    repeated SellerPreview sellers = 1;
-}

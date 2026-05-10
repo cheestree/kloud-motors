@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 K8S_DIR="$ROOT_DIR/deploy/k8s"
 KUSTOMIZE_DIR="$K8S_DIR/monitoring"
+INGRESS_FILE="$K8S_DIR/ingress_monitoring.yaml"
 NAMESPACE_FILE="$KUSTOMIZE_DIR/namespace.yaml"
 
 ACTION="up"
@@ -90,7 +91,6 @@ apply_up() {
   k apply -k "$KUSTOMIZE_DIR"
 
   if [[ "$WITH_INGRESS" == true ]]; then
-    INGRESS_FILE="$K8S_DIR/ingress_monitoring.yaml"
     if [[ -f "$INGRESS_FILE" ]]; then
       echo "Applying monitoring ingress: $INGRESS_FILE"
       k apply -f "$INGRESS_FILE"

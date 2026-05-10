@@ -13,7 +13,6 @@ gcloud sql instances create $INSTANCE_NAME \
 echo "Instance created! Now creating databases..."
 
 gcloud sql databases create listing_db --instance=cn-db-instance
-gcloud sql databases create auth_db --instance=cn-db-instance
 gcloud sql databases create user_db --instance=cn-db-instance
 gcloud sql databases create seller_db --instance=cn-db-instance
 gcloud sql databases create auction_db --instance=cn-db-instance

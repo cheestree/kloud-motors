@@ -6,7 +6,7 @@ metadata:
   labels:
     app: geographic-market-insights-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: geographic-market-insights-service

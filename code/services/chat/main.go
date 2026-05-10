@@ -126,7 +126,7 @@ func setupServiceClients() (*serviceClients, error) {
 
 func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, clients *serviceClients) error {
 	grpcPort := utils.GetEnv("CHAT_GRPC_PORT", "50052")
-	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
+	grpcLis, err := net.Listen("tcp", ":" + grpcPort)
 	if err != nil {
 		return err
 	}

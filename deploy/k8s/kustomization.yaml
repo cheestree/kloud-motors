@@ -9,10 +9,10 @@ resources:
   - search
   - chat
   - geographic-market-insights
-  - auth
   - user
   - seller
   - marketprice
   - auction
   - gateway
-  - ingress_vehicles_prod.yaml
+  - redis
+  - ingress.yaml
