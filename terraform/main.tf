@@ -12,6 +12,26 @@ resource "google_sql_database" "databases" {
   instance = google_sql_database_instance.db_instance.name
 }
 
+resource "google_storage_bucket" "backup_bucket" {
+  name                        = var.backup_bucket_name
+  location                    = var.region
+  uniform_bucket_level_access = true
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 30
+    }
+    action {
+      type = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+  }
+}
+
 # Artifact Registry para as imagens Docker
 resource "google_artifact_registry_repository" "vehicles_repo" {
   location      = var.region
@@ -36,7 +56,8 @@ resource "google_project_iam_member" "roles" {
   for_each = toset([
     "roles/pubsub.publisher", "roles/pubsub.subscriber",
     "roles/datastore.user", "roles/cloudsql.client",
-    "roles/artifactregistry.reader"
+    "roles/artifactregistry.reader", "roles/storage.objectAdmin",
+    "roles/cloudsql.admin"
   ])
   project = var.project_id
   role    = each.value
