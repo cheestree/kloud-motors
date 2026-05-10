@@ -9,6 +9,17 @@ service UserService {
     rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
     rpc GetUsersPreview (UsersPreviewRequest) returns (UsersPreviewResponse);
     rpc CreateUserProfile (CreateUserProfileRequest) returns (CreateUserProfileResponse);
+    rpc GetOrCreateByFirebaseUID (GetOrCreateByFirebaseUIDRequest) returns (GetOrCreateByFirebaseUIDResponse);
+}
+
+message GetOrCreateByFirebaseUIDRequest {
+  string firebase_uid = 1;
+  string email = 2;
+  string name = 3;
+}
+
+message GetOrCreateByFirebaseUIDResponse {
+  int64 user_id = 1;
 }
 
 message CreateUserProfileRequest {

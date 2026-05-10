@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: auth-config
-  namespace: vehicles-prod
-data:
-  USER_GRPC_ADDR: user-service:50058
-  AUTH_GRPC_PORT: "50050"

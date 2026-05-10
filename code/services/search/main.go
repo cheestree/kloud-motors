@@ -4,11 +4,15 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"strconv"
+	"time"
+
 	"services/search/domain"
 	"services/search/proto"
 	"services/search/repository"
 	"services/search/service"
 	"services/shared"
+	"services/redis/cache"
 	"services/utils"
 
 	_ "github.com/lib/pq"
@@ -108,7 +112,14 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	repo := repository.NewSearchRepository(listingDB)
-	searchService := service.NewSearchService(repo)
+
+	redisHost := utils.GetEnv("REDIS_HOST", "redis-cache")
+	redisPort := utils.GetEnv("REDIS_PORT", "6379")
+	ttlStr := utils.GetEnv("SEARCH_CACHE_TTL_SECONDS", "300")
+	ttlSeconds, _ := strconv.Atoi(ttlStr)
+	redisCache := cache.NewRedisCache(redisHost, redisPort, time.Duration(ttlSeconds)*time.Second)
+
+	searchService := service.NewSearchService(repo, redisCache)
 	proto.RegisterSearchServiceServer(grpcServer, &server{service: searchService})
 
 	utils.HealthCheck("search.SearchService", grpcServer)

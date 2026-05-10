@@ -15,6 +15,7 @@ SERVICES=(
   "geographic-market-insights"
   "listing"
   "marketprice"
+  "redis"
   "search"
   "seller"
   "user"

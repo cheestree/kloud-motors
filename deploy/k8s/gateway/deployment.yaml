@@ -11,6 +11,9 @@ spec:
       app: gateway-service
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
       labels:
         app: gateway-service
     spec:
@@ -23,12 +26,11 @@ spec:
             - name: http
               containerPort: 8080
           env:
-            # JWT — segredo partilhado com o auth service
-            - name: JWT_PUBLIC_KEY_B64
+            - name: FIREBASE_PROJECT_ID
               valueFrom:
-                secretKeyRef:
-                  name: gateway-secrets
-                  key: JWT_PUBLIC_KEY_B64
+                configMapKeyRef:
+                  name: gateway-config
+                  key: FIREBASE_PROJECT_ID
 
           envFrom:
             - configMapRef:

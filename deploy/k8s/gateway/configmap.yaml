@@ -4,7 +4,6 @@ metadata:
   name: gateway-config
   namespace: vehicles-prod
 data:
-  AUTH_GRPC_ADDR: "auth-service:50050"
   AUCTION_GRPC_ADDR: "auction-service:50051"
   CHAT_GRPC_ADDR: "chat-service:50052"
   GEO_GRPC_ADDR: "geographic-market-insights-service:50053"
@@ -15,3 +14,4 @@ data:
   USER_GRPC_ADDR: "user-service:50058"
   CHAT_WS_ADDR: "ws://chat-service:8080"
   AUCTION_WS_ADDR: "ws://auction-service:8081"
+  FIREBASE_PROJECT_ID: "cn-project-491618"
