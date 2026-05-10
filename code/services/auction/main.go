@@ -4,14 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	proto "services/auction/proto"
 	auctionpubsub "services/auction/pubsub"
 	ws2 "services/auction/ws"
 	listingproto "services/listing/proto"
+	"services/observability"
 	utils "services/utils"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc/credentials/insecure"
 
 	_ "github.com/lib/pq"
@@ -21,13 +26,27 @@ import (
 var auctionDB *sql.DB
 
 func main() {
+	ctx := context.Background()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+	shutdownTracing := observability.InitTracing(ctx, logger, "auction")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
+
 	auctionDSN := utils.MustGetEnv("AUCTION_DATABASE_URL")
 	auctionDB = utils.TryConnectDB(auctionDSN, 8, 10)
 
 	listingAddr := utils.GetEnv("LISTING_GRPC_ADDR", "listing:50054")
 	auctionGRPCPort := utils.GetEnv("AUCTION_GRPC_PORT", "50051")
 
-	listingConn, err := grpc.NewClient(listingAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	listingConn, err := grpc.NewClient(
+		listingAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		log.Fatalf("Failed to connect to listing service: %v", err)
 	}
@@ -35,7 +54,7 @@ func main() {
 	listingClient := listingproto.NewListingServiceClient(listingConn)
 
 	nodeID := utils.GetEnv("POD_ID", utils.LocalNodeID())
-	ps, err := auctionpubsub.NewGCPPubSub(context.Background(), auctionpubsub.GCPPubSubConfig{
+	ps, err := auctionpubsub.NewGCPPubSub(ctx, auctionpubsub.GCPPubSubConfig{
 		ProjectID:       utils.GetEnv("GCP_PROJECT_ID", ""),
 		TopicID:         utils.GetEnv("AUCTION_PUBSUB_TOPIC", "auction-events"),
 		SubscriptionID:  utils.GetEnv("AUCTION_PUBSUB_SUBSCRIPTION", "auction-sub-"+nodeID),
@@ -56,7 +75,7 @@ func main() {
 
 	lis := utils.TryListen(auctionGRPCPort)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	proto.RegisterAuctionServiceServer(grpcServer, &server{
 		hub:           hub,
 		listingClient: listingClient,
@@ -77,7 +96,8 @@ func main() {
 	wsPort := utils.GetEnv("AUCTION_WS_PORT", "8080")
 
 	log.Printf("Auction WS server is running on :%s...", wsPort)
-	if err := http.ListenAndServe(":"+wsPort, mux); err != nil {
+	handler := otelhttp.NewHandler(mux, "auction-websocket")
+	if err := http.ListenAndServe(":"+wsPort, handler); err != nil {
 		log.Fatalf("http serve: %v", err)
 	}
 }

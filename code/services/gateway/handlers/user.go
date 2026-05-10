@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -20,7 +19,7 @@ func HandleGetFavorites(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msgUnauthorized, http.StatusUnauthorized)
 		return
 	}
-	ctx := context.Background()
+	ctx := r.Context()
 	req := &userpb.GetFavoritesRequest{UserId: authUserID}
 	resp, err := userClient.GetFavorites(ctx, req)
 	if err != nil {
@@ -42,7 +41,7 @@ func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msgUnauthorized, http.StatusUnauthorized)
 		return
 	}
-	ctx := context.Background()
+	ctx := r.Context()
 	switch r.Method {
 	case http.MethodPost:
 		req := &userpb.AddFavoriteRequest{UserId: authUserID, ListingId: listingID}
@@ -75,7 +74,7 @@ func HandleGetUsersPreview(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}
-	ctx := context.Background()
+	ctx := r.Context()
 	resp, err := userClient.GetUsersPreview(ctx, &req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

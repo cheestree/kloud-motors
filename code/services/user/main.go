@@ -5,12 +5,14 @@ import (
 	"log/slog"
 	"os"
 
+	"services/observability"
 	"services/user/models"
 	userpb "services/user/proto"
 	"services/user/repository"
 	"services/user/service"
 	"services/utils"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -69,6 +71,13 @@ func (s *server) GetUsersPreview(ctx context.Context, req *userpb.UsersPreviewRe
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, logger, "user")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	userDsn := utils.MustGetEnv("USER_DATABASE_URL")
 
@@ -82,7 +91,7 @@ func main() {
 
 	lis := utils.TryListen(userGrpcPort)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	repo := repository.NewRepository(userDB)
 	userSvc := service.NewUserService(repo)
 	userpb.RegisterUserServiceServer(grpcServer, &server{service: userSvc})

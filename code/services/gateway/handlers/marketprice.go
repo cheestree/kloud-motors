@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	marketpricepb "services/marketprice/proto"
@@ -15,7 +14,7 @@ func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
-	ctx := context.Background()
+	ctx := r.Context()
 
 	req := &marketpricepb.AveragePriceRequest{
 		Brand: q.Get(queryBrand), // query param: "brand"

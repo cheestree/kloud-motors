@@ -6,6 +6,7 @@ RUN go mod download
 
 COPY ./shared ./shared
 COPY ./marketprice ./marketprice
+COPY ./observability ./observability
 COPY ./utils ./utils
 
 WORKDIR /app/marketprice

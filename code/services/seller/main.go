@@ -5,11 +5,13 @@ import (
 	"log/slog"
 	"os"
 
+	"services/observability"
 	sellerpb "services/seller/proto"
 	"services/seller/repository"
 	"services/seller/service"
 	"services/utils"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -81,6 +83,13 @@ func (s *server) GetSellersPreview(ctx context.Context, req *sellerpb.SellersPre
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, logger, "seller")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	sellerDsn := utils.MustGetEnv("SELLER_DATABASE_URL")
 	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
@@ -92,7 +101,7 @@ func main() {
 
 	lis := utils.TryListen(sellerGrpcPort)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	repo := repository.NewRepository(listingDB, sellerDB)
 	sellerSvc := service.NewService(repo)
 	sellerpb.RegisterSellerServiceServer(grpcServer, &server{service: sellerSvc})

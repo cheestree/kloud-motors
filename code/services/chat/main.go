@@ -14,9 +14,12 @@ import (
 	"services/chat/repository/postgres"
 	ws2 "services/chat/ws"
 	listingproto "services/listing/proto"
+	"services/observability"
 	sellerproto "services/seller/proto"
 	"services/utils"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -36,6 +39,12 @@ func main() {
 	slog.SetDefault(logger)
 
 	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, logger, "chat")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	nodeID := utils.GetEnv("POD_ID", utils.LocalNodeID())
 	pubsub, err := pubsub2.NewGCPPubSub(ctx, pubsub2.GCPPubSubConfig{
@@ -102,6 +111,7 @@ func setupServiceClients() (*serviceClients, error) {
 	listingConn, err := grpc.NewClient(
 		utils.GetEnv("LISTING_SERVICE_ADDR", "localhost:50054"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return nil, err
@@ -110,6 +120,7 @@ func setupServiceClients() (*serviceClients, error) {
 	sellerConn, err := grpc.NewClient(
 		utils.GetEnv("SELLER_SERVICE_ADDR", "localhost:50057"),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		_ = listingConn.Close()
@@ -126,12 +137,12 @@ func setupServiceClients() (*serviceClients, error) {
 
 func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, clients *serviceClients) error {
 	grpcPort := utils.GetEnv("CHAT_GRPC_PORT", "50052")
-	grpcLis, err := net.Listen("tcp", ":" + grpcPort)
+	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		return err
 	}
 
-	grpcSrv := grpc.NewServer()
+	grpcSrv := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	proto.RegisterChatServiceServer(grpcSrv, &grpcServer{
 		messageStore:  messageStore,
 		indexStore:    indexStore,
@@ -162,5 +173,6 @@ func setupHTTPWS(logger *slog.Logger, hub *ws2.Hub, messageStore repository.Mess
 	httpWSPort := utils.GetEnv("CHAT_WS_PORT", "8080")
 
 	log.Printf("WS listening on %s", httpWSPort)
-	return http.ListenAndServe(":"+httpWSPort, mux)
+	handler := otelhttp.NewHandler(mux, "chat-websocket")
+	return http.ListenAndServe(":"+httpWSPort, handler)
 }

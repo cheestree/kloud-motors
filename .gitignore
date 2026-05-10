@@ -28,3 +28,4 @@ proxy.log
 .env.secrets
 gcp-sa-key.json
 .env.variables
+deploy/k8s/gke_gcloud_auth_plugin_cache

@@ -7,15 +7,17 @@ import (
 	"strconv"
 	"time"
 
+	"services/observability"
+	"services/redis/cache"
 	"services/search/domain"
 	"services/search/proto"
 	"services/search/repository"
 	"services/search/service"
 	"services/shared"
-	"services/redis/cache"
 	"services/utils"
 
 	_ "github.com/lib/pq"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -101,6 +103,13 @@ func toListingSummary(item shared.ListingSummary) *shared.ListingSummary {
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, logger, "search")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
@@ -110,7 +119,7 @@ func main() {
 
 	lis := utils.TryListen(grpcPort)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	repo := repository.NewSearchRepository(listingDB)
 
 	redisHost := utils.GetEnv("REDIS_HOST", "redis-cache")

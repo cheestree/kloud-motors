@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
@@ -15,7 +14,7 @@ func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
-	ctx := context.Background()
+	ctx := r.Context()
 
 	var metrics []geopb.MetricType
 	for _, m := range q[queryMetrics] {
@@ -95,7 +94,7 @@ func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
-	ctx := context.Background()
+	ctx := r.Context()
 
 	var groupBy geopb.GroupBy
 	switch strings.ToLower(q.Get(queryGroupBy)) {
@@ -161,7 +160,7 @@ func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
-	ctx := context.Background()
+	ctx := r.Context()
 	var location *string
 	if s := q.Get(queryLocation); s != "" {
 		location = &s
