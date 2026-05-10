@@ -35,7 +35,6 @@ protoc \
     "$SERVICES_ROOT/chat/proto/chat.proto" \
     "$SERVICES_ROOT/seller/proto/seller.proto" \
     "$SERVICES_ROOT/user/proto/user.proto" \
-    "$SERVICES_ROOT/auth/proto/auth.proto" \
     "$SERVICES_ROOT/geographic-market-insights/proto/geo-market-insights.proto" \
     "$SERVICES_ROOT/auction/proto/auction.proto"
 
