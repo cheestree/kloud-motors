@@ -217,7 +217,7 @@ services:
       retries: 20
       start_period: 10s
     volumes:
-      - auth_postgres_data:/var/lib/postgresql/data
+      - user_postgres_data:/var/lib/postgresql/data
 
   seller-db:
     container_name: seller-db
@@ -286,7 +286,51 @@ services:
       timeout: 5s
       retries: 5
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "4041:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+      
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./code/services/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - gateway
+      - listing
+      - search
+      - auction
+      - user
+      - seller
+      - chat
+      - geo
+      - marketprice
 
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+    - grafana_data:/var/lib/grafana
+    - ./code/services/monitoring/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    depends_on:
+      - prometheus
 
 volumes:
   listing_postgres_data:
@@ -294,3 +338,4 @@ volumes:
   seller_postgres_data:
   chat_postgres_data:
   auction_postgres_data:
+  grafana_data:
