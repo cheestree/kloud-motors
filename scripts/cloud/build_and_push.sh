@@ -9,7 +9,6 @@ BASE_IMAGE_URL="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}"
 # Lista de serviços presentes na pasta code/services
 SERVICES=(
   "auction"
-  "auth"
   "chat"
   "gateway"
   "geographic-market-insights"
