@@ -25,8 +25,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - service: auth
-            dockerfile: auth/Dockerfile
           - service: listing
             dockerfile: listing/Dockerfile
           - service: search
@@ -45,6 +43,8 @@ jobs:
             dockerfile: geographic-market-insights/Dockerfile
           - service: gateway
             dockerfile: gateway/Dockerfile
+          - service: redis
+            dockerfile: redis/Dockerfile
 
     steps:
       - name: Checkout
@@ -93,11 +93,19 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
 
       - name: Get GKE credentials
+        id: gke-credentials
         uses: google-github-actions/get-gke-credentials@v3
         with:
           cluster_name: ${{ env.GKE_CLUSTER }}
           location: ${{ env.GKE_ZONE }}
 
 
-      - name: Deploy to GKE
-        run: bash scripts/cloud/k8s.sh up --with-ingress && bash scripts/cloud/monitoring_k8s.sh up
+      - name: Deploy app manifests to GKE
+        env:
+          KUBECONFIG: ${{ steps.gke-credentials.outputs.kubeconfig_path }}
+        run: bash scripts/cloud/k8s.sh up --with-ingress
+
+      - name: Deploy monitoring manifests to GKE
+        env:
+          KUBECONFIG: ${{ steps.gke-credentials.outputs.kubeconfig_path }}
+        run: bash scripts/cloud/monitoring_k8s.sh up

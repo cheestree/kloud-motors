@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	firebase "firebase.google.com/go/v4"
 	auctionpb "services/auction/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"

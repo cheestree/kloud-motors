@@ -217,7 +217,7 @@ services:
       retries: 20
       start_period: 10s
     volumes:
-      - user_postgres_data:/var/lib/postgresql/data
+      - auth_postgres_data:/var/lib/postgresql/data
 
   seller-db:
     container_name: seller-db

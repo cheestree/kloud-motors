@@ -14,6 +14,7 @@ import (
 	"services/search/repository"
 	"services/search/service"
 	"services/shared"
+	"services/redis/cache"
 	"services/utils"
 
 	_ "github.com/lib/pq"

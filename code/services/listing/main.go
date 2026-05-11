@@ -14,6 +14,7 @@ import (
 	"services/observability"
 	"services/redis/cache"
 	"services/shared"
+	"services/redis/cache"
 	"services/utils"
 
 	_ "github.com/lib/pq"
@@ -230,7 +231,6 @@ func main() {
 
 	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	repo := repository.NewListingRepository(listingDB)
-
 	redisHost := utils.GetEnv("REDIS_HOST", "redis-cache")
 	redisPort := utils.GetEnv("REDIS_PORT", "6379")
 	ttlStr := utils.GetEnv("CACHE_TTL_SECONDS", "3600")
