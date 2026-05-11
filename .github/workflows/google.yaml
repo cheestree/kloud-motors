@@ -43,6 +43,8 @@ jobs:
             dockerfile: geographic-market-insights/Dockerfile
           - service: gateway
             dockerfile: gateway/Dockerfile
+          - service: redis
+            dockerfile: redis/Dockerfile
 
     steps:
       - name: Checkout
