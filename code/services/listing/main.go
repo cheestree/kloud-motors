@@ -14,7 +14,6 @@ import (
 	"services/observability"
 	"services/redis/cache"
 	"services/shared"
-	"services/redis/cache"
 	"services/utils"
 
 	_ "github.com/lib/pq"

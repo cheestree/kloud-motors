@@ -19,7 +19,6 @@ import (
 	userpb "services/user/proto"
 
 
-	firebase "firebase.google.com/go/v4"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
