@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-config
+  namespace: vehicles-prod
+data:
+  BACKUP_BUCKET: cn-project-491618-backups
+  CLOUD_SQL_INSTANCE: cn-db-instance
+  DATABASES: listing_db,user_db,seller_db,auction_db,chat_db

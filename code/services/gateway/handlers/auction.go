@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -22,7 +21,7 @@ func SetAuctionWSUpstream(url string) {
 }
 
 func HandleAuctions(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:
 		q := r.URL.Query()
@@ -70,7 +69,7 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	auctionID := parts[3]
-	ctx := context.Background()
+	ctx := r.Context()
 
 	if len(parts) == 4 {
 		switch r.Method {

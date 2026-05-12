@@ -1,12 +1,14 @@
 #!/bin/bash
+set -euo pipefail
 
-# Configurações GCP
+
 PROJECT_ID="cn-project-491618"
 REGION="europe-central2"
 REPO_NAME="vehicles"
 BASE_IMAGE_URL="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}"
+TARGET_PLATFORM="${TARGET_PLATFORM:-linux/amd64}"
 
-# Lista de serviços presentes na pasta code/services
+
 SERVICES=(
   "auction"
   "chat"
@@ -21,6 +23,12 @@ SERVICES=(
 )
 
 echo "🛠️ Initiating Build and Push to GCP Artifact Registry..."
+echo "📦 Target platform: ${TARGET_PLATFORM}"
+
+if ! docker buildx version >/dev/null 2>&1; then
+  echo "❌ docker buildx is required but not available."
+  exit 1
+fi
 
 for SERVICE in "${SERVICES[@]}"; do
   echo "---------------------------------------------------"
@@ -28,12 +36,12 @@ for SERVICE in "${SERVICES[@]}"; do
   
   IMAGE_TAG="${BASE_IMAGE_URL}/${SERVICE}"
   
-
-  docker build -t ${IMAGE_TAG} -f code/services/${SERVICE}/Dockerfile code/services/
-  
-  echo "Pushing ${SERVICE} to GCP Artifact Registry..."
-  docker push ${IMAGE_TAG}
+  docker buildx build \
+    --platform "${TARGET_PLATFORM}" \
+    -t "${IMAGE_TAG}" \
+    -f "code/services/${SERVICE}/Dockerfile" \
+    code/services/ \
+    --push
   
   echo "✅ ${SERVICE} processed successfully!"
 done
-

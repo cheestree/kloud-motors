@@ -13,12 +13,18 @@ import (
 	geopb "services/geographic-market-insights/proto"
 	listingpb "services/listing/proto"
 	marketpricepb "services/marketprice/proto"
+	"services/observability"
 	searchpb "services/search/proto"
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
 
-	"google.golang.org/api/option"
+
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
+	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -76,6 +82,13 @@ func registerSellerRoutes() {
 func main() {
 	slog.SetDefault(Logger)
 	handlers.SetLogger(Logger)
+	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, Logger, "gateway")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			Logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	firebaseProjectID := os.Getenv("FIREBASE_PROJECT_ID")
 
@@ -84,7 +97,7 @@ func main() {
 		firebaseOpts = append(firebaseOpts, option.WithCredentialsFile(credFile))
 	}
 
-	fbApp, err := firebase.NewApp(context.Background(), &firebase.Config{
+	fbApp, err := firebase.NewApp(ctx, &firebase.Config{
 		ProjectID: firebaseProjectID,
 	}, firebaseOpts...)
 	if err != nil {
@@ -92,76 +105,108 @@ func main() {
 		return
 	}
 
-	fbAuthClient, err := fbApp.Auth(context.Background())
+	fbAuthClient, err := fbApp.Auth(ctx)
 	if err != nil {
 		Logger.Error("failed to create Firebase Auth client", "error", err)
 		return
 	}
 	handlers.SetFirebaseAuthClient(fbAuthClient)
 
-	listingConn, err := grpc.NewClient(os.Getenv("LISTING_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	listingConn, err := grpc.NewClient(
+		os.Getenv("LISTING_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to listing service", "error", err)
 		return
 	}
 	defer listingConn.Close()
-	listingClient := listingpb.NewListingServiceClient(listingConn)
+	listingClient := newBreakerListingClient(listingpb.NewListingServiceClient(listingConn))
 
-	searchConn, err := grpc.NewClient(os.Getenv("SEARCH_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	searchConn, err := grpc.NewClient(
+		os.Getenv("SEARCH_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to search service", "error", err)
 		return
 	}
 	defer searchConn.Close()
-	searchClient := searchpb.NewSearchServiceClient(searchConn)
+	searchClient := newBreakerSearchClient(searchpb.NewSearchServiceClient(searchConn))
 
-	userConn, err := grpc.NewClient(os.Getenv("USER_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userConn, err := grpc.NewClient(
+		os.Getenv("USER_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to user service", "error", err)
 		return
 	}
 	defer userConn.Close()
-	userClient := userpb.NewUserServiceClient(userConn)
+	userClient := newBreakerUserClient(userpb.NewUserServiceClient(userConn))
 
-	sellerConn, err := grpc.NewClient(os.Getenv("SELLER_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	sellerConn, err := grpc.NewClient(
+		os.Getenv("SELLER_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to seller service", "error", err)
 		return
 	}
 	defer sellerConn.Close()
-	sellerClient := sellerpb.NewSellerServiceClient(sellerConn)
+	sellerClient := newBreakerSellerClient(sellerpb.NewSellerServiceClient(sellerConn))
 
-	chatConn, err := grpc.NewClient(os.Getenv("CHAT_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	chatConn, err := grpc.NewClient(
+		os.Getenv("CHAT_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to chat service", "error", err)
 		return
 	}
 	defer chatConn.Close()
-	chatClient := chatpb.NewChatServiceClient(chatConn)
+	chatClient := newBreakerChatClient(chatpb.NewChatServiceClient(chatConn))
 
-	geoConn, err := grpc.NewClient(os.Getenv("GEO_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	geoConn, err := grpc.NewClient(
+		os.Getenv("GEO_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to geo-market-insights service", "error", err)
 		return
 	}
 	defer geoConn.Close()
-	geoClient := geopb.NewGeoMarketInsightsServiceClient(geoConn)
+	geoClient := newBreakerGeoClient(geopb.NewGeoMarketInsightsServiceClient(geoConn))
 
-	auctionConn, err := grpc.NewClient(os.Getenv("AUCTION_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	auctionConn, err := grpc.NewClient(
+		os.Getenv("AUCTION_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to auction service", "error", err)
 		return
 	}
 	defer auctionConn.Close()
-	auctionClient := auctionpb.NewAuctionServiceClient(auctionConn)
+	auctionClient := newBreakerAuctionClient(auctionpb.NewAuctionServiceClient(auctionConn))
 
-	marketpriceConn, err := grpc.NewClient(os.Getenv("MARKETPRICE_GRPC_ADDR"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	marketpriceConn, err := grpc.NewClient(
+		os.Getenv("MARKETPRICE_GRPC_ADDR"),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		Logger.Error("failed to connect to marketprice service", "error", err)
 		return
 	}
 	defer marketpriceConn.Close()
-	marketpriceClient := marketpricepb.NewMarketPriceServiceClient(marketpriceConn)
+	marketpriceClient := newBreakerMarketPriceClient(marketpricepb.NewMarketPriceServiceClient(marketpriceConn))
 
 	handlers.SetClients(
 		listingClient,
@@ -181,8 +226,15 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 
+	RegisterMetrics()
+	mux := http.DefaultServeMux
+	handler := MetricsMiddleware(mux)
+
 	Logger.Info("Gateway listening on :8080...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+
+	handler = otelhttp.NewHandler(handler, "gateway-http")
+
+	if err := http.ListenAndServe(":8080", handler); err != nil {
 		Logger.Error("failed to start HTTP server", "error", err)
 	}
 }

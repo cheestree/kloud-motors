@@ -7,6 +7,7 @@ RUN go mod download
 
 COPY ./shared ./shared
 COPY ./search ./search
+COPY ./observability ./observability
 COPY ./utils ./utils
 COPY ./redis ./redis
 

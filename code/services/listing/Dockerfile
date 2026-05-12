@@ -6,6 +6,7 @@ RUN go mod download
 
 COPY ./shared ./shared
 COPY ./listing ./listing
+COPY ./observability ./observability
 COPY ./utils ./utils
 COPY ./redis ./redis
 

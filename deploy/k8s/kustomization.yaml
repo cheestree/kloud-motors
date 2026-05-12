@@ -15,4 +15,5 @@ resources:
   - auction
   - gateway
   - redis
+  - backup
   - ingress.yaml
