@@ -130,8 +130,8 @@ func setupServiceClients() (*serviceClients, error) {
 	return &serviceClients{
 		listingConn:   listingConn,
 		sellerConn:    sellerConn,
-		listingClient: listingproto.NewListingServiceClient(listingConn),
-		sellerClient:  sellerproto.NewSellerServiceClient(sellerConn),
+		listingClient: newBreakerListingClient(listingproto.NewListingServiceClient(listingConn)),
+		sellerClient:  newBreakerSellerClient(sellerproto.NewSellerServiceClient(sellerConn)),
 	}, nil
 }
 

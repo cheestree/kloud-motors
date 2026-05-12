@@ -10,6 +10,9 @@ import (
 	proto "services/auction/proto"
 	ws2 "services/auction/ws"
 	listingproto "services/listing/proto"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type server struct {
@@ -127,7 +130,10 @@ func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequ
 	})
 	if err != nil {
 		log.Printf("Error checking listing ownership: %v", err)
-		return nil, fmt.Errorf("failed to verify listing ownership")
+		if status.Code(err) == codes.Unavailable {
+			return nil, status.Error(codes.Unavailable, "listing service unavailable")
+		}
+		return nil, status.Error(codes.Internal, "failed to verify listing ownership")
 	}
 	if !ownerResp.IsOwner {
 		return nil, fmt.Errorf("seller does not own listing %v", req.ListingId)
@@ -138,7 +144,10 @@ func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequ
 	})
 	if err != nil {
 		log.Printf("Error checking listing status: %v", err)
-		return nil, fmt.Errorf("failed to verify listing status")
+		if status.Code(err) == codes.Unavailable {
+			return nil, status.Error(codes.Unavailable, "listing service unavailable")
+		}
+		return nil, status.Error(codes.Internal, "failed to verify listing status")
 	}
 	if !openResp.IsOpen {
 		return nil, fmt.Errorf("listing %v is not available for auction", req.ListingId)

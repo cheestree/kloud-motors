@@ -57,6 +57,9 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 	isSeller, err := s.sellerClient.VerifySellerProfile(ctx, &sellerproto.VerifySellerRequest{SellerId: sellerId})
 
 	if err != nil {
+		if status.Code(err) == codes.Unavailable {
+			return nil, status.Errorf(codes.Unavailable, "seller service unavailable: %v", err)
+		}
 		return nil, status.Errorf(codes.Internal, "failed to verify seller profile: %v", err)
 	}
 
@@ -69,6 +72,9 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 		&listingproto.CheckListingOwnershipRequest{ListingId: listingID, DealerId: sellerId})
 
 	if err != nil {
+		if status.Code(err) == codes.Unavailable {
+			return nil, status.Errorf(codes.Unavailable, "listing service unavailable: %v", err)
+		}
 		return nil, status.Errorf(codes.Internal, "failed to check listing ownership: %v", err)
 	}
 	if !isListingFromSeller.IsOwner {
@@ -77,6 +83,9 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 
 	listing, err := s.listingClient.GetListingSummary(ctx, &listingproto.ListingDetailsRequest{Id: listingID})
 	if err != nil {
+		if status.Code(err) == codes.Unavailable {
+			return nil, status.Errorf(codes.Unavailable, "listing service unavailable: %v", err)
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get listing details: %v", err)
 	}
 

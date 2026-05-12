@@ -51,7 +51,7 @@ func main() {
 		log.Fatalf("Failed to connect to listing service: %v", err)
 	}
 	defer listingConn.Close()
-	listingClient := listingproto.NewListingServiceClient(listingConn)
+	listingClient := newBreakerListingClient(listingproto.NewListingServiceClient(listingConn))
 
 	nodeID := utils.GetEnv("POD_ID", utils.LocalNodeID())
 	ps, err := auctionpubsub.NewGCPPubSub(ctx, auctionpubsub.GCPPubSubConfig{

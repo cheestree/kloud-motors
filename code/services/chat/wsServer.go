@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type wsServer struct {
@@ -79,6 +81,10 @@ func (s *wsServer) ServeWS(w http.ResponseWriter, r *http.Request) {
 	listingOpen, err := s.listingClient.CheckListingOpen(r.Context(), &listingproto.CheckListingOpenRequest{ListingId: listingID})
 	if err != nil {
 		log.Printf("listing open check error listing=%d user=%d err=%v", listingID, userID, err)
+		if status.Code(err) == codes.Unavailable {
+			http.Error(w, "listing service unavailable", http.StatusServiceUnavailable)
+			return
+		}
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
