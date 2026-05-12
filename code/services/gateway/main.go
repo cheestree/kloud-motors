@@ -122,7 +122,7 @@ func main() {
 		return
 	}
 	defer listingConn.Close()
-	listingClient := listingpb.NewListingServiceClient(listingConn)
+	listingClient := newBreakerListingClient(listingpb.NewListingServiceClient(listingConn))
 
 	searchConn, err := grpc.NewClient(
 		os.Getenv("SEARCH_GRPC_ADDR"),
@@ -134,7 +134,7 @@ func main() {
 		return
 	}
 	defer searchConn.Close()
-	searchClient := searchpb.NewSearchServiceClient(searchConn)
+	searchClient := newBreakerSearchClient(searchpb.NewSearchServiceClient(searchConn))
 
 	userConn, err := grpc.NewClient(
 		os.Getenv("USER_GRPC_ADDR"),
@@ -146,7 +146,7 @@ func main() {
 		return
 	}
 	defer userConn.Close()
-	userClient := userpb.NewUserServiceClient(userConn)
+	userClient := newBreakerUserClient(userpb.NewUserServiceClient(userConn))
 
 	sellerConn, err := grpc.NewClient(
 		os.Getenv("SELLER_GRPC_ADDR"),
@@ -158,7 +158,7 @@ func main() {
 		return
 	}
 	defer sellerConn.Close()
-	sellerClient := sellerpb.NewSellerServiceClient(sellerConn)
+	sellerClient := newBreakerSellerClient(sellerpb.NewSellerServiceClient(sellerConn))
 
 	chatConn, err := grpc.NewClient(
 		os.Getenv("CHAT_GRPC_ADDR"),
@@ -170,7 +170,7 @@ func main() {
 		return
 	}
 	defer chatConn.Close()
-	chatClient := chatpb.NewChatServiceClient(chatConn)
+	chatClient := newBreakerChatClient(chatpb.NewChatServiceClient(chatConn))
 
 	geoConn, err := grpc.NewClient(
 		os.Getenv("GEO_GRPC_ADDR"),
@@ -182,7 +182,7 @@ func main() {
 		return
 	}
 	defer geoConn.Close()
-	geoClient := geopb.NewGeoMarketInsightsServiceClient(geoConn)
+	geoClient := newBreakerGeoClient(geopb.NewGeoMarketInsightsServiceClient(geoConn))
 
 	auctionConn, err := grpc.NewClient(
 		os.Getenv("AUCTION_GRPC_ADDR"),
@@ -194,7 +194,7 @@ func main() {
 		return
 	}
 	defer auctionConn.Close()
-	auctionClient := auctionpb.NewAuctionServiceClient(auctionConn)
+	auctionClient := newBreakerAuctionClient(auctionpb.NewAuctionServiceClient(auctionConn))
 
 	marketpriceConn, err := grpc.NewClient(
 		os.Getenv("MARKETPRICE_GRPC_ADDR"),
@@ -206,7 +206,7 @@ func main() {
 		return
 	}
 	defer marketpriceConn.Close()
-	marketpriceClient := marketpricepb.NewMarketPriceServiceClient(marketpriceConn)
+	marketpriceClient := newBreakerMarketPriceClient(marketpricepb.NewMarketPriceServiceClient(marketpriceConn))
 
 	handlers.SetClients(
 		listingClient,
