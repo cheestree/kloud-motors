@@ -1,0 +1,109 @@
+services:
+  listing-db-test:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: listing_user
+      POSTGRES_PASSWORD: listing_password
+      POSTGRES_DB: listing_db
+    ports:
+      - "15432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - listing_postgres_data_test:/var/lib/postgresql/data
+
+  redis-cache-test:
+    build:
+      context: ./code/services
+      dockerfile: redis/Dockerfile
+    ports:
+      - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  listing-seed-test:
+    image: python:3.12-slim
+    working_dir: /workspace/code/setup
+    volumes:
+      - ./:/workspace
+    environment:
+      LISTING_PYTHON_DATABASE_URL: postgresql://listing_user:listing_password@listing-db-test:5432/listing_db?sslmode=disable
+    depends_on:
+      listing-db-test:
+        condition: service_healthy
+    command: >
+      bash -c "pip install pandas sqlalchemy python-dotenv psycopg2-binary --quiet &&
+               python3 listing-db/load_listings.py --dataset /workspace/code/setup/dataset_prepared.csv"
+    restart: "no"
+
+  listing-test:
+    build:
+      context: ./code/services
+      dockerfile: listing/Dockerfile
+    ports:
+      - "15054:50054"
+    environment:
+      LISTING_DATABASE_URL: postgres://listing_user:listing_password@listing-db-test:5432/listing_db?sslmode=disable
+      LISTING_GRPC_PORT: "50054"
+      REDIS_HOST: redis-cache-test
+      REDIS_PORT: "6379"
+    depends_on:
+      listing-db-test:
+        condition: service_healthy
+      redis-cache-test:
+        condition: service_healthy
+      listing-seed-test:
+        condition: service_completed_successfully
+
+  search-test:
+    build:
+      context: ./code/services
+      dockerfile: search/Dockerfile
+    ports:
+      - "15056:50056"
+    environment:
+      LISTING_DATABASE_URL: postgres://listing_user:listing_password@listing-db-test:5432/listing_db?sslmode=disable
+      SEARCH_GRPC_PORT: "50056"
+      REDIS_HOST: redis-cache-test
+      REDIS_PORT: "6379"
+      SEARCH_CACHE_TTL_SECONDS: "300"
+    depends_on:
+      listing-db-test:
+        condition: service_healthy
+      redis-cache-test:
+        condition: service_healthy
+      listing-seed-test:
+        condition: service_completed_successfully
+
+  test-runner-test:
+    image: golang:1.25-alpine
+    working_dir: /workspace/code/services
+    volumes:
+      - ./code/services:/workspace/code/services
+    environment:
+      LISTING_TEST_DB_URL: postgres://listing_user:listing_password@listing-db-test:5432/listing_db?sslmode=disable
+      LISTING_TEST_ADDR: listing-test:50054
+      SEARCH_TEST_ADDR: search-test:50056
+      TEST_PACKAGES: "./listing ./search"
+    depends_on:
+      listing-test:
+        condition: service_started
+      search-test:
+        condition: service_started
+      listing-seed-test:
+        condition: service_completed_successfully
+    command: >
+      sh -c "apk add --no-cache netcat-openbsd >/dev/null &&
+             until nc -z listing-test 50054; do sleep 1; done &&
+             until nc -z search-test 50056; do sleep 1; done &&
+             go test -tags=integration $TEST_PACKAGES"
+
+volumes:
+  listing_postgres_data_test:
