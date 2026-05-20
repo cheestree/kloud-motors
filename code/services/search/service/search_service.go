@@ -6,14 +6,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
+	"services/redis/cache"
 	"services/search/domain"
 	"services/search/repository"
-	"services/redis/cache"
 	"services/utils"
 )
 
 type SearchService struct {
-	repository      *repository.SearchRepository
+	repository      repository.Searcher
 	redisCache      *cache.RedisCache
 	defaultPage     int32
 	defaultPageSize int32
@@ -30,7 +30,7 @@ const (
 	fallbackMaxPageSize     int32 = 100
 )
 
-func NewSearchService(repository *repository.SearchRepository, redisCache *cache.RedisCache) *SearchService {
+func NewSearchService(repository repository.Searcher, redisCache *cache.RedisCache) *SearchService {
 	return &SearchService{
 		repository:      repository,
 		redisCache:      redisCache,

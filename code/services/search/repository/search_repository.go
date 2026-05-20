@@ -14,6 +14,10 @@ type SearchRepository struct {
 	db *sql.DB
 }
 
+type Searcher interface {
+	Search(ctx context.Context, filters domain.SearchParams) ([]shared.ListingSummary, int32, error)
+}
+
 func NewSearchRepository(db *sql.DB) *SearchRepository {
 	return &SearchRepository{db: db}
 }
