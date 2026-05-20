@@ -14,6 +14,7 @@ COPY ./chat/proto                    ./chat/proto
 COPY ./geographic-market-insights/proto ./geographic-market-insights/proto
 COPY ./auction/proto                 ./auction/proto
 COPY ./marketprice/proto             ./marketprice/proto
+COPY ./observability                 ./observability
 COPY ./gateway                       ./gateway
 COPY ./utils ./utils
 

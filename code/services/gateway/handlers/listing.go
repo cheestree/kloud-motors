@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -15,7 +14,7 @@ import (
 )
 
 func HandleListings(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:
 		q := r.URL.Query()
@@ -66,7 +65,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
-	ctx := context.Background()
+	ctx := r.Context()
 	includeSold, err := parseOptionalBoolWrapper(q.Get(queryIncludeSold))
 	if err != nil {
 		http.Error(w, "Invalid includeSold query parameter", http.StatusBadRequest)
@@ -118,7 +117,7 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 		}
 		ids = append(ids, utils.ParseInt64(s))
 	}
-	ctx := context.Background()
+	ctx := r.Context()
 	resp, err := listingClient.CompareListings(ctx, &listingpb.CompareListingsRequest{Ids: ids})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -134,7 +133,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := utils.ParseInt64(parts[3])
-	ctx := context.Background()
+	ctx := r.Context()
 
 	switch r.Method {
 	case http.MethodGet:

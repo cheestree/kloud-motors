@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -41,7 +40,7 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	}
 	req.UserId = userID
 
-	ctx := context.Background()
+	ctx := r.Context()
 	resp, err := chatClient.OpenChat(ctx, &req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -62,7 +61,7 @@ func HandleGetChats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx := r.Context()
 	req := &chatpb.GetChatsRequest{UserId: userID}
 	resp, err := chatClient.GetChats(ctx, req)
 
@@ -92,7 +91,7 @@ func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chatID := parts[3]
-	ctx := context.Background()
+	ctx := r.Context()
 	req := &chatpb.GetChatHistoryRequest{ChatId: chatID, UserId: userID}
 	resp, err := chatClient.GetChatHistory(ctx, req)
 	if err != nil {

@@ -7,9 +7,11 @@ import (
 
 	marketpricepb "services/marketprice/proto"
 	"services/marketprice/service"
+	"services/observability"
 	"services/utils"
 
 	_ "github.com/lib/pq"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -31,6 +33,13 @@ func (s *server) GetAverageMarketPrice(ctx context.Context, req *marketpricepb.A
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, logger, "marketprice")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
@@ -40,7 +49,7 @@ func main() {
 
 	lis := utils.TryListen(marketpriceGrpcPort)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	marketSvc := service.NewService(listingDB)
 	marketpricepb.RegisterMarketPriceServiceServer(grpcServer, &server{service: marketSvc, logger: logger})
 

@@ -7,6 +7,7 @@ RUN go mod download
 COPY ./shared ./shared
 COPY ./chat ./chat
 COPY ./listing/proto ./listing/proto
+COPY ./observability ./observability
 COPY ./seller/proto ./seller/proto
 COPY ./utils ./utils
 

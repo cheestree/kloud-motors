@@ -1,4 +1,4 @@
-FROM golang:1.24 AS proto-gen
+FROM golang:1.25 AS proto-gen
 
 # Install protoc manually to get well-known types bundled
 ENV PROTOC_VERSION=27.0

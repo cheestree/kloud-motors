@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -30,7 +29,9 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 		return 0, errors.New("firebase auth client not initialised")
 	}
 
-	token, err := firebaseAuthClient.VerifyIDToken(context.Background(), idToken)
+	ctx := r.Context()
+
+	token, err := firebaseAuthClient.VerifyIDToken(ctx, idToken)
 	if err != nil {
 		println("Firebase token verification failed:", err.Error())
 		return 0, errors.New(errInvalidToken)
@@ -41,7 +42,7 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 	email, _ := token.Claims["email"].(string)
 	name, _ := token.Claims["name"].(string)
 
-	resp, err := userClient.GetOrCreateByFirebaseUID(context.Background(), &userpb.GetOrCreateByFirebaseUIDRequest{
+	resp, err := userClient.GetOrCreateByFirebaseUID(ctx, &userpb.GetOrCreateByFirebaseUIDRequest{
 		FirebaseUid: firebaseUID,
 		Email:       email,
 		Name:        name,

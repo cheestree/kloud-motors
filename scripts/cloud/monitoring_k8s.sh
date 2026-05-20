@@ -68,13 +68,27 @@ if [[ -z "$NAMESPACE" ]]; then
   exit 1
 fi
 
-KUBECONFIG_FILE="$K8S_DIR/kubeconfig"
 KUBE_ARGS=()
-if [[ -f "$KUBECONFIG_FILE" ]]; then
-  KUBE_ARGS+=(--kubeconfig="$KUBECONFIG_FILE")
+KUBECONFIG_FILE=""
+
+if [[ -n "${KUBECONFIG:-}" ]] && [[ -f "$KUBECONFIG" ]]; then
+  KUBECONFIG_FILE="$KUBECONFIG"
+  echo "Using kubeconfig from KUBECONFIG env var: $KUBECONFIG_FILE"
+elif [[ -n "${KUBECONFIG:-}" ]] && [[ ! -f "$KUBECONFIG" ]]; then
+  echo "KUBECONFIG is set but file does not exist: $KUBECONFIG"
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    echo "Refusing fallback kubeconfig in CI. Ensure get-gke-credentials output is valid."
+    exit 1
+  fi
+elif [[ -f "$K8S_DIR/kubeconfig" ]]; then
+  KUBECONFIG_FILE="$K8S_DIR/kubeconfig"
   echo "Using project kubeconfig: $KUBECONFIG_FILE"
 else
   echo "Using default kubeconfig (~/.kube/config)"
+fi
+
+if [[ -n "$KUBECONFIG_FILE" ]]; then
+  KUBE_ARGS+=(--kubeconfig="$KUBECONFIG_FILE")
 fi
 
 k() {

@@ -11,11 +11,13 @@ import (
 	listingpb "services/listing/proto"
 	"services/listing/repository"
 	"services/listing/service"
-	"services/shared"
+	"services/observability"
 	"services/redis/cache"
+	"services/shared"
 	"services/utils"
 
 	_ "github.com/lib/pq"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -210,6 +212,13 @@ func (s *server) CheckListingOpen(ctx context.Context, req *listingpb.CheckListi
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, logger, "listing")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	listingDsn := utils.MustGetEnv("LISTING_DATABASE_URL")
 
@@ -219,9 +228,8 @@ func main() {
 
 	lis := utils.TryListen(listingGrpcPort)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	repo := repository.NewListingRepository(listingDB)
-	
 	redisHost := utils.GetEnv("REDIS_HOST", "redis-cache")
 	redisPort := utils.GetEnv("REDIS_PORT", "6379")
 	ttlStr := utils.GetEnv("CACHE_TTL_SECONDS", "3600")

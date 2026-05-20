@@ -12,6 +12,11 @@ variable "artifact_registry_repo" {
   description = "Name of the Artifact Registry repository"
 }
 
+variable "backup_bucket_name" {
+  type        = string
+  description = "Name of the GCS bucket used to store database and dataset backups"
+}
+
 variable "pubsub_topics" {
   type        = list(string)
   description = "List of Pub/Sub topics to create"

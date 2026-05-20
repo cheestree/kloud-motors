@@ -32,3 +32,8 @@ gcloud iam service-accounts add-iam-policy-binding $SA \
 gcloud projects add-iam-policy-binding $PROJECT \
   --member="serviceAccount:$SA" \
   --role="roles/artifactregistry.reader"
+
+# 6. Cloud Trace (para o node pool enviar traces)
+gcloud projects add-iam-policy-binding $PROJECT \
+  --member="serviceAccount:$SA" \
+  --role="roles/cloudtrace.agent"

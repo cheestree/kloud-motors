@@ -10,13 +10,22 @@ import (
 	geopb "services/geographic-market-insights/proto"
 	"services/geographic-market-insights/repository"
 	"services/geographic-market-insights/repository/postgres"
+	"services/observability"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"services/utils"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+	ctx := context.Background()
+	shutdownTracing := observability.InitTracing(ctx, logger, "geographic-market-insights")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			logger.Error("failed to shutdown tracing", "error", err)
+		}
+	}()
 
 	geoGrpcPort := utils.MustGetEnv("GEO_GRPC_PORT")
 	geoDSN := utils.GetEnv("GEO_DATABASE_URL", utils.GetEnv("LISTING_DATABASE_URL", ""))
@@ -32,7 +41,7 @@ func main() {
 		Dsn:          geoDSN,
 	}
 
-	repo, err := postgres.NewPostgresRepo(context.Background(), repoConfig)
+	repo, err := postgres.NewPostgresRepo(ctx, repoConfig)
 	if err != nil {
 		logger.Error("postgres repo init error", "error", err)
 		return
@@ -41,7 +50,7 @@ func main() {
 
 	lis := utils.TryListen(geoGrpcPort)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	geopb.RegisterGeoMarketInsightsServiceServer(grpcServer, NewGeoServer(repo))
 
 	utils.HealthCheck("geographic-market-insights.GeoMarketInsightsService", grpcServer)
