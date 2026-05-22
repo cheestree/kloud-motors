@@ -1,0 +1,135 @@
+name: Phase 6 UC3 - Data Backup & Recovery
+
+on:
+  push:
+    branches:
+      - prod
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      backup_mode:
+        description: "Backup scope (all | db | dataset)"
+        required: false
+        default: "all"
+      run_restore_test:
+        description: "Run a restore smoke-test after backup? (true | false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION || 'europe-central2' }}
+  BACKUP_BUCKET: ${{ vars.BACKUP_BUCKET || format('{0}-backups', vars.GCP_PROJECT_ID) }}
+  CLOUD_SQL_INSTANCE: ${{ vars.CLOUD_SQL_INSTANCE_NAME || 'cn-db-instance' }}
+
+jobs:
+  backup:
+    name: "Data Backup"
+    runs-on: ubuntu-latest
+    outputs:
+      backup_timestamp: ${{ steps.run-backup.outputs.timestamp }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify backup bucket exists (create if absent)
+        run: |
+          if ! gcloud storage buckets describe "gs://${BACKUP_BUCKET}" \
+               --project="${PROJECT_ID}" &>/dev/null; then
+            gcloud storage buckets create "gs://${BACKUP_BUCKET}" \
+              --project="${PROJECT_ID}" \
+              --location="${REGION}" \
+              --uniform-bucket-level-access
+            gcloud storage buckets update "gs://${BACKUP_BUCKET}" \
+              --retention-period=30d \
+              --project="${PROJECT_ID}"
+          else
+            echo "Bucket gs://${BACKUP_BUCKET} already exists."
+          fi
+
+      - name: Run backup script
+        id: run-backup
+        env:
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_REGION: ${{ env.REGION }}
+          CLOUD_SQL_INSTANCE_NAME: ${{ env.CLOUD_SQL_INSTANCE }}
+          BACKUP_BUCKET: ${{ env.BACKUP_BUCKET }}
+        run: |
+          MODE="${{ github.event.inputs.backup_mode || 'all' }}"
+          echo "Running backup in mode: $MODE"
+          bash scripts/cloud/backup_data.sh "$MODE"
+          echo "timestamp=$(date -u +%Y-%m-%dT%H-%M-%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify backup artifacts exist in GCS
+        run: |
+          gcloud storage ls --recursive \
+            "gs://${BACKUP_BUCKET}/" \
+            --project="${PROJECT_ID}" | tail -20
+
+      - name: Backup summary
+        run: |
+          echo "✅ Backup completed."
+          echo "   Bucket : gs://${BACKUP_BUCKET}"
+          echo "   Project: ${PROJECT_ID}"
+
+
+  restore-smoke-test:
+    name: "Restore Smoke-Test"
+    runs-on: ubuntu-latest
+    needs: backup
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.run_restore_test == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: List available backup timestamps
+        run: |
+          gcloud storage ls "gs://${BACKUP_BUCKET}/cloudsql/" \
+            --project="${PROJECT_ID}" | sort | tail -10
+
+      - name: Run restore smoke-test (dry-run)
+        env:
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          BACKUP_BUCKET: ${{ env.BACKUP_BUCKET }}
+        run: |
+          LATEST=$(gcloud storage ls "gs://${BACKUP_BUCKET}/cloudsql/listing_db/" \
+            --project="${PROJECT_ID}" | sort | tail -1)
+          if [ -z "$LATEST" ]; then
+            echo "::error::No backup found for listing_db - restore test failed."
+            exit 1
+          fi
+          SIZE=$(gcloud storage objects describe "$LATEST" \
+            --project="${PROJECT_ID}" \
+            --format="value(size)" 2>/dev/null || echo "0")
+          if [ "$SIZE" -le 0 ]; then
+            echo "::error::Backup object is empty or unreadable: $LATEST"
+            exit 1
+          fi
+          echo "✅ Backup object verified: $LATEST (${SIZE} bytes)"
+
+      - name: Restore smoke-test passed
+        run: echo "✅ UC3 restore smoke-test completed successfully."
