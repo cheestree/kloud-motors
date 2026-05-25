@@ -8,12 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"services/internal/integrationtest"
 	listingpb "services/listing/proto"
 	"services/utils"
 
 	_ "github.com/lib/pq"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func TestListingIntegration_GetSummary(t *testing.T) {
@@ -27,12 +26,7 @@ func TestListingIntegration_GetSummary(t *testing.T) {
 	}
 
 	addr := utils.GetEnv("LISTING_TEST_ADDR", "localhost:15054")
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		t.Fatalf("failed to dial listing service at %s: %v", addr, err)
-	}
-	defer conn.Close()
-
+	conn := integrationtest.DialGRPC(ctx, t, "listing", addr)
 	client := listingpb.NewListingServiceClient(conn)
 	summary, err := client.GetListingSummary(ctx, &listingpb.ListingDetailsRequest{Id: listingID})
 	if err != nil {

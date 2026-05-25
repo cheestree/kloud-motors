@@ -7,11 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"services/internal/integrationtest"
 	searchpb "services/search/proto"
 	"services/utils"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -21,12 +20,7 @@ func TestSearchIntegration_Basic(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		t.Fatalf("failed to dial search service at %s: %v", addr, err)
-	}
-	defer conn.Close()
-
+	conn := integrationtest.DialGRPC(ctx, t, "search", addr)
 	client := searchpb.NewSearchServiceClient(conn)
 	resp, err := client.Search(ctx, &searchpb.SearchRequest{
 		Page:        1,
