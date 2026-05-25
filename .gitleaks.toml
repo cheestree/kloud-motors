@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore example and sample-data files that produce false positives"
+paths = [
+  '''^\.env\.example$''',
+  '''^code/setup/.csv$''',
+]
