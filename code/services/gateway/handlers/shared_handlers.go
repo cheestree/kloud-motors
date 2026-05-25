@@ -1,7 +1,6 @@
 package handlers
 
 import (
-
 	"encoding/json"
 	"errors"
 	"net/http"

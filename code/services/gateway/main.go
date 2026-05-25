@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 
-	firebase "firebase.google.com/go/v4"
 	auctionpb "services/auction/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"
@@ -18,7 +17,7 @@ import (
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
 
-
+	firebase "firebase.google.com/go/v4"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
