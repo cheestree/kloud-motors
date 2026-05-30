@@ -13,6 +13,10 @@ info:
     - **Listing details and comparison**: Provide detailed information on each listing and allow users to compare multiple listings side by side based on price, mileage, year and location.
 
 tags:
+  - name: Health
+    description: Gateway health endpoint
+  - name: Observability
+    description: Gateway metrics endpoint
   - name: Chat
     description: Buyer-Seller communication endpoints
   - name: Geographical Market Insights
@@ -21,8 +25,6 @@ tags:
     description: Endpoints for average car prices
   - name: Auction
     description: Endpoints for car auction listings
-  - name: Auth
-    description: Visitor and user registration
   - name: Users
     description: User profiles and favorite listings
   - name: Sellers
@@ -31,6 +33,35 @@ tags:
     description: Filtered car search and listing comparison
 
 paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns a plain-text OK response when the gateway is running.
+      operationId: getHealth
+      responses:
+        '200':
+          description: Gateway is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  /metrics:
+    get:
+      tags: [Observability]
+      summary: Prometheus metrics
+      description: Exposes gateway metrics in Prometheus text format.
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Prometheus metrics payload
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /api/chat:
     get:
       tags: [Chat]
@@ -39,7 +70,6 @@ paths:
       operationId: getChats
       security:
         - bearerAuth: []
-        - cookieAuth: []
       responses:
         '200':
           description: List of chats retrieved successfully
@@ -65,7 +95,6 @@ paths:
       operationId: openChat
       security:
         - bearerAuth: []
-        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -90,15 +119,12 @@ paths:
     get:
       tags: [Chat]
       summary: Get chat history
-      description: Retrieves message history for a specific chat session with pagination.
+      description: Retrieves message history for a specific chat session.
       operationId: getChatHistory
       security:
         - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - $ref: '#/components/parameters/ChatIdPath'
-        - $ref: '#/components/parameters/LimitQuery'
-        - $ref: '#/components/parameters/SkipQuery'
       responses:
         '200':
           description: Chat history retrieved successfully
@@ -123,7 +149,6 @@ paths:
       operationId: connectChatWebSocket
       security:
         - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - $ref: '#/components/parameters/ChatIdPath'
       responses:
@@ -420,7 +445,6 @@ paths:
       operationId: connectAuctionWebSocket
       security:
         - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - name: auction_id
           in: path
@@ -438,62 +462,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/register:
-    post:
-      tags: [Auth]
-      summary: Register a new user
-      description: Prompt visitors to register an account so they can save listings.
-      operationId: registerUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterUserRequest'
-      responses:
-        '201':
-          description: User registered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          description: User already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/auth/login:
-    post:
-      tags: [Auth]
-      summary: Authenticate user
-      description: Log in to save listings or access user profile.
-      operationId: loginUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginUserRequest'
-      responses:
-        '200':
-          description: Authentication successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
   /api/users/me/favorites:
     get:
       tags: [Users]
@@ -502,7 +470,6 @@ paths:
       operationId: getFavoriteListings
       security:
         - bearerAuth: []
-        - cookieAuth: []
       responses:
         '200':
           description: Favorite listings retrieved successfully
@@ -523,7 +490,6 @@ paths:
       operationId: addFavoriteListing
       security:
         - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - $ref: '#/components/parameters/ListingIdPath'
       responses:
@@ -554,7 +520,6 @@ paths:
       operationId: removeFavoriteListing
       security:
         - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - $ref: '#/components/parameters/ListingIdPath'
       responses:
@@ -630,25 +595,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                user_ids:
-                  type: array
-                  items:
-                    type: integer
-                    format: int64
+              $ref: '#/components/schemas/SellersPreviewRequest'
       responses:
         '200':
           description: List of seller previews
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  sellers:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/SellerPreview'
+                $ref: '#/components/schemas/SellersPreviewResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -778,7 +732,6 @@ paths:
       operationId: createListing
       security:
         - bearerAuth: []
-        - cookieAuth: []
       requestBody:
         required: true
         content:
@@ -801,7 +754,7 @@ paths:
       operationId: getListings
       parameters:
         - $ref: '#/components/parameters/PageQuery'
-        - $ref: '#/components/parameters/PageSizeQuery'
+        - $ref: '#/components/parameters/ListingPageSizeQuery'
         - $ref: '#/components/parameters/IncludeSoldQuery'
       responses:
         '200':
@@ -846,7 +799,6 @@ paths:
       operationId: updateListing
       security:
         - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - name: id
           in: path
@@ -876,7 +828,6 @@ paths:
       operationId: deleteListing
       security:
         - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - name: id
           in: path
@@ -899,10 +850,6 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: access_token
 
   parameters:
     ListingIdPath:
@@ -1114,6 +1061,16 @@ components:
         maximum: 100
       description: Number of results per page
 
+    ListingPageSizeQuery:
+      name: pageSize
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+      description: Number of results per page
+
     IncludeSoldQuery:
       name: includeSold
       in: query
@@ -1159,41 +1116,6 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
-    RegisterUserRequest:
-      type: object
-      required: [name, email, password]
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-
-    LoginUserRequest:
-      type: object
-      required: [email, password]
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-
-    AuthResponse:
-      type: object
-      required: [user_id, token]
-      properties:
-        user_id:
-          type: integer
-          format: int64
-        token:
-          type: string
-          description: JWT access token
-
     FavoritesResponse:
       type: object
       required: [favorites]
@@ -1240,30 +1162,52 @@ components:
               name:
                 type: string
 
+    SellersPreviewRequest:
+      type: object
+      required: [seller_ids]
+      properties:
+        seller_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+
     SellerProfileResponse:
       type: object
-      required: [seller_id, name, is_seller]
+      required: [seller_id, name, seller_type, contact_info, rating]
       properties:
         seller_id:
           type: integer
           format: int64
         name:
           type: string
-        is_seller:
-          type: boolean
-          description: Indicates if the seller is a professional dealer
+        seller_type:
+          type: string
+        contact_info:
+          type: string
+        rating:
+          type: number
+          format: double
 
     SellerPreview:
       type: object
-      required: [id, name, is_seller]
+      required: [id, name]
       properties:
         id:
           type: integer
           format: int64
         name:
           type: string
-        is_seller:
-          type: boolean
+
+    SellersPreviewResponse:
+      type: object
+      required: [sellers]
+      properties:
+        sellers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SellerPreview'
+
     OpenChatRequest:
       type: object
       required: [seller_id, listing_id]
