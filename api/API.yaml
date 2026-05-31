@@ -11,848 +11,840 @@ info:
     - **Visitor & User Registration**: Track and register platform visitors, registered users can save favourite listings.
     - **Auction Module**: Allow sellers to list cars under an auction format.
     - **Listing details and comparison**: Provide detailed information on each listing and allow users to compare multiple listings side by side based on price, mileage, year and location.
-
 tags:
-  - name: Health
-    description: Gateway health endpoint
-  - name: Observability
-    description: Gateway metrics endpoint
-  - name: Chat
-    description: Buyer-Seller communication endpoints
-  - name: Geographical Market Insights
-    description: Geographical market insights and listing aggregation
-  - name: Market Price Analysis
-    description: Endpoints for average car prices
-  - name: Auction
-    description: Endpoints for car auction listings
-  - name: Users
-    description: User profiles and favorite listings
-  - name: Sellers
-    description: Seller management and profiling
-  - name: Listings
-    description: Filtered car search and listing comparison
-
+- name: Health
+  description: Gateway health endpoint
+- name: Observability
+  description: Gateway metrics endpoint
+- name: Chat
+  description: Buyer-Seller communication endpoints
+- name: Geographical Market Insights
+  description: Geographical market insights and listing aggregation
+- name: Market Price Analysis
+  description: Endpoints for average car prices
+- name: Auction
+  description: Endpoints for car auction listings
+- name: Users
+  description: User profiles and favorite listings
+- name: Sellers
+  description: Seller management and profiling
+- name: Listings
+  description: Filtered car search and listing comparison
 paths:
-  /api/health:
+  "/api/health":
     get:
-      tags: [Health]
+      tags:
+      - Health
       summary: Health check
-      description: Returns a plain-text OK response when the gateway is running.
       operationId: getHealth
       responses:
         '200':
-          description: Gateway is healthy
+          description: Gateway is healthy.
           content:
             text/plain:
               schema:
                 type: string
                 example: OK
-
-  /metrics:
+  "/metrics":
     get:
-      tags: [Observability]
+      tags:
+      - Observability
       summary: Prometheus metrics
-      description: Exposes gateway metrics in Prometheus text format.
       operationId: getMetrics
       responses:
         '200':
-          description: Prometheus metrics payload
+          description: Prometheus metrics payload.
           content:
             text/plain:
               schema:
                 type: string
-
-  /api/chat:
+  "/api/chat":
     get:
-      tags: [Chat]
+      tags:
+      - Chat
       summary: Get user chats
-      description: Retrieve a list of all active chat sessions for the authenticated user.
       operationId: getChats
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
         '200':
-          description: List of chats retrieved successfully
+          description: User chats.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  chats:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ChatPreview'
+                "$ref": "#/components/schemas/GetChatsResponse"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/chat/open:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/chat/open":
     post:
-      tags: [Chat]
+      tags:
+      - Chat
       summary: Open or create a buyer-seller chat session
-      description: Enables messaging between a buyer and a seller for a specific listing.
       operationId: openChat
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OpenChatRequest'
+              "$ref": "#/components/schemas/OpenChatRequest"
       responses:
         '200':
-          description: Chat session opened successfully
+          description: Chat session opened.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpenChatResponse'
+                "$ref": "#/components/schemas/OpenChatResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '403':
+          "$ref": "#/components/responses/ForbiddenText"
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/chat/{chat_id}:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/chat/{chat_id}":
     get:
-      tags: [Chat]
+      tags:
+      - Chat
       summary: Get chat history
-      description: Retrieves message history for a specific chat session.
       operationId: getChatHistory
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/ChatIdPath'
+      - "$ref": "#/components/parameters/ChatIdPath"
       responses:
         '200':
-          description: Chat history retrieved successfully
+          description: Chat history.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChatHistoryResponse'
+                "$ref": "#/components/schemas/GetChatHistoryResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '403':
+          "$ref": "#/components/responses/ForbiddenText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/chat/ws/{chat_id}:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/chat/ws/{chat_id}":
     get:
-      tags: [Chat]
-      summary: WebSocket chat endpoint
-      description: WebSocket endpoint for real-time messaging in an active chat session.
+      tags:
+      - Chat
+      summary: Chat WebSocket proxy
       operationId: connectChatWebSocket
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/ChatIdPath'
+      - "$ref": "#/components/parameters/ChatIdPath"
       responses:
         '101':
-          description: Switching Protocols (WebSocket upgrade)
+          description: Switching Protocols.
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/market/insights/aggregates:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/market/insights/aggregates":
     get:
-      tags: [Geographical Market Insights]
+      tags:
+      - Geographical Market Insights
       summary: Get aggregated market insights
-      description: Returns aggregated market metrics for a specific car model, grouped by location level.
       operationId: getMarketInsightsAggregates
       parameters:
-        - $ref: '#/components/parameters/BrandQuery'
-        - $ref: '#/components/parameters/ModelQuery'
-        - $ref: '#/components/parameters/MetricsQuery'
-        - $ref: '#/components/parameters/GroupByLocationQuery'
-        - $ref: '#/components/parameters/LocationsQuery'
-        - $ref: '#/components/parameters/YearFromQuery'
-        - $ref: '#/components/parameters/YearToQuery'
-        - $ref: '#/components/parameters/FuelTypeQuery'
-        - $ref: '#/components/parameters/LimitQuery'
-        - $ref: '#/components/parameters/SkipQuery'
+      - "$ref": "#/components/parameters/BrandQueryRequired"
+      - "$ref": "#/components/parameters/ModelQueryRequired"
+      - "$ref": "#/components/parameters/MetricsQuery"
+      - "$ref": "#/components/parameters/GroupByQuery"
+      - "$ref": "#/components/parameters/LocationsQuery"
+      - "$ref": "#/components/parameters/YearFromQuery"
+      - "$ref": "#/components/parameters/YearToQuery"
+      - "$ref": "#/components/parameters/FuelTypeSnakeQuery"
+      - "$ref": "#/components/parameters/LimitQuery"
+      - "$ref": "#/components/parameters/SkipQuery"
       responses:
         '200':
-          description: Aggregated market insights retrieved successfully
+          description: Aggregated market insights.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListingsAggregateResponse'
+                "$ref": "#/components/schemas/AggregatesResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/BadRequestText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/market/price-comparison:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/market/price-comparison":
     get:
-      tags: [Geographical Market Insights]
+      tags:
+      - Geographical Market Insights
       summary: Compare prices across locations
-      description: Provides price comparison grouped by district, city or country for a specific car model, with optional sorting and limiting.
       operationId: getPriceComparison
       parameters:
-        - $ref: '#/components/parameters/BrandQuery'
-        - $ref: '#/components/parameters/ModelQuery'
-        - $ref: '#/components/parameters/GroupByDistrictCityCountryQuery'
-        - $ref: '#/components/parameters/SortByQuery'
-        - $ref: '#/components/parameters/OrderQuery'
-        - $ref: '#/components/parameters/LimitQuery'
-        - $ref: '#/components/parameters/SkipQuery'
+      - "$ref": "#/components/parameters/BrandQueryRequired"
+      - "$ref": "#/components/parameters/ModelQueryRequired"
+      - "$ref": "#/components/parameters/GroupByQuery"
+      - "$ref": "#/components/parameters/SortByQuery"
+      - "$ref": "#/components/parameters/OrderQuery"
+      - "$ref": "#/components/parameters/LimitQuery"
+      - "$ref": "#/components/parameters/SkipQuery"
       responses:
         '200':
-          description: Price comparison retrieved successfully
+          description: Price comparison.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PriceComparisonResponse'
+                "$ref": "#/components/schemas/PriceComparisonResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/BadRequestText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-
-  /api/listings/stats/by-location:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/listings/stats/by-location":
     get:
-      tags: [Geographical Market Insights]
+      tags:
+      - Geographical Market Insights
       summary: Get listing price statistics by location
-      description: Returns minimum, maximum, average and median price for a model in a selected location.
       operationId: getListingStatsByLocation
       parameters:
-        - $ref: '#/components/parameters/BrandQuery'
-        - $ref: '#/components/parameters/ModelQuery'
-        - $ref: '#/components/parameters/LocationQuery'
-        - $ref: '#/components/parameters/YearFromQuery'
-        - $ref: '#/components/parameters/YearToQuery'
-        - $ref: '#/components/parameters/FuelTypeQuery'
+      - "$ref": "#/components/parameters/BrandQueryRequired"
+      - "$ref": "#/components/parameters/ModelQueryRequired"
+      - "$ref": "#/components/parameters/LocationQuery"
+      - "$ref": "#/components/parameters/YearFromQuery"
+      - "$ref": "#/components/parameters/YearToQuery"
+      - "$ref": "#/components/parameters/FuelTypeSnakeQuery"
       responses:
         '200':
-          description: Statistics retrieved successfully
+          description: Listing statistics.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListingStatsResponse'
+                "$ref": "#/components/schemas/ByLocationResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/BadRequestText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/market/average-price:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/market/average-price":
     get:
-      tags: [Market Price Analysis]
-      summary: Get average market price for a specific car
-      description: Retrieve the average market price for a specific car make, model and year.
+      tags:
+      - Market Price Analysis
+      summary: Get average market price
       operationId: getAverageMarketPrice
       parameters:
-        - $ref: '#/components/parameters/BrandQuery'
-        - $ref: '#/components/parameters/ModelQuery'
-        - $ref: '#/components/parameters/YearFromQuery'
-        - $ref: '#/components/parameters/YearToQuery'
+      - "$ref": "#/components/parameters/BrandQueryRequired"
+      - "$ref": "#/components/parameters/ModelQueryRequired"
+      - "$ref": "#/components/parameters/YearFromQuery"
+      - "$ref": "#/components/parameters/YearToQuery"
       responses:
         '200':
-          description: Average market price retrieved successfully.
+          description: Average market price.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AveragePriceResponse'
+                "$ref": "#/components/schemas/AveragePriceResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/auctions:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/auctions":
     get:
-      tags: [Auction]
+      tags:
+      - Auction
       summary: List auctions
-      description: Returns a paginated list of car auctions, filterable by status, brand and model.
       operationId: listAuctions
       parameters:
-        - $ref: '#/components/parameters/AuctionStatusQuery'
-        - $ref: '#/components/parameters/PageQuery'
-        - $ref: '#/components/parameters/PageSizeQuery'
+      - "$ref": "#/components/parameters/AuctionStatusQuery"
+      - "$ref": "#/components/parameters/PageQuery"
+      - "$ref": "#/components/parameters/PageSizeSnakeQuery"
       responses:
         '200':
-          description: List of auctions retrieved successfully.
+          description: Auctions.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuctionListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                "$ref": "#/components/schemas/ListAuctionsResponse"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': &1
+          "$ref": "#/components/responses/BadGatewayText"
     post:
-      tags: [Auction]
-      summary: Create an auction listing
-      description: Allows a seller to create an auction for a car listing.
+      tags:
+      - Auction
+      summary: Create an auction
       operationId: createAuction
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAuctionRequest'
+              "$ref": "#/components/schemas/CreateAuctionRequest"
       responses:
         '201':
-          description: Auction created successfully
+          description: Auction created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuctionResponse'
+                "$ref": "#/components/schemas/CreateAuctionResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /api/auctions/{auction_id}:
+          "$ref": "#/components/responses/UnauthorizedText"
+        '403':
+          "$ref": "#/components/responses/ForbiddenText"
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
+        '409':
+          "$ref": "#/components/responses/ConflictText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/auctions/{auction_id}":
     get:
-      tags: [Auction]
+      tags:
+      - Auction
       summary: Get auction details
       operationId: getAuction
       parameters:
-        - $ref: '#/components/parameters/AuctionIdPath'
+      - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '200':
-          description: Auction retrieved successfully
+          description: Auction details.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuctionResponse'
+                "$ref": "#/components/schemas/GetAuctionResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
         '404':
-          description: Auction not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
     delete:
-      tags: [Auction]
-      summary: Delete an auction listing
+      tags:
+      - Auction
+      summary: Delete an auction
       operationId: deleteAuction
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/AuctionIdPath'
+      - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '204':
-          description: Auction deleted successfully
+          description: Auction deleted.
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
         '403':
-          $ref: '#/components/responses/Forbidden'
+          "$ref": "#/components/responses/ForbiddenText"
         '404':
-          description: Auction not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/auctions/{auction_id}/bid:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+  "/api/auctions/{auction_id}/bid":
     post:
-      tags: [Auction]
+      tags:
+      - Auction
       summary: Place a bid
       operationId: placeBid
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/AuctionIdPath'
+      - "$ref": "#/components/parameters/AuctionIdPath"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BidRequest'
+              "$ref": "#/components/schemas/PlaceBidRequest"
       responses:
         '200':
-          description: Bid placed successfully
+          description: Bid placed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BidResponse'
+                "$ref": "#/components/schemas/PlaceBidResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
         '404':
-          description: Auction not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/auctions/{auction_id}/bids:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+  "/api/auctions/{auction_id}/bids":
     get:
-      tags: [Auction]
+      tags:
+      - Auction
       summary: Get auction bids
       operationId: getAuctionBids
       parameters:
-        - $ref: '#/components/parameters/AuctionIdPath'
-        - $ref: '#/components/parameters/PageQuery'
-        - $ref: '#/components/parameters/PageSizeQuery'
+      - "$ref": "#/components/parameters/AuctionIdPath"
+      - "$ref": "#/components/parameters/PageQuery"
+      - "$ref": "#/components/parameters/PageSizeSnakeQuery"
       responses:
         '200':
-          description: List of bids
+          description: Auction bids.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BidsResponse'
+                "$ref": "#/components/schemas/GetAuctionBidsResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
         '404':
-          description: Auction not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-          
-  /api/auctions/ws/{auction_id}:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+  "/api/auctions/ws/{auction_id}":
     get:
-      tags: [Auction]
-      summary: Ligar ao WebSocket do leilão
-      description: Endpoint para receber as atualizações de licitações em tempo real para um leilão específico. Requer o upgrade de protocolo para WebSocket (ws://).
+      tags:
+      - Auction
+      summary: Auction WebSocket proxy
       operationId: connectAuctionWebSocket
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: auction_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: O ID único do leilão
+      - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '101':
-          description: Switching Protocols (WebSocket upgrade efetuado com sucesso)
+          description: Switching Protocols.
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/users/me/favorites:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/users/me/favorites":
     get:
-      tags: [Users]
-      summary: Get user's favorite listings
-      description: Retrieve all listings the authenticated user has saved for later.
+      tags:
+      - Users
+      summary: Get the authenticated user's favorite listing IDs
       operationId: getFavoriteListings
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       responses:
         '200':
-          description: Favorite listings retrieved successfully
+          description: Favorite listing IDs.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FavoritesResponse'
+                "$ref": "#/components/schemas/FavoritesResponse"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/users/me/favorites/{listing_id}:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/users/me/favorites/{listing_id}":
     post:
-      tags: [Users]
-      summary: Save a listing to favorites
-      description: Save a specific listing for later. User must be registered and logged in.
+      tags:
+      - Users
+      summary: Add a listing to favorites
       operationId: addFavoriteListing
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/ListingIdPath'
+      - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
-          description: Listing saved successfully
+          description: Mutation result.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FavoriteMutationResponse'
+                "$ref": "#/components/schemas/FavoriteMutationResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Listing already in favorites
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
+        '409': &3
+          "$ref": "#/components/responses/ConflictText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
     delete:
-      tags: [Users]
+      tags:
+      - Users
       summary: Remove a listing from favorites
-      description: Remove a previously saved listing from the user's favorites.
       operationId: removeFavoriteListing
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/ListingIdPath'
+      - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
-          description: Listing removed successfully
+          description: Mutation result.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FavoriteMutationResponse'
+                "$ref": "#/components/schemas/FavoriteMutationResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/UnauthorizedText"
+        '404': &2
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/users/preview:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+  "/api/users/preview":
     post:
-      tags: [Users]
+      tags:
+      - Users
       summary: Get user previews
-      description: Retrieve basic user info (name) for a list of user IDs.
       operationId: getUsersPreview
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UsersPreviewRequest'
+              "$ref": "#/components/schemas/UsersPreviewRequest"
       responses:
         '200':
-          description: User previews retrieved successfully
+          description: User previews.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UsersPreviewResponse'
+                "$ref": "#/components/schemas/UsersPreviewResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/sellers/{seller_id}:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/sellers/{seller_id}":
     get:
-      tags: [Sellers]
-      summary: Get seller profile and categorization
-      description: Retrieve information about a seller, including whether they are a professional dealer or a private seller.
+      tags:
+      - Sellers
+      summary: Get seller profile
       operationId: getSellerProfile
       parameters:
-        - $ref: '#/components/parameters/SellerIdPath'
+      - "$ref": "#/components/parameters/SellerIdPath"
       responses:
         '200':
-          description: Seller profile retrieved successfully
+          description: Seller profile.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SellerProfileResponse'
+                "$ref": "#/components/schemas/SellerProfileResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/BadRequestText"
+        '404': *2
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/sellers/preview:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/sellers/preview":
     post:
-      tags: [Sellers]
-      summary: Get sellers preview
-      description: Retrieve basic profile information for a batch of seller IDs.
+      tags:
+      - Sellers
+      summary: Get seller previews
       operationId: getSellersPreview
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SellersPreviewRequest'
+              "$ref": "#/components/schemas/SellersPreviewRequest"
       responses:
         '200':
-          description: List of seller previews
+          description: Seller previews.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SellersPreviewResponse'
+                "$ref": "#/components/schemas/SellersPreviewResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          "$ref": "#/components/responses/BadRequestText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
-
-
-  /api/listings/search:
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+  "/api/listings":
     get:
-      tags: [Listings]
-      summary: Filtered car search
-      description: Search for car listings using filters such as mileage, price range, make, model, year, and fuel type.
-      operationId: searchCars
-      parameters:
-        - $ref: '#/components/parameters/IncludeSoldQuery'
-        - name: make
-          in: query
-          description: Car manufacturer (e.g. Toyota, Ford)
-          schema:
-            type: string
-        - name: model
-          in: query
-          description: Car model (e.g. Corolla, Mustang)
-          schema:
-            type: string
-        - name: year
-          in: query
-          description: Manufacturing year
-          schema:
-            type: integer
-        - name: minPrice
-          in: query
-          description: Minimum price in USD
-          schema:
-            type: number
-            format: float
-        - name: maxPrice
-          in: query
-          description: Maximum price in USD
-          schema:
-            type: number
-            format: float
-        - name: maxMileage
-          in: query
-          description: Maximum mileage in miles
-          schema:
-            type: integer
-        - name: fuelType
-          in: query
-          description: Fuel type (e.g. gasoline, diesel, electric)
-          schema:
-            type: string
-            enum: [gasoline, diesel, hybrid, electric]
-        - name: location
-          in: query
-          description: City or region to filter listings by
-          schema:
-            type: string
-        - name: page
-          in: query
-          description: Page number for pagination
-          schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          description: Number of results per page
-          schema:
-            type: integer
-            default: 20
-      responses:
-        '200':
-          description: A paginated list of car listings matching the filters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total_count:
-                    type: integer
-                    description: Total number of matching listings
-                  current_page:
-                    type: integer
-                  total_pages:
-                    type: integer
-                  listings:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CarSummary'
-        '400':
-          description: Invalid query parameters
-
-  /api/listings/compare:
-    get:
-      tags: [Listings]
-      summary: Compare multiple listings
-      description: Retrieve and compare multiple car listings side by side based on price, mileage, year, and location.
-      operationId: compareListings
-      parameters:
-        - name: ids
-          in: query
-          required: true
-          description: Comma-separated list of listing IDs to compare
-          schema:
-            type: string
-            example: abc123,def456,ghi789
-      responses:
-        '200':
-          description: Comparison data for the requested listings
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  listings:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CarListing'
-        '400':
-          description: Missing or invalid IDs parameter
-        '404':
-          description: One or more listings not found
-  /api/listings:
-    post:
-      tags: [Listings]
-      summary: Create a new listing
-      description: Create a new car listing.
-      operationId: createListing
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CarListing'
-      responses:
-        '201':
-          description: Listing created successfully
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    get:
-      tags: [Listings]
-      summary: Get all listings
-      description: Retrieve a paginated list of all listings.
+      tags:
+      - Listings
+      summary: Get listings
       operationId: getListings
       parameters:
-        - $ref: '#/components/parameters/PageQuery'
-        - $ref: '#/components/parameters/ListingPageSizeQuery'
-        - $ref: '#/components/parameters/IncludeSoldQuery'
+      - "$ref": "#/components/parameters/PageQuery"
+      - "$ref": "#/components/parameters/PageSizeCamelQuery"
+      - "$ref": "#/components/parameters/IncludeSoldQuery"
       responses:
         '200':
-          description: A paginated list of car listings
+          description: Listings.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  listings:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CarSummary'
-
-  /api/listings/{id}:
-    get:
-      tags: [Listings]
-      summary: Get listing details
-      description: Retrieve full details for a specific car listing.
-      operationId: getCarById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique listing identifier
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: Full details of the car listing
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CarListing'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    put:
-      tags: [Listings]
-      summary: Update a listing
-      description: Update an existing car listing.
-      operationId: updateListing
+                "$ref": "#/components/schemas/SearchResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+    post:
+      tags:
+      - Listings
+      summary: Create a listing
+      operationId: createListing
       security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+      - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CarListing'
+              "$ref": "#/components/schemas/CreateListingRequest"
+      responses:
+        '201':
+          description: Listing created.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ListingDetailsResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '401':
+          "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
+        '409': *3
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+  "/api/listings/search":
+    get:
+      tags:
+      - Listings
+      summary: Search listings
+      operationId: searchCars
+      parameters:
+      - "$ref": "#/components/parameters/MakeQuery"
+      - "$ref": "#/components/parameters/ModelQuery"
+      - "$ref": "#/components/parameters/YearQuery"
+      - "$ref": "#/components/parameters/MinPriceQuery"
+      - "$ref": "#/components/parameters/MaxPriceQuery"
+      - "$ref": "#/components/parameters/MaxMileageQuery"
+      - "$ref": "#/components/parameters/FuelTypeCamelQuery"
+      - "$ref": "#/components/parameters/PageQuery"
+      - "$ref": "#/components/parameters/PageSizeCamelQuery"
+      - "$ref": "#/components/parameters/IncludeSoldQuery"
       responses:
         '200':
-          description: Listing updated successfully
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SearchResponse"
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/BadRequestText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502': *1
+  "/api/listings/compare":
+    get:
+      tags:
+      - Listings
+      summary: Compare listings
+      operationId: compareListings
+      parameters:
+      - "$ref": "#/components/parameters/IdsQuery"
+      responses:
+        '200':
+          description: Listing comparison.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CompareListingsResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/listings/{id}":
+    get:
+      tags:
+      - Listings
+      summary: Get listing details
+      operationId: getCarById
+      parameters:
+      - "$ref": "#/components/parameters/ListingIdPlainPath"
+      responses:
+        '200':
+          description: Listing details.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ListingDetailsResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+    put:
+      tags:
+      - Listings
+      summary: Update a listing
+      operationId: updateListing
+      security:
+      - bearerAuth: []
+      parameters:
+      - "$ref": "#/components/parameters/ListingIdPlainPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateListingRequest"
+      responses:
+        '200':
+          description: Listing updated.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ListingDetailsResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '401':
+          "$ref": "#/components/responses/UnauthorizedText"
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
+        '409':
+          "$ref": "#/components/responses/ConflictText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
     delete:
-      tags: [Listings]
+      tags:
+      - Listings
       summary: Delete a listing
-      description: Delete a specific car listing.
       operationId: deleteListing
       security:
-        - bearerAuth: []
+      - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
+      - "$ref": "#/components/parameters/ListingIdPlainPath"
       responses:
         '204':
-          description: Listing deleted successfully
+          description: Listing deleted.
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          "$ref": "#/components/responses/UnauthorizedText"
         '404':
-          $ref: '#/components/responses/NotFound'
+          "$ref": "#/components/responses/NotFoundText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
-      description: Firebase ID token
-
+      bearerFormat: Firebase ID token
   parameters:
+    AuctionIdPath:
+      name: auction_id
+      in: path
+      required: true
+      schema:
+        type: string
+    ChatIdPath:
+      name: chat_id
+      in: path
+      required: true
+      schema:
+        type: string
     ListingIdPath:
       name: listing_id
       in: path
@@ -860,8 +852,13 @@ components:
       schema:
         type: integer
         format: int64
-      description: Car listing ID
-
+    ListingIdPlainPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     SellerIdPath:
       name: seller_id
       in: path
@@ -869,64 +866,75 @@ components:
       schema:
         type: integer
         format: int64
-      description: Seller ID
-
-    ChatIdPath:
-      name: chat_id
-      in: path
-      required: true
+    AuctionStatusQuery:
+      name: status
+      in: query
+      required: false
       schema:
         type: string
-      description: Chat session ID
-
-    AuctionIdPath:
-      name: auction_id
-      in: path
-      required: true
-      schema:
-        type: string
-      description: Unique auction identifier
-
     BrandQuery:
       name: brand
       in: query
-      required: true
+      required: false
       schema:
         type: string
-      description: Car brand (e.g., Toyota)
-
-    ModelQuery:
-      name: model
-      in: query
-      required: true
-      schema:
-        type: string
-      description: Car model (e.g., Corolla)
-
-    BrandQueryOptional:
+    BrandQueryRequired:
       name: brand
       in: query
-      required: false
+      required: true
       schema:
         type: string
-      description: Car brand filter (e.g., Toyota)
-
-    ModelQueryOptional:
-      name: model
+    FuelTypeCamelQuery:
+      name: fuelType
       in: query
       required: false
       schema:
         type: string
-      description: Car model filter (e.g., Corolla)
-
+    FuelTypeSnakeQuery:
+      name: fuel_type
+      in: query
+      required: false
+      schema:
+        type: string
+    GroupByQuery:
+      name: group_by
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+        - district
+        - city
+        - country
+        default: district
+    IdsQuery:
+      name: ids
+      in: query
+      required: false
+      description: Comma-separated listing IDs. Invalid numbers are parsed as 0 by
+        the gateway.
+      schema:
+        type: string
+        example: 123
+    IncludeSoldQuery:
+      name: includeSold
+      in: query
+      required: false
+      schema:
+        type: boolean
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
     LocationQuery:
       name: location
       in: query
       required: false
       schema:
         type: string
-      description: District, city or region filter
-
     LocationsQuery:
       name: locations
       in: query
@@ -937,245 +945,637 @@ components:
         type: array
         items:
           type: string
-      description: Optional list of districts/cities for comparison
-
-    YearFromQuery:
-      name: year_from
-      in: query
-      required: false
-      schema:
-        type: integer
-        minimum: 1886
-      description: Minimum model year filter
-
-    YearToQuery:
-      name: year_to
-      in: query
-      required: false
-      schema:
-        type: integer
-        minimum: 1886
-      description: Maximum model year filter
-
-    FuelTypeQuery:
-      name: fuel_type
+    MakeQuery:
+      name: make
       in: query
       required: false
       schema:
         type: string
-      description: Fuel type filter (e.g., Gasoline)
-
-    GroupByDistrictCityCountryQuery:
-      name: group_by
-      in: query
-      required: true
-      schema:
-        type: string
-        enum: [district, city, country]
-      description: Grouping field for comparison
-
-    SortByQuery:
-      name: sort_by
-      in: query
-      required: false
-      schema:
-        type: string
-        enum: [avg_price, count]
-      description: Sort field
-
-    OrderQuery:
-      name: order
-      in: query
-      required: false
-      schema:
-        type: string
-        enum: [asc, desc]
-      description: Sort order
-
-    LimitQuery:
-      name: limit
+    MaxMileageQuery:
+      name: maxMileage
       in: query
       required: false
       schema:
         type: integer
-        minimum: 1
-      description: Maximum number of groups to return
-
-    SkipQuery:
-      name: skip
+        format: int32
+    MaxPriceQuery:
+      name: maxPrice
       in: query
       required: false
       schema:
         type: integer
-        minimum: 0
-      description: Number of groups to skip for pagination
-
+        format: int64
     MetricsQuery:
       name: metrics
       in: query
-      required: true
+      required: false
       style: form
       explode: true
       schema:
         type: array
         items:
           type: string
-          enum: [avg_price, median_price, count]
-      description: Metrics to aggregate
-
-    GroupByLocationQuery:
-      name: group_by
+          enum:
+          - avg_price
+          - median_price
+          - count
+    MinPriceQuery:
+      name: minPrice
       in: query
-      required: true
+      required: false
       schema:
-        type: string
-        enum: [district, city, country]
-      description: Grouping field for aggregation
-
-    AuctionStatusQuery:
-      name: status
+        type: integer
+        format: int64
+    ModelQuery:
+      name: model
       in: query
       required: false
       schema:
         type: string
-        enum: [ACTIVE, COMPLETED, CANCELLED]
-      description: Filter by auction status
-
+    ModelQueryRequired:
+      name: model
+      in: query
+      required: true
+      schema:
+        type: string
+    OrderQuery:
+      name: order
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
     PageQuery:
       name: page
       in: query
       required: false
       schema:
         type: integer
+        format: int32
         default: 1
-        minimum: 1
-      description: Page number for pagination
-
-    PageSizeQuery:
-      name: page_size
-      in: query
-      required: false
-      schema:
-        type: integer
-        default: 20
-        minimum: 1
-        maximum: 100
-      description: Number of results per page
-
-    ListingPageSizeQuery:
+    PageSizeCamelQuery:
       name: pageSize
       in: query
       required: false
       schema:
         type: integer
+        format: int32
         default: 20
-        minimum: 1
-      description: Number of results per page
-
-    IncludeSoldQuery:
-      name: includeSold
+    PageSizeSnakeQuery:
+      name: page_size
       in: query
       required: false
       schema:
-        type: boolean
-      description: Indicates whether to include sold vehicles in the search results
-
+        type: integer
+        format: int32
+        default: 20
+    SkipQuery:
+      name: skip
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+    SortByQuery:
+      name: sort_by
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+        - avg_price
+        - count
+    YearQuery:
+      name: year
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+    YearFromQuery:
+      name: year_from
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+    YearToQuery:
+      name: year_to
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
   responses:
-    BadRequest:
-      description: Invalid input/query parameters
+    BadGatewayText:
+      description: Upstream WebSocket connection failed.
       content:
-        application/json:
+        text/plain:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Unauthorized:
-      description: User not authenticated
+            type: string
+    BadRequestText:
+      description: Bad request.
       content:
-        application/json:
+        text/plain:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Forbidden:
-      description: User does not have permission to access this resource
+            type: string
+    ConflictText:
+      description: Conflict.
       content:
-        application/json:
+        text/plain:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: Resource not found
+            type: string
+    ForbiddenText:
+      description: Forbidden.
       content:
-        application/json:
+        text/plain:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    InternalServerError:
-      description: Server error while processing the request
+            type: string
+    InternalServerErrorText:
+      description: Internal server error.
       content:
-        application/json:
+        text/plain:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
+            type: string
+    MethodNotAllowedText:
+      description: Method not allowed.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Method not allowed
+    NotFoundText:
+      description: Not found.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Not found
+    UnauthorizedText:
+      description: Unauthorized.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Unauthorized
   schemas:
+    Aggregates:
+      type: object
+      properties:
+        location:
+          type: string
+        avg_price:
+          type: integer
+          format: int32
+        median_price:
+          type: integer
+          format: int32
+        count:
+          type: integer
+          format: int32
+    AggregatesResponse:
+      type: object
+      properties:
+        aggregates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Aggregates"
+        pagination:
+          "$ref": "#/components/schemas/Pagination"
+    Auction:
+      type: object
+      properties:
+        auction_id:
+          type: string
+        listing_id:
+          type: integer
+          format: int64
+        seller_id:
+          type: integer
+          format: int64
+        starting_price:
+          type: number
+          format: double
+        current_price:
+          type: number
+          format: double
+          nullable: true
+        status:
+          type: string
+        end_time:
+          type: string
+        winner_user_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        reserve_met:
+          type: boolean
+        total_bids:
+          type: integer
+          format: int32
+    AveragePriceResponse:
+      type: object
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        average_price:
+          type: number
+          format: double
+        min_price:
+          type: number
+          format: double
+        max_price:
+          type: number
+          format: double
+        listing_count:
+          type: integer
+          format: int32
+    Bid:
+      type: object
+      properties:
+        bid_id:
+          type: string
+        auction_id:
+          type: string
+        bidder_id:
+          type: string
+        bid_amount:
+          type: number
+          format: double
+        timestamp:
+          type: string
+    ByLocationResponse:
+      type: object
+      properties:
+        stats:
+          "$ref": "#/components/schemas/Stats"
+    ChatMessage:
+      type: object
+      properties:
+        sender_id:
+          type: integer
+          format: int64
+        content:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+    ChatsSummary:
+      type: object
+      properties:
+        chat_id:
+          type: string
+        listing_id:
+          type: integer
+          format: int64
+        brand:
+          type: string
+        model:
+          type: string
+    Comparisons:
+      type: object
+      properties:
+        location:
+          type: string
+        average_price:
+          type: integer
+          format: int32
+        listing_count:
+          type: integer
+          format: int32
+    CompareListingsResponse:
+      type: object
+      properties:
+        listings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ListingDetailsResponse"
+    CreateAuctionRequest:
+      type: object
+      properties:
+        listing_id:
+          type: integer
+          format: int64
+        seller_id:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Overwritten from the authenticated user by the gateway.
+        starting_price:
+          type: number
+          format: double
+        end_time:
+          type: string
+        reserve_price:
+          type: number
+          format: double
+          nullable: true
+    CreateAuctionResponse:
+      type: object
+      properties:
+        auction:
+          "$ref": "#/components/schemas/Auction"
+    CreateListingRequest:
+      type: object
+      properties:
+        vin:
+          type: string
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+          format: int32
+        price:
+          type: number
+          format: double
+        mileage:
+          type: integer
+          format: int32
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        fuel_type:
+          type: string
+        body_class:
+          type: string
+        drive_type:
+          type: string
+        transmission:
+          type: string
+        trim:
+          type: string
+        color:
+          type: string
+        dealer_id:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Overwritten from the authenticated user by the gateway.
+        is_new:
+          type: boolean
+        is_sold:
+          type: boolean
+    FavoriteMutationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
     FavoritesResponse:
       type: object
-      required: [favorites]
       properties:
         favorites:
           type: array
           items:
             type: integer
             format: int64
-            description: Car listing ID
-
-    FavoriteMutationResponse:
+    GetAuctionBidsResponse:
       type: object
-      required: [success, message]
       properties:
-        success:
-          type: boolean
-        message:
+        bids:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Bid"
+        total:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        page_size:
+          type: integer
+          format: int32
+    GetAuctionResponse:
+      type: object
+      properties:
+        auction:
+          "$ref": "#/components/schemas/Auction"
+    GetChatHistoryResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ChatMessage"
+        pagination:
+          "$ref": "#/components/schemas/Pagination"
+    GetChatsResponse:
+      type: object
+      properties:
+        chats:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ChatsSummary"
+    ListAuctionsResponse:
+      type: object
+      properties:
+        auctions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Auction"
+        total:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        page_size:
+          type: integer
+          format: int32
+    ListingDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        make:
           type: string
-
-    UsersPreviewRequest:
-      type: object
-      required: [user_ids]
-      properties:
-        user_ids:
+        model:
+          type: string
+        year:
+          type: integer
+          format: int32
+        price:
+          type: number
+          format: double
+        mileage:
+          type: integer
+          format: int32
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        fuel_type:
+          type: string
+        trim:
+          type: string
+        transmission:
+          type: string
+        color:
+          type: string
+        seller_type:
+          type: string
+        description:
+          type: string
+        listed_at:
+          type: string
+        images:
           type: array
           items:
-            type: integer
-            format: int64
-
-    UsersPreviewResponse:
+            type: string
+        is_sold:
+          type: boolean
+    ListingSummary:
       type: object
-      required: [users]
       properties:
-        users:
+        id:
+          type: integer
+          format: int64
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+          format: int32
+        price:
+          type: number
+          format: float
+        mileage:
+          type: integer
+          format: int32
+        fuel_type:
+          type: string
+        body_class:
+          type: string
+        drive_type:
+          type: string
+        transmission:
+          type: string
+        is_new:
+          type: boolean
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        last_seen:
+          type: string
+        is_sold:
+          type: boolean
+        dealer_id:
+          type: integer
+          format: int32
+    OpenChatRequest:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Overwritten from the authenticated user by the gateway.
+        seller_id:
+          type: integer
+          format: int64
+        listing_id:
+          type: integer
+          format: int64
+    OpenChatResponse:
+      type: object
+      properties:
+        chat_id:
+          type: string
+        is_chat_closed:
+          type: boolean
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          format: int32
+        skip:
+          type: integer
+          format: int32
+        has_next:
+          type: boolean
+        next_skip:
+          type: integer
+          format: int32
+          nullable: true
+    PlaceBidRequest:
+      type: object
+      properties:
+        auction_id:
+          type: string
+          readOnly: true
+          description: Overwritten from the path by the gateway.
+        bidder_id:
+          type: string
+          readOnly: true
+          description: Overwritten from the authenticated user by the gateway.
+        bid_amount:
+          type: number
+          format: double
+    PlaceBidResponse:
+      type: object
+      properties:
+        bid:
+          "$ref": "#/components/schemas/Bid"
+    PriceComparisonResponse:
+      type: object
+      properties:
+        comparisons:
           type: array
           items:
-            type: object
-            required: [id, name]
-            properties:
-              id:
-                type: integer
-                format: int64
-              name:
-                type: string
-
-    SellersPreviewRequest:
+            "$ref": "#/components/schemas/Comparisons"
+        pagination:
+          "$ref": "#/components/schemas/Pagination"
+    SearchResponse:
       type: object
-      required: [seller_ids]
       properties:
-        seller_ids:
+        total:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        page_size:
+          type: integer
+          format: int32
+        listings:
           type: array
           items:
-            type: integer
-            format: int64
-
+            "$ref": "#/components/schemas/ListingSummary"
+    SellerPreview:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
     SellerProfileResponse:
       type: object
-      required: [seller_id, name, seller_type, contact_info, rating]
       properties:
         seller_id:
           type: integer
@@ -1189,425 +1589,106 @@ components:
         rating:
           type: number
           format: double
-
-    SellerPreview:
+    SellersPreviewRequest:
       type: object
-      required: [id, name]
       properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-
+        seller_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
     SellersPreviewResponse:
       type: object
-      required: [sellers]
       properties:
         sellers:
           type: array
           items:
-            $ref: '#/components/schemas/SellerPreview'
-
-    OpenChatRequest:
+            "$ref": "#/components/schemas/SellerPreview"
+    Stats:
       type: object
-      required: [seller_id, listing_id]
-      properties:
-        seller_id:
-          type: integer
-          format: int64
-          description: Seller ID
-        listing_id:
-          type: integer
-          format: int64
-          description: Car listing ID
-
-    OpenChatResponse:
-      type: object
-      required: [chat_id]
-      properties:
-        chat_id:
-          type: string
-          description: Chat session ID
-        is_chat_closed:
-          type: boolean
-          description: Indicates if the chat session has been closed by the seller
-
-    ChatPreview:
-      type: object
-      properties:
-        chat_id:
-          type: string
-        other_user_id:
-          type: integer
-          format: int64
-        other_user_name:
-          type: string
-        listing_id:
-          type: integer
-          format: int64
-        last_message:
-          type: string
-        updated_at:
-          type: integer
-          format: int64
-          description: Timestamp in Unix milliseconds
-        unread:
-          type: boolean
-
-    Message:
-      type: object
-      required: [message_id, chat_id, sender_id, content, timestamp]
-      properties:
-        message_id:
-          type: string
-        chat_id:
-          type: string
-        sender_id:
-          type: integer
-          format: int64
-        content:
-          type: string
-        timestamp:
-          type: integer
-          format: int64
-          description: Timestamp in Unix milliseconds
-        is_read:
-          type: boolean
-
-    ChatHistoryResponse:
-      type: object
-      required: [messages, pagination]
-      properties:
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/Message'
-        pagination:
-          $ref: '#/components/schemas/PaginationMetadata'
-
-    PriceComparison:
-      type: object
-      required: [location, average_price, listing_count]
-      properties:
-        location:
-          type: string
-        average_price:
-          type: number
-          format: float
-        listing_count:
-          type: integer
-
-    PriceComparisonResponse:
-      type: object
-      required: [comparisons, pagination]
-      properties:
-        comparisons:
-          type: array
-          items:
-            $ref: '#/components/schemas/PriceComparison'
-        pagination:
-          $ref: '#/components/schemas/PaginationMetadata'
-
-    ListingsAggregateItem:
-      type: object
-      required: [location]
-      properties:
-        location:
-          type: string
-        avg_price:
-          type: number
-          format: float
-          nullable: true
-        median_price:
-          type: number
-          format: float
-          nullable: true
-        count:
-          type: integer
-          nullable: true
-      additionalProperties: false
-
-    ListingsAggregateResponse:
-      type: object
-      required: [aggregates, pagination]
-      properties:
-        aggregates:
-          type: array
-          items:
-            $ref: '#/components/schemas/ListingsAggregateItem'
-        pagination:
-          $ref: '#/components/schemas/PaginationMetadata'
-
-    ListingStats:
-      type: object
-      required: [min_price, max_price, avg_price, median_price]
       properties:
         min_price:
-          type: number
-          format: float
+          type: integer
+          format: int32
         max_price:
-          type: number
-          format: float
+          type: integer
+          format: int32
         avg_price:
-          type: number
-          format: float
+          type: integer
+          format: int32
         median_price:
-          type: number
-          format: float
-
-    ListingStatsResponse:
-      type: object
-      required: [stats]
-      properties:
-        stats:
-          $ref: '#/components/schemas/ListingStats'
-
-    PaginationMetadata:
-      type: object
-      required: [limit, skip, has_next]
-      properties:
-        limit:
           type: integer
-          minimum: 1
-          description: Maximum number of items requested for this page.
-        skip:
-          type: integer
-          minimum: 0
-          description: Number of items skipped before this page.
-        has_next:
-          type: boolean
-          description: Indicates whether there is a next page.
-        next_skip:
-          type: integer
-          minimum: 0
-          nullable: true
-          description: Skip value to request the next page, or null when there is no next page.
-
-    AveragePriceResponse:
-      type: object
-      required: [average_price, listing_count]
-      properties:
-        brand:
-          type: string
-        model:
-          type: string
-        average_price:
-          type: number
-          format: float
-          description: Average listing price in USD
-        min_price:
-          type: number
-          format: float
-          description: Lowest price in matching listings
-        max_price:
-          type: number
-          format: float
-          description: Highest price in matching listings
-        listing_count:
-          type: integer
-          description: Number of listings used to calculate the average
-
-    CreateAuctionRequest:
-      type: object
-      required: [listing_id, starting_price, end_time]
-      properties:
-        listing_id:
-          type: integer
-          format: int64
-          description: ID of the existing car listing to auction
-        seller_id:
-          type: integer
-          format: int64
-          description: Optional seller ID (calculated from auth if omitted)
-        starting_price:
-          type: number
-          format: float
-          description: Minimum starting bid in USD
-          minimum: 0.01
-        reserve_price:
-          type: number
-          format: float
-          nullable: true
-          description: Optional minimum acceptable sale price (kept private until met)
-        end_time:
-          type: string
-          format: date-time
-          description: When the auction ends, must be a future date-time
-
-    AuctionListResponse:
-      type: object
-      required: [auctions]
-      properties:
-        total:
-          type: integer
-          description: Total number of matching auctions
-        page:
-          type: integer
-        page_size:
-          type: integer
-        auctions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Auction'
-
-    AuctionResponse:
-      type: object
-      required: [auction]
-      properties:
-        auction:
-          $ref: '#/components/schemas/Auction'
-
-    Auction:
-      type: object
-      required: [auction_id, listing_id, seller_id, starting_price, status, end_time, created_at, reserve_met, total_bids]
-      properties:
-        auction_id:
-          type: string
-        listing_id:
-          type: integer
-          format: int64
-        seller_id:
-          type: integer
-          format: int64
-        starting_price:
-          type: number
-          format: float
-        reserve_met:
-          type: boolean
-          description: Whether the current highest bid has met the reserve price
-        current_price:
-          type: number
-          format: float
-          nullable: true
-          description: Current highest bid, null if no bids placed yet
-        total_bids:
-          type: integer
-        status:
-          type: string
-          enum: [ACTIVE, COMPLETED, CANCELLED]
-        end_time:
-          type: string
-          format: date-time
-        winner_user_id:
-          type: string
-          nullable: true
-          description: Winning bidder user ID, populated only after auction ends
-        created_at:
-          type: string
-          format: date-time
-
-    BidRequest:
-      type: object
-      required: [bid_amount]
-      properties:
-        bidder_id:
-          type: string
-          description: Optional bidder ID (calculated from auth if omitted)
-        bid_amount:
-          type: number
-          format: float
-          description: Bid amount in USD, must be greater than the current highest bid
-          minimum: 0.01
-
-    BidResponse:
-      type: object
-      required: [bid]
-      properties:
-        bid:
-          $ref: '#/components/schemas/Bid'
-
-    Bid:
-      type: object
-      required: [bid_id, auction_id, bidder_id, bid_amount, timestamp]
-      properties:
-        bid_id:
-          type: string
-        auction_id:
-          type: string
-        bidder_id:
-          type: string
-        bid_amount:
-          type: number
-          format: float
-        timestamp:
-          type: string
-          format: date-time
-
-    BidsResponse:
-      type: object
-      required: [bids]
-      properties:
-        total:
-          type: integer
-        page:
-          type: integer
-        page_size:
-          type: integer
-        bids:
-          type: array
-          items:
-            $ref: '#/components/schemas/Bid'
-
-    CarSummary:
+          format: int32
+    UpdateListingRequest:
       type: object
       properties:
         id:
           type: integer
           format: int64
+          readOnly: true
+          description: Overwritten from the path by the gateway.
+        vin:
+          type: string
         make:
           type: string
         model:
           type: string
         year:
           type: integer
+          format: int32
         price:
-          type: integer
-          format: int64
+          type: number
+          format: double
         mileage:
           type: integer
-        location:
+          format: int32
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        country:
           type: string
         fuel_type:
           type: string
-
-    CarListing:
-      allOf:
-        - $ref: '#/components/schemas/CarSummary'
-        - type: object
-          properties:
-            transmission:
-              type: string
-              enum: [automatic, manual]
-            color:
-              type: string
-            sellerType:
-              type: string
-              enum: [dealer, private]
-            description:
-              type: string
-            listedAt:
-              type: string
-              format: date-time
-            is_sold:
-              type: boolean
-              description: Indicates if the car has already been sold
-            dealer_id:
-              type: integer
-              format: int64
-              description: The ID of the seller/dealer
-
-    ErrorResponse:
+        body_class:
+          type: string
+        drive_type:
+          type: string
+        transmission:
+          type: string
+        trim:
+          type: string
+        color:
+          type: string
+        dealer_id:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Overwritten from the authenticated user by the gateway.
+        is_new:
+          type: boolean
+    UserPreview:
       type: object
-      required: [error]
       properties:
-        error:
+        id:
+          type: integer
+          format: int64
+        name:
           type: string
-          description: Human-readable error message
-        code:
-          type: string
-          description: Optional machine-readable error code
-        details:
-          type: object
-          additionalProperties: true
-          description: Optional error details
+    UsersPreviewRequest:
+      type: object
+      properties:
+        user_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+    UsersPreviewResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UserPreview"

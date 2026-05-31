@@ -32,7 +32,7 @@ func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 		}
 		resp, err := auctionClient.ListAuctions(ctx, req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -52,7 +52,7 @@ func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := auctionClient.CreateAuction(ctx, &req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusCreated, resp)
@@ -76,7 +76,7 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 		case http.MethodGet:
 			resp, err := auctionClient.GetAuctionDetails(ctx, &auctionpb.GetAuctionRequest{AuctionId: auctionID})
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeServiceError(w, err)
 				return
 			}
 			writeJSON(w, http.StatusOK, resp)
@@ -88,7 +88,7 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 			}
 			resp, err := auctionClient.DeleteAuction(ctx, &auctionpb.DeleteAuctionRequest{AuctionId: auctionID, UserId: strconv.FormatInt(authUserID, 10)})
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeServiceError(w, err)
 				return
 			}
 			if resp.GetSuccess() {
@@ -123,7 +123,7 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 			req.BidderId = strconv.FormatInt(authUserID, 10)
 			resp, err := auctionClient.PlaceBid(ctx, &req)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeServiceError(w, err)
 				return
 			}
 			writeJSON(w, http.StatusOK, resp)
@@ -140,7 +140,7 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 			}
 			resp, err := auctionClient.GetAuctionBids(ctx, req)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeServiceError(w, err)
 				return
 			}
 			writeJSON(w, http.StatusOK, resp)
@@ -174,7 +174,7 @@ func HandleAuctionWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	upstreamURL, err := auctionWSProxyURL(auctionID, r.URL.RawQuery)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 

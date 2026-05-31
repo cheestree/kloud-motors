@@ -23,7 +23,7 @@ func HandleGetFavorites(w http.ResponseWriter, r *http.Request) {
 	req := &userpb.GetFavoritesRequest{UserId: authUserID}
 	resp, err := userClient.GetFavorites(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -47,7 +47,7 @@ func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 		req := &userpb.AddFavoriteRequest{UserId: authUserID, ListingId: listingID}
 		resp, err := userClient.AddFavorite(ctx, req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -55,7 +55,7 @@ func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 		req := &userpb.RemoveFavoriteRequest{UserId: authUserID, ListingId: listingID}
 		resp, err := userClient.RemoveFavorite(ctx, req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -77,7 +77,7 @@ func HandleGetUsersPreview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	resp, err := userClient.GetUsersPreview(ctx, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)

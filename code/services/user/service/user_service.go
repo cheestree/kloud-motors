@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	. "services/user/models"
 	proto "services/user/proto"
@@ -66,6 +67,9 @@ func (s *UserService) AddFavorite(ctx context.Context, req *proto.AddFavoriteReq
 
 	err := s.repo.AddFavorite(ctx, fav)
 	if err != nil {
+		if isDuplicateFavoriteError(err) {
+			return nil, status.Error(codes.AlreadyExists, "favorite already exists")
+		}
 		return nil, status.Error(codes.Internal, "failed to add favorite")
 	}
 
@@ -73,6 +77,13 @@ func (s *UserService) AddFavorite(ctx context.Context, req *proto.AddFavoriteReq
 		Success: true,
 		Message: "favorite added",
 	}, nil
+}
+
+func isDuplicateFavoriteError(err error) bool {
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "duplicate") ||
+		strings.Contains(msg, "unique") ||
+		strings.Contains(msg, "idx_user_listing")
 }
 
 func (s *UserService) RemoveFavorite(ctx context.Context, req *proto.RemoveFavoriteRequest) (*proto.FavoriteMutationResponse, error) {

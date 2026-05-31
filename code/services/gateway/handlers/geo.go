@@ -82,7 +82,7 @@ func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := geoClient.Aggregates(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -148,7 +148,7 @@ func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := geoClient.PriceComparison(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -188,7 +188,7 @@ func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := geoClient.ByLocation(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)

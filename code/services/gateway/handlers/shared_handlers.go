@@ -8,6 +8,8 @@ import (
 
 	userpb "services/user/proto"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -72,4 +74,27 @@ func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	}
 
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func writeServiceError(w http.ResponseWriter, err error) {
+	http.Error(w, err.Error(), httpStatusFromServiceError(err))
+}
+
+func httpStatusFromServiceError(err error) int {
+	switch status.Code(err) {
+	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
+		return http.StatusBadRequest
+	case codes.Unauthenticated:
+		return http.StatusUnauthorized
+	case codes.PermissionDenied:
+		return http.StatusForbidden
+	case codes.NotFound:
+		return http.StatusNotFound
+	case codes.AlreadyExists, codes.Aborted:
+		return http.StatusConflict
+	case codes.Unavailable:
+		return http.StatusBadGateway
+	default:
+		return http.StatusInternalServerError
+	}
 }

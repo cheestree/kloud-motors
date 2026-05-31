@@ -30,7 +30,7 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 			IncludeSold: includeSold,
 		})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -50,7 +50,7 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := listingClient.CreateListing(ctx, &req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusCreated, resp)
@@ -85,7 +85,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 		IncludeSold: includeSold,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -120,7 +120,7 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	resp, err := listingClient.CompareListings(ctx, &listingpb.CompareListingsRequest{Ids: ids})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -139,7 +139,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		resp, err := listingClient.GetListingDetails(ctx, &listingpb.ListingDetailsRequest{Id: id})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -160,7 +160,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := listingClient.UpdateListing(ctx, &req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -173,7 +173,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := listingClient.DeleteListing(ctx, &listingpb.DeleteListingRequest{Id: id, DealerId: authUserID})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeServiceError(w, err)
 			return
 		}
 		if !resp.GetDeleted() {

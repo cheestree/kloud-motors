@@ -43,7 +43,7 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	resp, err := chatClient.OpenChat(ctx, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -66,7 +66,7 @@ func HandleGetChats(w http.ResponseWriter, r *http.Request) {
 	resp, err := chatClient.GetChats(ctx, req)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	req := &chatpb.GetChatHistoryRequest{ChatId: chatID, UserId: userID}
 	resp, err := chatClient.GetChatHistory(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -122,7 +122,7 @@ func HandleChatWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	upstreamURL, err := chatWSProxyURL(chatID, r.URL.RawQuery)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 

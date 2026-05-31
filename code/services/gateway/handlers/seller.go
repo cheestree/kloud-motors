@@ -24,7 +24,7 @@ func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 	req := &sellerpb.GetSellerProfileRequest{SellerId: utils.ParseInt64(sellerID)}
 	resp, err := sellerClient.GetSellerProfile(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -43,7 +43,7 @@ func HandleGetSellersPreview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	resp, err := sellerClient.GetSellersPreview(ctx, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)

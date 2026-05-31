@@ -29,7 +29,7 @@ func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := marketpriceClient.GetAverageMarketPrice(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
