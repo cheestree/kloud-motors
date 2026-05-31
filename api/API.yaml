@@ -367,7 +367,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
     delete:
       tags:
       - Auction
@@ -392,7 +393,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/auctions/{auction_id}/bid":
     post:
       tags:
@@ -426,7 +428,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/auctions/{auction_id}/bids":
     get:
       tags:
@@ -452,7 +455,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/auctions/ws/{auction_id}":
     get:
       tags:
@@ -526,7 +530,8 @@ paths:
           "$ref": "#/components/responses/ConflictText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
     delete:
       tags:
       - Users
@@ -553,7 +558,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/users/preview":
     post:
       tags:
@@ -598,7 +604,8 @@ paths:
                 "$ref": "#/components/schemas/SellerProfileResponse"
         '400':
           "$ref": "#/components/responses/BadRequestText"
-        '404': *2
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
         '405':
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
@@ -630,7 +637,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/listings":
     get:
       tags:
@@ -654,7 +662,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
     post:
       tags:
       - Listings
@@ -681,10 +690,12 @@ paths:
           "$ref": "#/components/responses/UnauthorizedText"
         '405':
           "$ref": "#/components/responses/MethodNotAllowedText"
-        '409': *3
+        '409':
+          "$ref": "#/components/responses/ConflictText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/listings/search":
     get:
       tags:
@@ -715,7 +726,8 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': *1
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/listings/compare":
     get:
       tags:
