@@ -264,7 +264,7 @@ paths:
     get:
       tags: [Market Price Analysis]
       summary: Get average market price for a specific car
-      description: Retrieve the average market price for a specific car make, model, year and location.
+      description: Retrieve the average market price for a specific car make, model and year.
       operationId: getAverageMarketPrice
       parameters:
         - $ref: '#/components/parameters/BrandQuery'
@@ -289,7 +289,7 @@ paths:
     get:
       tags: [Auction]
       summary: List auctions
-      description: Returns a paginated list of car auctions, filterable by status, brand, model and location.
+      description: Returns a paginated list of car auctions, filterable by status, brand and model.
       operationId: listAuctions
       parameters:
         - $ref: '#/components/parameters/AuctionStatusQuery'
@@ -850,6 +850,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Firebase ID token
 
   parameters:
     ListingIdPath:
