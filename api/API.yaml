@@ -30,9 +30,8 @@ tags:
   description: Seller management and profiling
 - name: Listings
   description: Filtered car search and listing comparison
-host: kloud-motors.com
-schemes: 
-  - https
+servers:
+  - url: https://kloud-motors.com
 paths:
   "/api/health":
     get:
