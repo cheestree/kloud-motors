@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Car Marketplace API
+  title: Kloud Motors - Online Car Dealer
   version: 1.0.0
   description: |
     - **Market Price Analysis**: Calculate the average price of cars based on brand, model, year, and location.
@@ -30,6 +30,9 @@ tags:
   description: Seller management and profiling
 - name: Listings
   description: Filtered car search and listing comparison
+host: kloud-motors.com
+schemes: 
+  - https
 paths:
   "/api/health":
     get:
@@ -306,7 +309,7 @@ paths:
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
-        '502': &1
+        '502':
           "$ref": "#/components/responses/BadGatewayText"
     post:
       tags:
@@ -526,7 +529,7 @@ paths:
           "$ref": "#/components/responses/UnauthorizedText"
         '405':
           "$ref": "#/components/responses/MethodNotAllowedText"
-        '409': &3
+        '409':
           "$ref": "#/components/responses/ConflictText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
@@ -552,7 +555,7 @@ paths:
           "$ref": "#/components/responses/BadRequestText"
         '401':
           "$ref": "#/components/responses/UnauthorizedText"
-        '404': &2
+        '404':
           "$ref": "#/components/responses/NotFoundText"
         '405':
           "$ref": "#/components/responses/MethodNotAllowedText"
@@ -922,7 +925,7 @@ components:
     IdsQuery:
       name: ids
       in: query
-      required: false
+      required: true
       description: Comma-separated listing IDs. Invalid numbers are parsed as 0 by
         the gateway.
       schema:
@@ -1082,7 +1085,7 @@ components:
         format: int32
   responses:
     BadGatewayText:
-      description: Upstream WebSocket connection failed.
+      description: Upstream service is unavailable or could not be reached.
       content:
         text/plain:
           schema:
