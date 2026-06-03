@@ -145,37 +145,6 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
-  "/api/health":
-    get:
-      tags:
-      - Health
-      summary: Health check
-      operationId: getHealth
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
-      responses:
-        '200':
-          description: Gateway is healthy.
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: OK
-  "/metrics":
-    get:
-      tags:
-      - Observability
-      summary: Prometheus metrics
-      operationId: getMetrics
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
-      responses:
-        '200':
-          description: Prometheus metrics payload.
-          content:
-            text/plain:
-              schema:
-                type: string
   "/api/chat":
     get:
       tags:
