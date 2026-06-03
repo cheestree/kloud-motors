@@ -36,6 +36,7 @@ protoc \
     "$SERVICES_ROOT/seller/proto/seller.proto" \
     "$SERVICES_ROOT/user/proto/user.proto" \
     "$SERVICES_ROOT/geographic-market-insights/proto/geo-market-insights.proto" \
-    "$SERVICES_ROOT/auction/proto/auction.proto"
+    "$SERVICES_ROOT/auction/proto/auction.proto" \
+    "$SERVICES_ROOT/marketprice/proto/marketprice.proto"
 
 echo "Protobuf generation complete (local)."

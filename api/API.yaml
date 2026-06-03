@@ -42,6 +42,8 @@ paths:
         Exchanges an email and password for a Firebase ID token through the
         Kloud Motors gateway. The Firebase API key remains server-side.
       operationId: loginUser
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -77,6 +79,8 @@ paths:
         Creates a Firebase Auth user and returns tokens plus the internal
         Kloud Motors user id.
       operationId: registerUser
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -114,6 +118,8 @@ paths:
         Exchanges a Firebase refresh token for a new ID token through the
         Kloud Motors gateway. The Firebase API key remains server-side.
       operationId: refreshUserToken
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -145,6 +151,8 @@ paths:
       - Health
       summary: Health check
       operationId: getHealth
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       responses:
         '200':
           description: Gateway is healthy.
@@ -159,6 +167,8 @@ paths:
       - Observability
       summary: Prometheus metrics
       operationId: getMetrics
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       responses:
         '200':
           description: Prometheus metrics payload.
@@ -172,6 +182,8 @@ paths:
       - Chat
       summary: Get user chats
       operationId: getChats
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       responses:
@@ -195,6 +207,8 @@ paths:
       - Chat
       summary: Open or create a buyer-seller chat session
       operationId: openChat
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -233,7 +247,10 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ChatIdPath"
+      - "$ref": "#/components/parameters/LimitQuery"
+      - "$ref": "#/components/parameters/SkipQuery"
       responses:
         '200':
           description: Chat history.
@@ -262,6 +279,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ChatIdPath"
       responses:
         '101':
@@ -283,6 +301,7 @@ paths:
       summary: Get aggregated market insights
       operationId: getMarketInsightsAggregates
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/MetricsQuery"
@@ -315,6 +334,7 @@ paths:
       summary: Compare prices across locations
       operationId: getPriceComparison
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/GroupByQuery"
@@ -344,6 +364,7 @@ paths:
       summary: Get listing price statistics by location
       operationId: getListingStatsByLocation
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/LocationQuery"
@@ -372,6 +393,7 @@ paths:
       summary: Get average market price
       operationId: getAverageMarketPrice
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/YearFromQuery"
@@ -400,6 +422,7 @@ paths:
       summary: List auctions
       operationId: listAuctions
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionStatusQuery"
       - "$ref": "#/components/parameters/PageQuery"
       - "$ref": "#/components/parameters/PageSizeSnakeQuery"
@@ -421,6 +444,8 @@ paths:
       - Auction
       summary: Create an auction
       operationId: createAuction
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -459,6 +484,7 @@ paths:
       summary: Get auction details
       operationId: getAuction
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '200':
@@ -485,6 +511,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '204':
@@ -512,6 +539,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       requestBody:
         required: true
@@ -545,6 +573,7 @@ paths:
       summary: Get auction bids
       operationId: getAuctionBids
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       - "$ref": "#/components/parameters/PageQuery"
       - "$ref": "#/components/parameters/PageSizeSnakeQuery"
@@ -574,6 +603,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '101':
@@ -594,6 +624,8 @@ paths:
       - Users
       summary: Get the authenticated user's favorite listing IDs
       operationId: getFavoriteListings
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       responses:
@@ -620,6 +652,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
@@ -648,6 +681,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
@@ -674,6 +708,8 @@ paths:
       - Users
       summary: Get user previews
       operationId: getUsersPreview
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -702,6 +738,7 @@ paths:
       summary: Get seller profile
       operationId: getSellerProfile
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/SellerIdPath"
       responses:
         '200':
@@ -726,6 +763,8 @@ paths:
       - Sellers
       summary: Get seller previews
       operationId: getSellersPreview
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -754,6 +793,7 @@ paths:
       summary: Get listings
       operationId: getListings
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/PageQuery"
       - "$ref": "#/components/parameters/PageSizeCamelQuery"
       - "$ref": "#/components/parameters/IncludeSoldQuery"
@@ -777,6 +817,8 @@ paths:
       - Listings
       summary: Create a listing
       operationId: createListing
+      parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -811,6 +853,7 @@ paths:
       summary: Search listings
       operationId: searchCars
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/MakeQuery"
       - "$ref": "#/components/parameters/ModelQuery"
       - "$ref": "#/components/parameters/YearQuery"
@@ -843,6 +886,7 @@ paths:
       summary: Compare listings
       operationId: compareListings
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/IdsQuery"
       responses:
         '200':
@@ -868,6 +912,7 @@ paths:
       summary: Get listing details
       operationId: getCarById
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       responses:
         '200':
@@ -894,6 +939,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       requestBody:
         required: true
@@ -930,6 +976,7 @@ paths:
       security:
       - bearerAuth: []
       parameters:
+      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       responses:
         '204':
@@ -953,6 +1000,16 @@ components:
       scheme: bearer
       bearerFormat: Firebase ID token
   parameters:
+    HostHeader:
+      name: Host
+      in: header
+      required: true
+      description: Requests must target the Kloud Motors public host.
+      schema:
+        type: string
+        enum:
+        - kloud-motors.com
+      example: kloud-motors.com
     AuctionIdPath:
       name: auction_id
       in: path
@@ -1046,9 +1103,12 @@ components:
       name: limit
       in: query
       required: false
+      description: Defaults to 20 when omitted or non-positive. Geo endpoints cap this at 100 by default; chat history may be capped by service configuration.
       schema:
         type: integer
         format: int32
+        minimum: 1
+        default: 20
     LocationQuery:
       name: location
       in: query
@@ -1134,6 +1194,7 @@ components:
       schema:
         type: integer
         format: int32
+        minimum: 1
         default: 1
     PageSizeCamelQuery:
       name: pageSize
@@ -1142,22 +1203,29 @@ components:
       schema:
         type: integer
         format: int32
+        minimum: 1
         default: 20
     PageSizeSnakeQuery:
       name: page_size
       in: query
       required: false
+      description: Defaults to 20 at the gateway. Auction endpoints cap the effective page size at 100.
       schema:
         type: integer
         format: int32
+        minimum: 1
+        maximum: 100
         default: 20
     SkipQuery:
       name: skip
       in: query
       required: false
+      description: Zero-based offset. Negative values are rejected by chat history and normalized to 0 by geo endpoints.
       schema:
         type: integer
         format: int32
+        minimum: 0
+        default: 0
     SortByQuery:
       name: sort_by
       in: query

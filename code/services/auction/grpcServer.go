@@ -21,6 +21,28 @@ type server struct {
 	listingClient listingproto.ListingServiceClient
 }
 
+const (
+	defaultAuctionPageSize = 10
+	maxAuctionPageSize     = 100
+)
+
+func normalizePage(page, limit int32) (int, int) {
+	normalizedLimit := int(limit)
+	if normalizedLimit <= 0 {
+		normalizedLimit = defaultAuctionPageSize
+	}
+	if normalizedLimit > maxAuctionPageSize {
+		normalizedLimit = maxAuctionPageSize
+	}
+
+	normalizedPage := int(page)
+	if normalizedPage <= 0 {
+		normalizedPage = 1
+	}
+
+	return normalizedPage, normalizedLimit
+}
+
 func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsRequest) (*proto.ListAuctionsResponse, error) {
 	query := `SELECT id, listing_id, seller_id, starting_price, current_price, status, end_time, winner_user_id, created_at, reserve_met, total_bids FROM auctions WHERE 1=1`
 	countQuery := `SELECT COUNT(*) FROM auctions WHERE 1=1`
@@ -36,14 +58,7 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 		argId++
 	}
 
-	limit := int(req.Limit)
-	if limit <= 0 {
-		limit = 10
-	}
-	page := int(req.Page)
-	if page <= 0 {
-		page = 1
-	}
+	page, limit := normalizePage(req.Page, req.Limit)
 	offset := (page - 1) * limit
 
 	var total int32
@@ -53,7 +68,7 @@ func (s *server) ListAuctions(ctx context.Context, req *proto.ListAuctionsReques
 		return nil, status.Error(codes.Internal, "failed to count auctions")
 	}
 
-	query += fmt.Sprintf(` LIMIT $%d OFFSET $%d`, argId, argId+1)
+	query += fmt.Sprintf(` ORDER BY created_at DESC, id ASC LIMIT $%d OFFSET $%d`, argId, argId+1)
 	args = append(args, limit, offset)
 
 	rows, err := auctionDB.QueryContext(ctx, query, args...)
@@ -422,18 +437,11 @@ func (s *server) GetAuctionBids(ctx context.Context, req *proto.GetAuctionBidsRe
 		return nil, status.Error(codes.Internal, "failed to count auction bids")
 	}
 
-	limit := int(req.Limit)
-	if limit <= 0 {
-		limit = 10
-	}
-	page := int(req.Page)
-	if page <= 0 {
-		page = 1
-	}
+	page, limit := normalizePage(req.Page, req.Limit)
 	offset := (page - 1) * limit
 
 	// 2. Get all bids for a specific auction, ordered by amount descending
-	query := `SELECT id, auction_id, bidder_id, bid_amount, timestamp FROM bids WHERE auction_id = $1 ORDER BY bid_amount DESC LIMIT $2 OFFSET $3`
+	query := `SELECT id, auction_id, bidder_id, bid_amount, timestamp FROM bids WHERE auction_id = $1 ORDER BY bid_amount DESC, timestamp ASC, id ASC LIMIT $2 OFFSET $3`
 
 	rows, err := auctionDB.QueryContext(ctx, query, req.AuctionId, limit, offset)
 	if err != nil {

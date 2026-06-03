@@ -22,6 +22,8 @@ type grpcServer struct {
 	sellerClient  sellerproto.SellerServiceClient
 }
 
+const defaultChatHistoryLimit int32 = 20
+
 func (s *grpcServer) GetChats(ctx context.Context, req *proto.GetChatsRequest) (*proto.GetChatsResponse, error) {
 	if req.GetUserId() <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid user id")
@@ -144,15 +146,11 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 		}
 	}
 
-	if s.messageStore == nil {
-		return &proto.GetChatHistoryResponse{Messages: []*proto.ChatMessage{}}, nil
-	}
-
 	limit := req.GetLimit()
 	if limit <= 0 {
-		limit = 20 // Default limit
+		limit = defaultChatHistoryLimit
 	}
-	if limit > s.historyLimit {
+	if s.historyLimit > 0 && limit > s.historyLimit {
 		limit = s.historyLimit // Cap at max allowed
 	}
 
@@ -161,10 +159,22 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 		return nil, status.Error(codes.InvalidArgument, "invalid skip")
 	}
 
-	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), limit, skip)
+	if s.messageStore == nil {
+		return &proto.GetChatHistoryResponse{
+			Messages:   []*proto.ChatMessage{},
+			Pagination: chatPagination(limit, skip, false),
+		}, nil
+	}
+
+	messages, err := s.messageStore.ListChatMessages(ctx, req.GetChatId(), limit+1, skip)
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to load chat history: %v", err)
+	}
+
+	hasNext := int32(len(messages)) > limit
+	if hasNext {
+		messages = messages[:limit]
 	}
 
 	protoMessages := make([]*proto.ChatMessage, 0, len(messages))
@@ -176,5 +186,21 @@ func (s *grpcServer) GetChatHistory(ctx context.Context, req *proto.GetChatHisto
 		})
 	}
 
-	return &proto.GetChatHistoryResponse{Messages: protoMessages}, nil
+	return &proto.GetChatHistoryResponse{
+		Messages:   protoMessages,
+		Pagination: chatPagination(limit, skip, hasNext),
+	}, nil
+}
+
+func chatPagination(limit, skip int32, hasNext bool) *proto.Pagination {
+	pagination := &proto.Pagination{
+		Limit:   limit,
+		Skip:    skip,
+		HasNext: hasNext,
+	}
+	if hasNext {
+		nextSkip := skip + limit
+		pagination.NextSkip = &nextSkip
+	}
+	return pagination
 }

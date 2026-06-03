@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	chatpb "services/chat/proto"
+	"services/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -92,7 +93,13 @@ func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	chatID := parts[3]
 	ctx := r.Context()
-	req := &chatpb.GetChatHistoryRequest{ChatId: chatID, UserId: userID}
+	q := r.URL.Query()
+	req := &chatpb.GetChatHistoryRequest{
+		ChatId: chatID,
+		UserId: userID,
+		Limit:  utils.ParseInt32WithDefault(q.Get(queryLimit), 20),
+		Skip:   utils.ParseInt32(q.Get(querySkip)),
+	}
 	resp, err := chatClient.GetChatHistory(ctx, req)
 	if err != nil {
 		writeServiceError(w, err)
