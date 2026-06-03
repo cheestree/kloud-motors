@@ -22,17 +22,18 @@ func TestUserIntegration_FavoritesLifecycle(t *testing.T) {
 	conn := integrationtest.DialGRPC(ctx, t, "user", addr)
 	client := userpb.NewUserServiceClient(conn)
 
-	userID := time.Now().UnixNano()
-	createResp, err := client.CreateUserProfile(ctx, &userpb.CreateUserProfileRequest{
-		UserId: userID,
-		Name:   "Integration User",
-		Email:  fmt.Sprintf("integration-%d@example.test", userID),
+	uniqueID := time.Now().UnixNano()
+	userResp, err := client.GetOrCreateByFirebaseUID(ctx, &userpb.GetOrCreateByFirebaseUIDRequest{
+		FirebaseUid: fmt.Sprintf("integration-firebase-%d", uniqueID),
+		Name:        "Integration User",
+		Email:       fmt.Sprintf("integration-%d@example.test", uniqueID),
 	})
 	if err != nil {
-		t.Fatalf("create user profile failed: %v", err)
+		t.Fatalf("get or create user by firebase uid failed: %v", err)
 	}
-	if !createResp.Success {
-		t.Fatalf("expected create user profile to succeed")
+	userID := userResp.GetUserId()
+	if userID <= 0 {
+		t.Fatalf("expected positive user id, got %d", userID)
 	}
 
 	const listingID int64 = 1

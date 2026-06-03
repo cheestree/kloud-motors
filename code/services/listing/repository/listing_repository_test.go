@@ -53,7 +53,7 @@ func TestListingRepository_GetListingSummary(t *testing.T) {
 	if summary == nil {
 		t.Fatalf("expected summary")
 	}
-	if summary.Id != 7 || summary.DealerId != 42 || summary.Make != "Ford" || summary.Model != "Fiesta" {
+	if summary.Id != 7 || summary.SellerId != 42 || summary.Make != "Ford" || summary.Model != "Fiesta" {
 		t.Fatalf("unexpected summary identifiers: %+v", summary)
 	}
 	if summary.LastSeen != "2025-01-02T03:04:05Z" {

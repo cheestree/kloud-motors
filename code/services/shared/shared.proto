@@ -21,7 +21,7 @@ message ListingSummary {
   string country = 15;
   string last_seen = 16;
   bool is_sold = 17;
-  int32 dealer_id = 18;
+  int32 seller_id = 18;
 }
 
 message ListingDetails {

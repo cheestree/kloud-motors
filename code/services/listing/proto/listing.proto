@@ -78,7 +78,7 @@ message CreateListingRequest {
   string transmission = 14;
   string trim = 15;
   string color = 16;
-  int64 dealer_id = 17;
+  int64 seller_id = 17;
   bool is_new = 18;
   bool is_sold = 19;
 }
@@ -101,19 +101,19 @@ message UpdateListingRequest {
   string transmission = 15;
   string trim = 16;
   string color = 17;
-  int64 dealer_id = 18;
+  int64 seller_id = 18;
   bool is_new = 19;
 }
 
 message SetListingSoldStatusRequest {
   int64 id = 1;
-  int64 dealer_id = 2;
+  int64 seller_id = 2;
   bool is_sold = 3;
 }
 
 message DeleteListingRequest {
   int64 id = 1;
-  int64 dealer_id = 2;
+  int64 seller_id = 2;
 }
 
 message DeleteListingResponse {
@@ -130,7 +130,7 @@ message CompareListingsResponse {
 
 message CheckListingOwnershipRequest {
   int64 listing_id = 1;
-  int64 dealer_id = 2;
+  int64 seller_id = 2;
 }
 
 message CheckListingOwnershipResponse {
@@ -143,5 +143,5 @@ message CheckListingOpenRequest {
 
 message CheckListingOpenResponse {
   bool is_open = 1;
-  int64 dealer_id = 2;
+  int64 seller_id = 2;
 }

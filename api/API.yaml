@@ -1432,7 +1432,7 @@ components:
           type: string
         color:
           type: string
-        dealer_id:
+        seller_id:
           type: integer
           format: int64
           readOnly: true
@@ -1660,7 +1660,7 @@ components:
           type: string
         is_sold:
           type: boolean
-        dealer_id:
+        seller_id:
           type: integer
           format: int32
     OpenChatRequest:
@@ -1839,7 +1839,7 @@ components:
           type: string
         color:
           type: string
-        dealer_id:
+        seller_id:
           type: integer
           format: int64
           readOnly: true

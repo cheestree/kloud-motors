@@ -46,7 +46,7 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, msgInvalidBody, http.StatusBadRequest)
 			return
 		}
-		req.DealerId = authUserID
+		req.SellerId = authUserID
 
 		resp, err := listingClient.CreateListing(ctx, &req)
 		if err != nil {
@@ -156,7 +156,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		req.Id = id
-		req.DealerId = authUserID
+		req.SellerId = authUserID
 
 		resp, err := listingClient.UpdateListing(ctx, &req)
 		if err != nil {
@@ -171,7 +171,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		resp, err := listingClient.DeleteListing(ctx, &listingpb.DeleteListingRequest{Id: id, DealerId: authUserID})
+		resp, err := listingClient.DeleteListing(ctx, &listingpb.DeleteListingRequest{Id: id, SellerId: authUserID})
 		if err != nil {
 			writeServiceError(w, err)
 			return

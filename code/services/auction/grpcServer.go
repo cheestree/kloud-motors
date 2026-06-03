@@ -146,7 +146,7 @@ func (s *server) CreateAuction(ctx context.Context, req *proto.CreateAuctionRequ
 
 	ownerResp, err := s.listingClient.CheckListingOwnership(ctx, &listingproto.CheckListingOwnershipRequest{
 		ListingId: req.ListingId,
-		DealerId:  req.SellerId,
+		SellerId:  req.SellerId,
 	})
 	if err != nil {
 		log.Printf("Error checking listing ownership: %v", err)

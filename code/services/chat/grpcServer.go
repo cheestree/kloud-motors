@@ -86,7 +86,7 @@ func (s *grpcServer) OpenChat(ctx context.Context, req *proto.OpenChatRequest) (
 	}
 
 	isListingFromSeller, err := s.listingClient.CheckListingOwnership(ctx,
-		&listingproto.CheckListingOwnershipRequest{ListingId: listingID, DealerId: sellerId})
+		&listingproto.CheckListingOwnershipRequest{ListingId: listingID, SellerId: sellerId})
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unavailable:
