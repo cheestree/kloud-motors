@@ -1,1 +1,56 @@
 \chapter{Smoke Tests} \label{cap:smoke}
+The main goal of smoke tests is to validate the correct behaviour of the API.
+
+\section{Endpoint POST /forum/posts}
+
+The goal of this endpoint is to create a new post in the forum. The test evaluated whether the API correctly processes valid posts and rejects invalid ones.
+
+For this test, the tool used was Postman and according to the API specification, this endpoint has 2 possible scenarios:
+
+\subsection{Scenario 1: Valid Post 201 Created}
+After reviewing the API specification, a valid post request was created with the following fields:
+
+\begin{verbatim}
+{
+  "authorID": 0,
+  "title": "string",
+  "content": "string"
+}
+\end{verbatim}
+
+When the request is sent to the API, the response is as follows:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{./images/francisco/AuthorIDError.png}
+    \caption{Invalid AuthorID 400 Bad Request}
+    \label{fig:smoke_post_invalid_author}
+\end{figure}
+
+The error message suggests that the AuthorID is required. However if we look into the body of the request, we can see that the AuthorID is there. 
+
+Then I tried to send the same request but with the last 'D' of AuthorID as 'd' and finnaly I got the 201 Created response.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{./images/francisco/SuccessSmoke.png}
+    \caption{Success 201 Created}
+    \label{fig:smoke_post_success}
+\end{figure}
+
+It was a little mistake that the API specification had regarding the case of the field names, but it was easy to fix.
+
+\subsection{Scenario 2: Missing Fields 400 Bad Request}
+For the scenario 2, we evaluate the behavior of the API when the request is missing some fields.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{./images/francisco/BadContentSmoke.png}
+    \caption{Bad Content 400 Bad Request}
+    \label{fig:smoke_post_bad_content}
+\end{figure}
+
+The error message "title: Title is required" suggested that the API correctly identifies missing fields and returns an appropriate error response.
+
+\subsection{Security Vulnerability}
+One interesting thing to note is that everyone could do a post without being authenticated. If someone guesses the ID of another user, he or she could do a post on behalf of that user. This should not be allowed and one way to fix this is to implement a mechanism where the user needs a login token to do a post.
