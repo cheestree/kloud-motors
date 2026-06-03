@@ -132,6 +132,24 @@ func (c *breakerUserClient) GetFavorites(ctx context.Context, in *userpb.GetFavo
 	})
 }
 
+func (c *breakerUserClient) Login(ctx context.Context, in *userpb.AuthRequest, opts ...grpc.CallOption) (*userpb.AuthResponse, error) {
+	return withBreaker(c.breaker, "user service", func() (*userpb.AuthResponse, error) {
+		return c.UserServiceClient.Login(ctx, in, opts...)
+	})
+}
+
+func (c *breakerUserClient) Register(ctx context.Context, in *userpb.AuthRequest, opts ...grpc.CallOption) (*userpb.AuthResponse, error) {
+	return withBreaker(c.breaker, "user service", func() (*userpb.AuthResponse, error) {
+		return c.UserServiceClient.Register(ctx, in, opts...)
+	})
+}
+
+func (c *breakerUserClient) RefreshToken(ctx context.Context, in *userpb.RefreshTokenRequest, opts ...grpc.CallOption) (*userpb.AuthResponse, error) {
+	return withBreaker(c.breaker, "user service", func() (*userpb.AuthResponse, error) {
+		return c.UserServiceClient.RefreshToken(ctx, in, opts...)
+	})
+}
+
 func (c *breakerUserClient) AddFavorite(ctx context.Context, in *userpb.AddFavoriteRequest, opts ...grpc.CallOption) (*userpb.FavoriteMutationResponse, error) {
 	return withBreaker(c.breaker, "user service", func() (*userpb.FavoriteMutationResponse, error) {
 		return c.UserServiceClient.AddFavorite(ctx, in, opts...)

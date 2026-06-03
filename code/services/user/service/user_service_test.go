@@ -2,6 +2,10 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	userpb "services/user/proto"
@@ -28,6 +32,195 @@ func newMockUserService(t *testing.T) (*UserService, sqlmock.Sqlmock, func()) {
 
 	return NewUserService(repository.NewRepository(gormDB)), mock, func() {
 		db.Close()
+	}
+}
+
+func TestUserService_LoginCallsFirebaseSignInWithPassword(t *testing.T) {
+	var gotPath string
+	var gotKey string
+	var gotBody firebaseAuthRequest
+
+	firebaseServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotKey = r.URL.Query().Get("key")
+		if r.Header.Get("Content-Type") != "application/json" {
+			t.Fatalf("unexpected content-type: %s", r.Header.Get("Content-Type"))
+		}
+		if err := json.NewDecoder(r.Body).Decode(&gotBody); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"idToken": "id-token",
+			"email": "seller7514@mock.local",
+			"refreshToken": "refresh-token",
+			"expiresIn": "3600",
+			"localId": "firebase-uid"
+		}`))
+	}))
+	defer firebaseServer.Close()
+
+	authClient := &firebaseAuthClient{
+		apiKey:      "secret-key",
+		authBaseURL: firebaseServer.URL,
+		client:      firebaseServer.Client(),
+	}
+
+	resp, err := authClient.login(context.Background(), "seller7514@mock.local", "password123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if gotPath != "/accounts:signInWithPassword" {
+		t.Fatalf("unexpected firebase path: %s", gotPath)
+	}
+	if gotKey != "secret-key" {
+		t.Fatalf("unexpected firebase key: %s", gotKey)
+	}
+	if gotBody.Email != "seller7514@mock.local" || gotBody.Password != "password123" || !gotBody.ReturnSecureToken {
+		t.Fatalf("unexpected firebase request body: %+v", gotBody)
+	}
+	if resp.IdToken != "id-token" || resp.RefreshToken != "refresh-token" || resp.LocalId != "firebase-uid" {
+		t.Fatalf("unexpected auth response: %+v", resp)
+	}
+}
+
+func TestUserService_RegisterCallsFirebaseSignUp(t *testing.T) {
+	var gotPath string
+
+	firebaseServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"idToken": "new-id-token",
+			"email": "new-user@example.test",
+			"refreshToken": "new-refresh-token",
+			"expiresIn": "3600",
+			"localId": "new-firebase-uid"
+		}`))
+	}))
+	defer firebaseServer.Close()
+
+	authClient := &firebaseAuthClient{
+		apiKey:      "secret-key",
+		authBaseURL: firebaseServer.URL,
+		client:      firebaseServer.Client(),
+	}
+
+	resp, err := authClient.register(context.Background(), "new-user@example.test", "password123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if gotPath != "/accounts:signUp" {
+		t.Fatalf("unexpected firebase path: %s", gotPath)
+	}
+	if resp.IdToken != "new-id-token" || resp.Email != "new-user@example.test" {
+		t.Fatalf("unexpected auth response: %+v", resp)
+	}
+}
+
+func TestUserService_AuthMapsFirebaseErrors(t *testing.T) {
+	firebaseServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":{"message":"INVALID_PASSWORD"}}`))
+	}))
+	defer firebaseServer.Close()
+
+	authClient := &firebaseAuthClient{
+		apiKey:      "secret-key",
+		authBaseURL: firebaseServer.URL,
+		client:      firebaseServer.Client(),
+	}
+
+	_, err := authClient.login(context.Background(), "seller7514@mock.local", "wrong")
+	if err == nil || !strings.Contains(err.Error(), "invalid email or password") {
+		t.Fatalf("expected invalid credentials error, got %v", err)
+	}
+}
+
+func TestUserService_RefreshTokenCallsFirebaseSecureToken(t *testing.T) {
+	var gotPath string
+	var gotBody firebaseRefreshRequest
+
+	firebaseServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		if err := json.NewDecoder(r.Body).Decode(&gotBody); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"id_token": "new-id-token",
+			"refresh_token": "new-refresh-token",
+			"expires_in": "3600",
+			"user_id": "firebase-uid"
+		}`))
+	}))
+	defer firebaseServer.Close()
+
+	authClient := &firebaseAuthClient{
+		apiKey:             "secret-key",
+		secureTokenBaseURL: firebaseServer.URL,
+		client:             firebaseServer.Client(),
+	}
+
+	resp, err := authClient.refreshToken(context.Background(), "old-refresh-token")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if gotPath != "/token" {
+		t.Fatalf("unexpected firebase path: %s", gotPath)
+	}
+	if gotBody.GrantType != "refresh_token" || gotBody.RefreshToken != "old-refresh-token" {
+		t.Fatalf("unexpected refresh request body: %+v", gotBody)
+	}
+	if resp.IdToken != "new-id-token" || resp.RefreshToken != "new-refresh-token" || resp.LocalId != "firebase-uid" {
+		t.Fatalf("unexpected refresh response: %+v", resp)
+	}
+}
+
+func TestUserService_LoginReturnsDatabaseUserID(t *testing.T) {
+	svc, mock, cleanup := newMockUserService(t)
+	defer cleanup()
+
+	firebaseServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"idToken": "id-token",
+			"email": "seller7514@mock.local",
+			"refreshToken": "refresh-token",
+			"expiresIn": "3600",
+			"localId": "firebase-uid"
+		}`))
+	}))
+	defer firebaseServer.Close()
+
+	svc.auth = &firebaseAuthClient{
+		apiKey:      "secret-key",
+		authBaseURL: firebaseServer.URL,
+		client:      firebaseServer.Client(),
+	}
+
+	mock.ExpectQuery(`SELECT \* FROM "users" WHERE "users"\."firebase_uid" = \$1 ORDER BY "users"\."id" LIMIT \$2`).
+		WithArgs("firebase-uid", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "firebase_uid", "name", "email"}).
+			AddRow(int64(42), "firebase-uid", "", "seller7514@mock.local"))
+
+	resp, err := svc.Login(context.Background(), &userpb.AuthRequest{
+		Email:    "seller7514@mock.local",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.UserId != 42 || resp.LocalId != "firebase-uid" {
+		t.Fatalf("unexpected auth response ids: %+v", resp)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sqlmock expectations: %v", err)
 	}
 }
 

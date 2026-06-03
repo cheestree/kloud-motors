@@ -36,6 +36,11 @@ spec:
                 secretKeyRef:
                   name: user-secrets
                   key: USER_DATABASE_URL
+            - name: FIREBASE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: user-secrets
+                  key: FIREBASE_API_KEY
           envFrom:
             - configMapRef:
                 name: user-config

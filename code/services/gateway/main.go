@@ -68,6 +68,9 @@ func registerAuctionRoutes() {
 }
 
 func registerUserRoutes() {
+	http.HandleFunc(routeUserLogin, handlers.HandleUserLogin)
+	http.HandleFunc(routeUserRegister, handlers.HandleUserRegister)
+	http.HandleFunc(routeUserRefresh, handlers.HandleUserRefresh)
 	http.HandleFunc(routeFavorites, handlers.HandleGetFavorites)
 	http.HandleFunc(routeFavoriteByListingID, handlers.HandleFavoriteListing)
 	http.HandleFunc(routeUsersPreview, handlers.HandleGetUsersPreview)

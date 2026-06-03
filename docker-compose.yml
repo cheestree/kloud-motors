@@ -179,6 +179,7 @@ services:
     environment:
       USER_DATABASE_URL: ${USER_DATABASE_URL}
       USER_GRPC_PORT: ${USER_GRPC_PORT}
+      FIREBASE_API_KEY: ${FIREBASE_API_KEY}
     depends_on:
       user-db:
         condition: service_healthy

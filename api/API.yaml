@@ -33,6 +33,106 @@ tags:
 servers:
   - url: https://kloud-motors.com
 paths:
+  "/api/user/login":
+    post:
+      tags:
+      - Users
+      summary: Authenticate a user with email and password
+      description: |
+        Exchanges an email and password for a Firebase ID token through the
+        Kloud Motors gateway. The Firebase API key remains server-side.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AuthRequest"
+            example:
+              email: seller7514@mock.local
+              password: password123
+      responses:
+        '200':
+          description: User authentication token response.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AuthResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '401':
+          "$ref": "#/components/responses/UnauthorizedText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/user/register":
+    post:
+      tags:
+      - Users
+      summary: Register a user with email and password
+      description: |
+        Creates a Firebase Auth user and returns tokens plus the internal
+        Kloud Motors user id.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AuthRequest"
+            example:
+              email: new-seller@example.com
+              password: password123
+      responses:
+        '200':
+          description: User registration token response.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AuthResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '401':
+          "$ref": "#/components/responses/UnauthorizedText"
+        '409':
+          "$ref": "#/components/responses/ConflictText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
+  "/api/user/refresh":
+    post:
+      tags:
+      - Users
+      summary: Refresh a Firebase ID token
+      description: |
+        Exchanges a Firebase refresh token for a new ID token through the
+        Kloud Motors gateway. The Firebase API key remains server-side.
+      operationId: refreshUserToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RefreshTokenRequest"
+            example:
+              refresh_token: refresh-token-value
+      responses:
+        '200':
+          description: Refreshed authentication token response.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AuthResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
+        '401':
+          "$ref": "#/components/responses/UnauthorizedText"
+        '500':
+          "$ref": "#/components/responses/InternalServerErrorText"
+        '502':
+          "$ref": "#/components/responses/BadGatewayText"
   "/api/health":
     get:
       tags:
@@ -1356,6 +1456,69 @@ components:
           items:
             type: integer
             format: int64
+    FirebaseErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+              format: int32
+            message:
+              type: string
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  domain:
+                    type: string
+                  reason:
+                    type: string
+    AuthRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    RefreshTokenRequest:
+      type: object
+      required:
+      - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: Firebase refresh token returned by login, register, or refresh.
+    AuthResponse:
+      type: object
+      properties:
+        id_token:
+          type: string
+          description: Firebase ID token to send as a Bearer token to protected API endpoints.
+        email:
+          type: string
+          format: email
+        refresh_token:
+          type: string
+        expires_in:
+          type: string
+          description: Token lifetime in seconds, returned as a string by Firebase.
+        local_id:
+          type: string
+          description: Firebase user ID.
+        user_id:
+          type: integer
+          format: int64
+          description: Internal Kloud Motors user ID.
     GetAuctionBidsResponse:
       type: object
       properties:

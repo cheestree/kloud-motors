@@ -194,6 +194,7 @@ services:
     environment:
       USER_DATABASE_URL: postgres://user_user:user_password@user-db-test:5432/user_db?sslmode=disable
       USER_GRPC_PORT: "50058"
+      FIREBASE_API_KEY: ${FIREBASE_API_KEY:-test-api-key}
     depends_on:
       user-db-test:
         condition: service_healthy

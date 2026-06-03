@@ -9,6 +9,7 @@ const (
 	routePrefixChat     = routeBaseAPI + "/chat"
 	routePrefixMarket   = routeBaseAPI + "/market"
 	routePrefixAuctions = routeBaseAPI + "/auctions"
+	routePrefixUser     = routeBaseAPI + "/user"
 	routePrefixUsers    = routeBaseAPI + "/users"
 	routePrefixSellers  = routeBaseAPI + "/sellers"
 	routePrefixHealth   = routeBaseAPI + "/health"
@@ -30,6 +31,9 @@ const (
 	routeAuctions                = routePrefixAuctions
 	routeAuctionWS               = routePrefixAuctions + "/ws/{auctionID}"
 	routeAuctionByID             = routePrefixAuctions + "/"
+	routeUserLogin               = routePrefixUser + "/login"
+	routeUserRegister            = routePrefixUser + "/register"
+	routeUserRefresh             = routePrefixUser + "/refresh"
 	routeFavorites               = routePrefixUsers + "/me/favorites"
 	routeFavoriteByListingID     = routePrefixUsers + "/me/favorites/"
 	routeSellerByID              = routePrefixSellers + "/"

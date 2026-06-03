@@ -1,13 +1,72 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 
 	userpb "services/user/proto"
 	"services/utils"
+
+	"google.golang.org/grpc"
 )
+
+func HandleUserLogin(w http.ResponseWriter, r *http.Request) {
+	handleUserAuth(w, r, userClient.Login)
+}
+
+func HandleUserRegister(w http.ResponseWriter, r *http.Request) {
+	handleUserAuth(w, r, userClient.Register)
+}
+
+func HandleUserRefresh(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req userpb.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, msgInvalidBody, http.StatusBadRequest)
+		return
+	}
+	if req.RefreshToken == "" {
+		http.Error(w, "refresh_token is required", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := userClient.RefreshToken(r.Context(), &req)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func handleUserAuth(w http.ResponseWriter, r *http.Request, authFn func(context.Context, *userpb.AuthRequest, ...grpc.CallOption) (*userpb.AuthResponse, error)) {
+	if r.Method != http.MethodPost {
+		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req userpb.AuthRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, msgInvalidBody, http.StatusBadRequest)
+		return
+	}
+	if req.Email == "" || req.Password == "" {
+		http.Error(w, "email and password are required", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := authFn(r.Context(), &req)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
 
 func HandleGetFavorites(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
