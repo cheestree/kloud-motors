@@ -41,11 +41,11 @@ spec:
                 name: listing-config
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 250m
+              memory: 384Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: "1"
+              memory: 1Gi
           startupProbe:
             grpc:
               port: 50054
@@ -81,11 +81,11 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
+              cpu: 100m
               memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
           startupProbe:
             httpGet:
               path: /startup

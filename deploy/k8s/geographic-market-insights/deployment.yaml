@@ -51,11 +51,11 @@ spec:
 
           resources:
             requests:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "250m"
+              memory: "384Mi"
             limits:
-              cpu: "500m"
-              memory: "256Mi"
+              cpu: "1"
+              memory: "1Gi"
         - name: cloud-sql-proxy
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
           args:
@@ -72,11 +72,11 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: "50m"
-              memory: "64Mi"
-            limits:
-              cpu: "200m"
+              cpu: "100m"
               memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           startupProbe:
             httpGet:
               path: /startup
