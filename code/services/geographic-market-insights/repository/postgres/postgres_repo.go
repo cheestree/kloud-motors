@@ -67,7 +67,7 @@ func (db *RelationalRepo) FetchAggregates(ctx context.Context, filters repositor
 	whereSQL, args := buildBaseFilters(filters)
 	if len(locations) > 0 {
 		args = append(args, locations)
-		whereSQL += fmt.Sprintf(" AND %s = ANY($%d)", groupExpr, len(args))
+		whereSQL += fmt.Sprintf(" AND LOWER(%s) = ANY(SELECT LOWER(unnest($%d::text[])))", groupExpr, len(args))
 	}
 
 	args = append(args, limit+1, skip)
@@ -172,7 +172,7 @@ func (db *RelationalRepo) FetchByLocation(ctx context.Context, filters repositor
 	if location != nil && strings.TrimSpace(*location) != "" {
 		args = append(args, strings.TrimSpace(*location))
 		idx := len(args)
-		whereSQL += fmt.Sprintf(" AND (f.district = $%d OR f.city = $%d OR f.country = $%d OR f.state = $%d)", idx, idx, idx, idx)
+		whereSQL += fmt.Sprintf(" AND (LOWER(f.district) = LOWER($%d) OR LOWER(f.city) = LOWER($%d) OR LOWER(f.country) = LOWER($%d) OR LOWER(f.state) = LOWER($%d))", idx, idx, idx, idx)
 	}
 
 	q := fmt.Sprintf(`
@@ -192,7 +192,7 @@ func (db *RelationalRepo) FetchByLocation(ctx context.Context, filters repositor
 }
 
 func buildBaseFilters(filters repository.Filters) (string, []any) {
-	clauses := []string{"b.name = $1", "m.name = $2", "f.ask_price IS NOT NULL"}
+	clauses := []string{"LOWER(b.name) = LOWER($1)", "LOWER(m.name) = LOWER($2)", "f.ask_price IS NOT NULL"}
 	args := []any{strings.TrimSpace(filters.Brand), strings.TrimSpace(filters.Model)}
 
 	if filters.YearFrom != nil {
@@ -205,7 +205,7 @@ func buildBaseFilters(filters repository.Filters) (string, []any) {
 	}
 	if filters.FuelType != nil && strings.TrimSpace(*filters.FuelType) != "" {
 		args = append(args, strings.TrimSpace(*filters.FuelType))
-		clauses = append(clauses, fmt.Sprintf("ft.name = $%d", len(args)))
+		clauses = append(clauses, fmt.Sprintf("LOWER(ft.name) = LOWER($%d)", len(args)))
 	}
 
 	return "WHERE " + strings.Join(clauses, " AND "), args
