@@ -62,6 +62,8 @@ paths:
           "$ref": "#/components/responses/BadRequestText"
         '401':
           "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
@@ -95,6 +97,8 @@ paths:
           "$ref": "#/components/responses/BadRequestText"
         '401':
           "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '409':
           "$ref": "#/components/responses/ConflictText"
         '500':
@@ -129,6 +133,8 @@ paths:
           "$ref": "#/components/responses/BadRequestText"
         '401':
           "$ref": "#/components/responses/UnauthorizedText"
+        '405':
+          "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
@@ -1456,28 +1462,6 @@ components:
           items:
             type: integer
             format: int64
-    FirebaseErrorResponse:
-      type: object
-      properties:
-        error:
-          type: object
-          properties:
-            code:
-              type: integer
-              format: int32
-            message:
-              type: string
-            errors:
-              type: array
-              items:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  domain:
-                    type: string
-                  reason:
-                    type: string
     AuthRequest:
       type: object
       required:
