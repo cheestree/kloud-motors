@@ -5,6 +5,6 @@ locust -f smoke_test.py --headless \
        --csv=logs/smoke --html=logs/smoke_report.html
 
 # # Stress
-# locust -f stress_test.py --headless \
-#        --host http://8.233.225.83/api/v1 \
-#        --csv=logs/stress --html=logs/stress_report.html
+locust -f stress_test.py --headless \
+       --host http://8.233.225.83/api/v1 \
+       --csv=logs/stress --html=logs/stress_report.html
