@@ -1,6 +1,6 @@
 \chapter{Stress Tests} \label{cap:stress}
 
-\section{Endpoint GET /forum/posts}
+\section{Endpoint \texttt{GET /forum/posts} - Francisco Encarnação}
 The main goal of this test is to evaluate the behavior of the API when it is subjected to a high volume of requests. The test was conducted using the Locust tool, with a load profile that simulates a realistic usage scenario.
 
 A custom load profile was created, where the number of users increases over time until it reaches a peak, and then decreases for approximately 9 minutes.
@@ -11,12 +11,14 @@ To properly diagnose the system's behavior, the stress testing was divided into 
 
 \subsection{Phase 1: Test \& Bug Discovery}
 
-In the initial phase, the test generated concurrent traffic to both the global endpoint (GET /api/v1/forum/posts) and the filtered endpoint (GET /api/v1/forum/posts?userId=X).
+In the initial phase, the test generated concurrent traffic to both the global endpoint (\texttt{GET /api/v1/forum/posts}) and the filtered endpoint (\texttt{GET /api/v1/forum/posts?userId=X}).
 
 The global endpoint showed a 100\% failure rate. As shown by the Locust results below all 17,931 requests directed to the unparameterized endpoint resulted in 500 Internal Server Error responses.
 
 The API specification explicitly defines the userId query parameter as optional. However, omitting it causes a fatal backend crash. 
 Because of the high failure rate the 95th percentile response times had big spikes.
+
+\newpage
 
 \begin{figure}[H]
     \centering
@@ -33,11 +35,13 @@ Because of the high failure rate the 95th percentile response times had big spik
 \end{figure}
 
 \subsection{Phase 2: Filtered Route Only}
-After understanding the issue, I modified the test to only send requests to the filtered endpoint (GET /api/v1/forum/posts?userId=X).
+After understanding the issue, I modified the test to only send requests to the filtered endpoint (\texttt{GET /api/v1/forum/posts?userId=X}).
 
 The system handled the initial ramp-up phases fine. However, during the peak load phase, the server reached its processing limit and began to drop requests.
 
 As shown in the statistics below, the test generated over 18,700 requests, of which 1,337 failed, resulting in a 7\% failure rate. This indicates that the application logic works correctly, but the infrastructure or database connection pool cannot sustain 200 concurrent users performing read operations.
+
+\newpage
 
 The response times were also affected by the high load. The average response time got up to 669ms, with a maximum peak reaching 5400ms. These latency spikes correlate directly with the dropped requests visible on the failure rate graph.
 
@@ -60,8 +64,8 @@ The response times were also affected by the high load. The average response tim
 The stress testing revealed two issues in the target API:
 
 \begin{enumerate}
-    \item The global endpoint (GET /forum/posts) is broken and returns a 500 Internal Server Error response.
-    \item The filtered endpoint (GET /forum/posts?userId=X) is implemented well but cannot handle high concurrency.
+    \item The global endpoint (\texttt{GET /forum/posts}) is broken and returns a 500 Internal Server Error response.
+    \item The filtered endpoint (\texttt{GET /forum/posts?userId=X}) is implemented well but cannot handle high concurrency.
 \end{enumerate}
 
 For that reason I suggest fixing the global endpoint and increasing the infrastructure resources to handle the high load.

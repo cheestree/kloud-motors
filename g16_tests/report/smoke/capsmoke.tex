@@ -1,7 +1,7 @@
 \chapter{Smoke Tests} \label{cap:smoke}
 The main goal of smoke tests is to validate the correct behaviour of the API.
 
-\section{Endpoint POST /forum/posts}
+\section{Endpoint \texttt{POST /forum/posts} - Francisco Encarnação}
 
 The goal of this endpoint is to create a new post in the forum. The test evaluated whether the API correctly processes valid posts and rejects invalid ones.
 
@@ -17,6 +17,8 @@ After reviewing the API specification, a valid post request was created with the
   "content": "string"
 }
 \end{verbatim}
+
+\newpage
 
 When the request is sent to the API, the response is as follows:
 
@@ -56,9 +58,11 @@ The error message "title: Title is required" suggested that the API correctly id
 One interesting thing to note is that everyone could do a post without being authenticated. If someone guesses the ID of another user, he or she could do a post on behalf of that user. This should not be allowed and one way to fix this is to implement a mechanism where the user needs a login token to do a post.
 
 
-\section{Endpoint GET /locations/\{id\}}
+\section{Endpoint \texttt{GET /locations/\{id\}} - Daniel Nunes}
 
 The goal of this endpoint is to retrieve the details of a specific location by its numeric identifier. The smoke test evaluated whether the API returns valid location data for existing IDs and whether it handles missing resources, invalid identifiers, query parameters, path variants and unsupported methods correctly. The tests were made with Postman and overall it behaved correctly and as documented.
+
+\newpage
 
 \subsection{Scenario 1: Valid Location 200 OK}
 
@@ -132,12 +136,19 @@ Path variants were stricter, the routes \texttt{GET /locations/1/} and \texttt{G
 
 The same route was also tested with other HTTP methods. The \texttt{HEAD /locations/1} request returned \texttt{200 OK} with headers and no body, which is normal. The \texttt{DELETE /locations/1} request returned \texttt{405 Method Not Allowed}, which is also the expected response for an unsupported method.
 
+\newpage 
+
 \subsection{Response Time Notes}
 
 Most smoke checks completed in less than one second. A few requests were slower but still acceptable:
-
-\begin{itemize}
-    \item \texttt{GET /locations/1?year=2015}:\qquad about \texttt{1.27s}
-    \item \texttt{GET /locations/1.5}:\qquad about \texttt{1.25s}
-    \item \texttt{GET /locations/0}:\qquad about \texttt{0.65s}
-\end{itemize}
+\begin{table}[H]
+    \centering
+    \caption{Response time notes for selected requests}
+    \begin{tabular}{p{0.7\textwidth} p{0.25\textwidth}}
+    \hline
+    \textbf{Request} & \textbf{Approx. time} \\\hline
+    \texttt{GET /locations/1?year=2015} & \texttt{1.27s} \\
+    \texttt{GET /locations/1.5} & \texttt{1.25s} \\
+    \texttt{GET /locations/0} & \texttt{0.65s} \\\hline
+    \end{tabular}
+\end{table}
