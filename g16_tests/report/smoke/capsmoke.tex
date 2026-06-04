@@ -197,3 +197,84 @@ All smoke test requests returned \texttt{200 OK}. The response was valid JSON, t
 The endpoint behaved as expected in the smoke test. It matched the API specification by returning a list of locations with the documented summary fields, and all responses were well below the smoke latency threshold of \texttt{800ms}. No inconsistencies were found between the implemented behaviour and the successful response described in \texttt{combinedAPI.yaml}.
 
 \section{Endpoint \texttt{POST /auth/login} - Daniel Carvalho}
+
+The goal of this endpoint is to authenticate an existing user. Since the login endpoint requires a valid user to exist first, the smoke test also used \texttt{POST /auth/register} as a setup step and then cleaned up the created user at the end of the run.
+
+The smoke test was implemented with a Python script using \texttt{httpx}. According to the observed API contract, the login request does not include a password field and uses only \texttt{username} and \texttt{email}. The main valid request tested was:
+
+\begin{verbatim}
+{
+  "username": "avalidusername4",
+  "email": "avalidemail4@email.com"
+}
+\end{verbatim}
+
+\subsection{Scenario 1: Register New User 201 Created}
+
+The first step registered a fresh user with \texttt{POST /auth/register}. The API returned \texttt{201 Created} and the response body contained the expected user data:
+
+\begin{itemize}
+    \item \texttt{id}
+    \item \texttt{email}
+    \item \texttt{userNName}
+\end{itemize}
+
+The test validated that the response was valid JSON, that \texttt{id} was an integer, and that the username and email fields were strings.
+
+\subsection{Scenario 2: Duplicate Registration 409 Conflict}
+
+After the first registration, the same request was sent again. The API returned \texttt{409 Conflict}, which is the expected behaviour because the username and email were already registered.
+
+\subsection{Scenario 3: Login Happy Path 200 OK}
+
+The login request with the registered username and email returned \texttt{200 OK}, and the response body was valid JSON. However, the response did not match the expected shape checked by the script. The test expected a \texttt{User} object in the response body, but received \texttt{None} for that field.
+
+This means that the endpoint accepts the credentials and returns a successful status code, but the response schema is inconsistent with the structure expected by the test.
+
+\subsection{Scenario 4: Invalid and Missing Credentials}
+
+The test also checked negative authentication cases. Login with unknown credentials returned \texttt{401 Unauthorized}, which is correct. Requests with missing fields were also handled correctly:
+
+\begin{itemize}
+    \item username only returned \texttt{400 Bad Request}
+    \item email only returned \texttt{400 Bad Request}
+    \item empty body returned \texttt{400 Bad Request}
+\end{itemize}
+
+An additional schema probe tried to register a user with only an email. The API returned \texttt{400 Bad Request}, showing that the username field is required during registration.
+
+\subsection{Scenario 5: Wrong Content Type}
+
+The script sent a login request with \texttt{Content-Type: text/plain}. The expected response was \texttt{400 Bad Request} or \texttt{415 Unsupported Media Type}. Instead, the API returned \texttt{500 Internal Server Error}. This indicates that the endpoint does not handle invalid content types safely and should return a client error instead of crashing internally.
+
+\subsection{Results}
+
+\begin{table}[H]
+    \centering
+    \caption{Smoke test summary for \texttt{POST /auth/login}}
+    \begin{tabular}{p{0.55\textwidth} p{0.3\textwidth}}
+    \hline
+    \textbf{Check} & \textbf{Result} \\\hline
+    Register new user & \texttt{201 Created} \\
+    Duplicate registration & \texttt{409 Conflict} \\
+    Login with valid credentials & \texttt{200 OK} \\
+    Login response schema & Failed: missing \texttt{User} object \\
+    Login with unknown credentials & \texttt{401 Unauthorized} \\
+    Login with missing fields & \texttt{400 Bad Request} \\
+    Email-only registration & \texttt{400 Bad Request} \\
+    Wrong content type & Failed: returned \texttt{500} \\
+    Cleanup request & Failed: returned \texttt{404} \\
+    Total result & \texttt{13/16 checks passed} \\\hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/daniel_carvalho/user\_crop.png}
+    \caption{Smoke test execution for authentication endpoints}
+    \label{fig:smoke_auth_results}
+\end{figure}
+
+\subsection{Conclusion}
+
+The smoke test showed that most authentication behaviours are implemented correctly: registration works, duplicate users are rejected, valid login returns \texttt{200 OK}, unknown users return \texttt{401 Unauthorized}, and missing fields return \texttt{400 Bad Request}. However, three problems were found. The login response does not include the expected \texttt{User} object, invalid content types return \texttt{500 Internal Server Error}, and the cleanup endpoint returned \texttt{404 Not Found}. For that reason, the endpoint should be adjusted to return a consistent response schema and to handle malformed requests without internal server errors.

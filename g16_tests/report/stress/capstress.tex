@@ -120,3 +120,67 @@ The median response time stayed very low at \texttt{57ms}, which shows that the 
 The stress test did not reveal a specification mismatch for \texttt{GET /locations/compare}. The endpoint returned the expected data structure for valid comparison requests. The main issue is performance under high concurrency: once the test reached the stress and spike phases, a relevant number of requests took more than \texttt{3000ms}. This suggests that the comparison endpoint or its underlying data access layer should be optimized before the system is expected to support around 100 to 200 concurrent users.
 
 \section{Endpoint \texttt{GET /locations/top} - Daniel Carvalho}
+
+The goal of this endpoint is to return the top locations for a selected metric. According to the API specification, \texttt{GET /locations/top} receives the query parameters \texttt{metric}, \texttt{order} and \texttt{limit}. The \texttt{metric} parameter defines which metric is used for the ranking, \texttt{order} defines if the ranking should be ascending or descending, and \texttt{limit} controls the maximum number of returned locations.
+
+The stress test was implemented with Locust and used multiple valid scenarios instead of testing only one fixed query:
+
+\begin{itemize}
+    \item \texttt{GET /locations/top?metric=hpi\&order=desc\&limit=5}
+    \item \texttt{GET /locations/top?metric=crime\&order=asc\&limit=10}
+    \item \texttt{GET /locations/top?metric=life\_expectancy\&order=desc\&limit=15}
+    \item \texttt{GET /locations/top?metric=pli\&order=asc\&limit=5}
+\end{itemize}
+
+These requests follow the contract of the endpoint and cover different combinations of metrics, ordering and response sizes. The test also validated that the API returned \texttt{200 OK}, that the body was valid JSON, that the response was a non-empty array, and that each returned object contained \texttt{rank}, \texttt{name} and \texttt{value}. The test also checked that the number of returned locations did not exceed the requested \texttt{limit} and that the values were correctly sorted according to the selected \texttt{order}.
+
+\subsection{Load Profile}
+
+The stress test used a staged load profile. It started with 10 virtual users, increased to 50 users, then to 100 users, and finally introduced a spike to 200 users before reducing the load again. This profile was useful to verify the behaviour of the endpoint under normal traffic and under a short peak of concurrency.
+
+\subsection{Results}
+
+The endpoint behaved correctly during the whole run. Locust recorded \texttt{25502} requests and no failures. This means that no unexpected status codes, invalid JSON responses, invalid response structures or latency violations above the configured \texttt{3000ms} threshold were detected.
+
+\begin{table}[H]
+    \centering
+    \caption{Stress test summary for \texttt{GET /locations/top}}
+    \begin{tabular}{p{0.45\textwidth} p{0.4\textwidth}}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & \texttt{25502} \\
+    Failures & \texttt{0} \\
+    Error rate & \texttt{0\%} \\
+    Median response time & \texttt{37ms} \\
+    Average response time & \texttt{66.6ms} \\
+    90th percentile & \texttt{110ms} \\
+    95th percentile & \texttt{190ms} \\
+    99th percentile & \texttt{640ms} \\
+    Maximum response time & \texttt{2972ms} \\
+    Average throughput & \texttt{51.62 requests/s} \\\hline
+    \end{tabular}
+\end{table}
+
+\newpage
+
+The Locust graphs show that the endpoint remained stable even during the 200 user spike. The median response time stayed around \texttt{37ms}, and the 95th percentile stayed at \texttt{190ms}. The maximum response time was \texttt{2972ms}, which was close to the stress threshold but still below the configured limit.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/daniel_carvalho/req.png}
+    \caption{Locust graphs for \texttt{GET /locations/top}}
+    \label{fig:stress_top_locust_graphs}
+\end{figure}
+
+The request graph confirms that the endpoint sustained the generated load without errors. During the peak phase, throughput reached more than \texttt{120} requests per second, while the aggregated average throughput for the whole run was \texttt{51.62} requests per second.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/daniel_carvalho/log.png}
+    \caption{Locust final summary for \texttt{GET /locations/top}}
+    \label{fig:stress_top_log_summary}
+\end{figure}
+
+\subsection{Conclusion}
+
+The stress test did not reveal any functional problem in \texttt{GET /locations/top}. The endpoint respected the API contract for all tested scenarios and kept response times low for most requests. Since the maximum latency was close to the \texttt{3000ms} threshold, the endpoint should still be monitored under heavier or longer runs, but for the tested load profile it handled up to 200 concurrent users without failures.
