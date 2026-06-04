@@ -3,6 +3,14 @@ info:
   title: Kloud Motors - Online Car Dealer
   version: 1.0.0
   description: |
+    Protected endpoints declare `bearerAuth` and require `Authorization: Bearer <id_token>`, where `id_token` is returned by `/api/user/login`, `/api/user/register`, or `/api/user/refresh`.
+
+    Requests to the deployed gateway also use `Host: kloud-motors.com`.
+
+    Query parameters use the names documented per endpoint. Listing search endpoints accept `pageSize` and return `page_size` in JSON responses; auction endpoints accept and return `page_size`.
+
+    Successful responses with a JSON body are documented under `application/json`. Error responses currently return `text/plain` and the reusable error components describe the common triggers for each status code.
+
     - **Market Price Analysis**: Calculate the average price of cars based on brand, model, year, and location.
     - **Filtered Search**: Allow users to search for cars based on specific criteria(make, model, year, price range, mileage, fuel type, location).
     - **Geographical Market Insights**: Analyze car availability and price variations across different regions.
@@ -150,6 +158,9 @@ paths:
       tags:
       - Chat
       summary: Get user chats
+      description: |
+        Requires `Authorization: Bearer <id_token>` from login, registration, or refresh.
+        Returns the chats visible to the authenticated user.
       operationId: getChats
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -175,6 +186,7 @@ paths:
       tags:
       - Chat
       summary: Open or create a buyer-seller chat session
+      description: The authenticated user is derived from the bearer token; clients only provide the seller and listing IDs. Returns 404 when the referenced seller or listing cannot be resolved.
       operationId: openChat
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -186,6 +198,9 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/OpenChatRequest"
+            example:
+              seller_id: 7514
+              listing_id: 128390
       responses:
         '200':
           description: Chat session opened.
@@ -212,6 +227,7 @@ paths:
       tags:
       - Chat
       summary: Get chat history
+      description: Requires a bearer token. Returns 403 when the authenticated user cannot access the chat and 404 when the chat id does not exist.
       operationId: getChatHistory
       security:
       - bearerAuth: []
@@ -233,6 +249,8 @@ paths:
           "$ref": "#/components/responses/UnauthorizedText"
         '403':
           "$ref": "#/components/responses/ForbiddenText"
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
         '405':
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
@@ -244,6 +262,7 @@ paths:
       tags:
       - Chat
       summary: Chat WebSocket proxy
+      description: Upgrades an authenticated user into the chat WebSocket. The chat id must identify an existing chat visible to that user.
       operationId: connectChatWebSocket
       security:
       - bearerAuth: []
@@ -257,6 +276,8 @@ paths:
           "$ref": "#/components/responses/BadRequestText"
         '401':
           "$ref": "#/components/responses/UnauthorizedText"
+        '404':
+          "$ref": "#/components/responses/NotFoundText"
         '405':
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
@@ -268,6 +289,7 @@ paths:
       tags:
       - Geographical Market Insights
       summary: Get aggregated market insights
+      description: Requires `brand` and `model`. Invalid filters, pagination values, or enum values return 400; upstream geo-service timeouts or overloads are surfaced as 502.
       operationId: getMarketInsightsAggregates
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -301,6 +323,7 @@ paths:
       tags:
       - Geographical Market Insights
       summary: Compare prices across locations
+      description: Requires `brand` and `model`. `group_by`, `sort_by`, and `order` must match the documented enum values.
       operationId: getPriceComparison
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -331,6 +354,7 @@ paths:
       tags:
       - Geographical Market Insights
       summary: Get listing price statistics by location
+      description: Requires `brand` and `model`; optional filters narrow the statistics by location, year range, or fuel type.
       operationId: getListingStatsByLocation
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -360,6 +384,7 @@ paths:
       tags:
       - Market Price Analysis
       summary: Get average market price
+      description: Calculates average, minimum, and maximum market price for a brand/model and optional year range. Returns 404 when no matching market data is found.
       operationId: getAverageMarketPrice
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -423,6 +448,11 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/CreateAuctionRequest"
+            example:
+              listing_id: 128390
+              starting_price: 8500
+              end_time: "2026-06-10T18:00:00Z"
+              reserve_price: 10000
       responses:
         '201':
           description: Auction created.
@@ -516,6 +546,8 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/PlaceBidRequest"
+            example:
+              bid_amount: 9200
       responses:
         '200':
           description: Bid placed.
@@ -685,6 +717,11 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/UsersPreviewRequest"
+            example:
+              user_ids:
+              - 101
+              - 102
+              - 103
       responses:
         '200':
           description: User previews.
@@ -740,6 +777,10 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/SellersPreviewRequest"
+            example:
+              seller_ids:
+              - 7514
+              - 7515
       responses:
         '200':
           description: Seller previews.
@@ -760,6 +801,7 @@ paths:
       tags:
       - Listings
       summary: Get listings
+      description: Uses the camelCase `pageSize` query parameter and returns the effective page size in the snake_case `page_size` response field.
       operationId: getListings
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -796,6 +838,24 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/CreateListingRequest"
+            example:
+              vin: 1HGCM82633A004352
+              make: Toyota
+              model: Corolla
+              year: 2021
+              price: 18500
+              mileage: 42000
+              city: Lisbon
+              state: Lisbon
+              country: Portugal
+              fuel_type: Gasoline
+              body_class: Sedan
+              drive_type: FWD
+              transmission: Automatic
+              trim: LE
+              color: White
+              is_new: false
+              is_sold: false
       responses:
         '201':
           description: Listing created.
@@ -820,6 +880,7 @@ paths:
       tags:
       - Listings
       summary: Search listings
+      description: Uses camelCase filter names such as `fuelType`, `minPrice`, and `pageSize`; the response keeps the existing JSON field name `page_size`.
       operationId: searchCars
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -916,6 +977,17 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/UpdateListingRequest"
+            example:
+              price: 17900
+              mileage: 42500
+              city: Lisbon
+              state: Lisbon
+              country: Portugal
+              fuel_type: Gasoline
+              drive_type: FWD
+              transmission: Automatic
+              color: White
+              is_new: false
       responses:
         '200':
           description: Listing updated.
@@ -973,7 +1045,7 @@ components:
       name: Host
       in: header
       required: true
-      description: Requests must target the Kloud Motors public host.
+      description: Requests to the deployed gateway must target the Kloud Motors public host.
       schema:
         type: string
         enum:
@@ -1016,8 +1088,13 @@ components:
       name: status
       in: query
       required: false
+      description: Optional auction status filter. Values are case-sensitive.
       schema:
         type: string
+        enum:
+        - ACTIVE
+        - COMPLETED
+        - CANCELLED
     BrandQuery:
       name: brand
       in: query
@@ -1028,24 +1105,31 @@ components:
       name: brand
       in: query
       required: true
+      description: Vehicle brand. Missing or blank values return 400 on market insight endpoints.
       schema:
         type: string
+        example: Toyota
     FuelTypeCamelQuery:
       name: fuelType
       in: query
       required: false
+      description: Optional listing fuel type filter for search endpoints.
       schema:
         type: string
+        example: Gasoline
     FuelTypeSnakeQuery:
       name: fuel_type
       in: query
       required: false
+      description: Optional fuel type filter for market insight endpoints.
       schema:
         type: string
+        example: Gasoline
     GroupByQuery:
       name: group_by
       in: query
       required: false
+      description: Location dimension used to group market insight results.
       schema:
         type: string
         enum:
@@ -1057,22 +1141,24 @@ components:
       name: ids
       in: query
       required: true
-      description: Comma-separated listing IDs. Invalid numbers are parsed as 0 by
-        the gateway.
+      description: Comma-separated listing IDs.
       schema:
         type: string
-        example: 123
+        pattern: '^[0-9]+(,[0-9]+)*$'
+        example: 123,456,789
     IncludeSoldQuery:
       name: includeSold
       in: query
       required: false
+      description: Include sold listings in listing search results when true.
       schema:
         type: boolean
+        default: false
     LimitQuery:
       name: limit
       in: query
       required: false
-      description: Defaults to 20 when omitted or non-positive. Geo endpoints cap this at 100 by default; chat history may be capped by service configuration.
+      description: Defaults to 20 when omitted. Negative values or non-integer values are invalid; geo endpoints cap the effective limit at 100 by default and chat history may be capped by service configuration.
       schema:
         type: integer
         format: int32
@@ -1082,8 +1168,10 @@ components:
       name: location
       in: query
       required: false
+      description: Optional city, district, or country filter for location statistics.
       schema:
         type: string
+        example: Lisbon
     LocationsQuery:
       name: locations
       in: query
@@ -1098,8 +1186,10 @@ components:
       name: make
       in: query
       required: false
+      description: Vehicle make filter for listing search.
       schema:
         type: string
+        example: Toyota
     MaxMileageQuery:
       name: maxMileage
       in: query
@@ -1139,23 +1229,29 @@ components:
       name: model
       in: query
       required: false
+      description: Vehicle model filter for listing search.
       schema:
         type: string
+        example: Corolla
     ModelQueryRequired:
       name: model
       in: query
       required: true
+      description: Vehicle model. Missing or blank values return 400 on market insight endpoints.
       schema:
         type: string
+        example: Corolla
     OrderQuery:
       name: order
       in: query
       required: false
+      description: Sort direction for market insight comparison results.
       schema:
         type: string
         enum:
         - asc
         - desc
+        default: asc
     PageQuery:
       name: page
       in: query
@@ -1169,6 +1265,7 @@ components:
       name: pageSize
       in: query
       required: false
+      description: Page size for listing search endpoints. Responses use the snake_case `page_size` field.
       schema:
         type: integer
         format: int32
@@ -1178,7 +1275,7 @@ components:
       name: page_size
       in: query
       required: false
-      description: Defaults to 20 at the gateway. Auction endpoints cap the effective page size at 100.
+      description: Page size for auction endpoints. Defaults to 20 at the gateway and caps the effective page size at 100.
       schema:
         type: integer
         format: int32
@@ -1189,7 +1286,7 @@ components:
       name: skip
       in: query
       required: false
-      description: Zero-based offset. Negative values are rejected by chat history and normalized to 0 by geo endpoints.
+      description: Zero-based offset. Negative values are invalid for chat history; geo endpoints normalize negative values to 0.
       schema:
         type: integer
         format: int32
@@ -1199,11 +1296,13 @@ components:
       name: sort_by
       in: query
       required: false
+      description: Metric used to sort price comparison results.
       schema:
         type: string
         enum:
         - avg_price
         - count
+        default: avg_price
     YearQuery:
       name: year
       in: query
@@ -1215,47 +1314,56 @@ components:
       name: year_from
       in: query
       required: false
+      description: Inclusive lower bound for vehicle model year.
       schema:
         type: integer
         format: int32
+        example: 2018
     YearToQuery:
       name: year_to
       in: query
       required: false
+      description: Inclusive upper bound for vehicle model year.
       schema:
         type: integer
         format: int32
+        example: 2024
   responses:
     BadGatewayText:
-      description: Upstream service is unavailable or could not be reached.
+      description: Upstream service is unavailable, timed out, or could not be reached by the gateway. Current overload and circuit-breaker failures are surfaced as 502 rather than 429 or 503.
       content:
         text/plain:
           schema:
             type: string
+            example: upstream service is unavailable
     BadRequestText:
-      description: Bad request.
+      description: Invalid request body, missing required query/path field, unsupported enum value, malformed ID, or invalid pagination/filter value.
       content:
         text/plain:
           schema:
             type: string
+            example: brand and model are required
     ConflictText:
-      description: Conflict.
+      description: Request conflicts with current resource state, such as creating a duplicate resource or performing an action that is no longer valid.
       content:
         text/plain:
           schema:
             type: string
+            example: resource already exists
     ForbiddenText:
-      description: Forbidden.
+      description: Authenticated user is not allowed to access or mutate the requested resource.
       content:
         text/plain:
           schema:
             type: string
+            example: permission denied
     InternalServerErrorText:
-      description: Internal server error.
+      description: Unexpected gateway or service error.
       content:
         text/plain:
           schema:
             type: string
+            example: internal server error
     MethodNotAllowedText:
       description: Method not allowed.
       content:
@@ -1264,14 +1372,14 @@ components:
             type: string
             example: Method not allowed
     NotFoundText:
-      description: Not found.
+      description: Requested listing, auction, bid collection, seller, chat, user, or matching market data was not found.
       content:
         text/plain:
           schema:
             type: string
             example: Not found
     UnauthorizedText:
-      description: Unauthorized.
+      description: Missing, malformed, expired, or invalid Firebase bearer token.
       content:
         text/plain:
           schema:
@@ -1321,8 +1429,14 @@ components:
           nullable: true
         status:
           type: string
+          enum:
+          - ACTIVE
+          - COMPLETED
+          - CANCELLED
         end_time:
           type: string
+          format: date-time
+          description: Auction closing time in RFC 3339 format.
         winner_user_id:
           type: string
           nullable: true
@@ -1428,6 +1542,8 @@ components:
           format: double
         end_time:
           type: string
+          format: date-time
+          description: Auction closing time in RFC 3339 format, for example `2026-06-10T18:00:00Z`.
         reserve_price:
           type: number
           format: double
@@ -1465,12 +1581,15 @@ components:
           type: string
         fuel_type:
           type: string
+          description: Fuel type label, for example `Gasoline`, `Diesel`, `Electric`, or `Hybrid`.
         body_class:
           type: string
         drive_type:
           type: string
+          description: Drive type label, for example `FWD`, `RWD`, `AWD`, `4WD`, or `2WD`.
         transmission:
           type: string
+          description: Transmission label, for example `Automatic`, `Manual`, `CVT`, `DCT`, or `AMT`.
         trim:
           type: string
         color:
@@ -1556,6 +1675,7 @@ components:
         page_size:
           type: integer
           format: int32
+          description: Effective auction page size, matching the `page_size` query parameter.
     GetAuctionResponse:
       type: object
       properties:
@@ -1593,6 +1713,7 @@ components:
         page_size:
           type: integer
           format: int32
+          description: Effective auction page size, matching the `page_size` query parameter.
     ListingDetailsResponse:
       type: object
       properties:
@@ -1661,12 +1782,15 @@ components:
           format: int32
         fuel_type:
           type: string
+          description: Fuel type label, for example `Gasoline`, `Diesel`, `Electric`, or `Hybrid`.
         body_class:
           type: string
         drive_type:
           type: string
+          description: Drive type label, for example `FWD`, `RWD`, `AWD`, `4WD`, or `2WD`.
         transmission:
           type: string
+          description: Transmission label, for example `Automatic`, `Manual`, `CVT`, `DCT`, or `AMT`.
         is_new:
           type: boolean
         city:
@@ -1760,6 +1884,7 @@ components:
         page_size:
           type: integer
           format: int32
+          description: Effective listing page size. Listing endpoints accept the query parameter as `pageSize` but return this field as `page_size`.
         listings:
           type: array
           items:
