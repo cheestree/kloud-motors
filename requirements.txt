@@ -3,4 +3,4 @@ sqlalchemy
 faker
 psycopg2-binary
 dotenv
-
+locust
