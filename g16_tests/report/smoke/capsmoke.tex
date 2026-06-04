@@ -54,3 +54,90 @@ The error message "title: Title is required" suggested that the API correctly id
 
 \subsection{Security Vulnerability}
 One interesting thing to note is that everyone could do a post without being authenticated. If someone guesses the ID of another user, he or she could do a post on behalf of that user. This should not be allowed and one way to fix this is to implement a mechanism where the user needs a login token to do a post.
+
+
+\section{Endpoint GET /locations/\{id\}}
+
+The goal of this endpoint is to retrieve the details of a specific location by its numeric identifier. The smoke test evaluated whether the API returns valid location data for existing IDs and whether it handles missing resources, invalid identifiers, query parameters, path variants and unsupported methods correctly. The tests were made with Postman and overall it behaved correctly and as documented.
+
+\subsection{Scenario 1: Valid Location 200 OK}
+
+The first scenario checked if existing location IDs returned a successful response with the expected structure:
+
+\begin{itemize}
+    \item \texttt{GET /locations/1}
+    \item \texttt{GET /locations/24}
+    \item \texttt{GET /locations/30}
+\end{itemize}
+
+All three requests returned \texttt{200 OK}. The responses included the expected fields:
+
+\begin{itemize}
+    \item \texttt{id}
+    \item \texttt{name}
+    \item \texttt{country\_code}
+    \item \texttt{metrics}
+\end{itemize}
+
+\subsection{Scenario 2: Missing Location 404 Not Found}
+
+The second scenario evaluated the behavior of the API when the numeric ID does not correspond to an existing location. The following requests were tested:
+
+\begin{itemize}
+    \item \texttt{GET /locations/0}
+    \item \texttt{GET /locations/-1}
+    \item \texttt{GET /locations/999999}
+\end{itemize}
+
+All of these requests returned \texttt{404 Not Found} with the message \texttt{Location not found}. This behavior is expected because the ID is numeric and valid as a path parameter format but the resource does not exist.
+
+\subsection{Scenario 3: Invalid ID 400 Bad Request}
+
+The third scenario checked how the API handles invalid ID formats. The tested values included decimal IDs, alphabetic IDs, alphanumeric IDs, encoded spaces and more:
+
+\begin{itemize}
+    \item \texttt{GET /locations/1.5}
+    \item \texttt{GET /locations/abc}
+    \item \texttt{GET /locations/1abc}
+    \item \texttt{GET /locations/\%20}
+    \item \texttt{GET /locations/1\%20OR\%201=1}
+\end{itemize}
+
+All invalid ID formats returned \texttt{400 Bad Request}. No internal server errors were found which means that the endpoint validates the ID parameter before trying to use it as a location identifier.
+
+\subsection{Scenario 4: Year Query Parameter}
+
+The endpoint also accepts an optional \texttt{year} query parameter. Valid integer years returned \texttt{200 OK}. When data existed for the requested year, the \texttt{metrics} array was filtered to that year. This was observed for:
+
+\begin{itemize}
+    \item \texttt{GET /locations/1?year=2024}
+    \item \texttt{GET /locations/1?year=2023}
+    \item \texttt{GET /locations/1?year=2015}
+    \item \texttt{GET /locations/1?year=2014}
+\end{itemize}
+
+For years without data, such as \texttt{2030}, \texttt{1900}, \texttt{0} and \texttt{-1}, the API returned \texttt{200 OK} with an empty \texttt{metrics} array. This is acceptable because the location does exists but no metrics match the requested year.
+
+Invalid year formats, such as \texttt{year=abcd} and \texttt{year=2023.5}, returned \texttt{400 Bad Request}. An empty year value, \texttt{year=}, was accepted and behaved like no year filter was provided. When duplicate year parameters were sent, as in \texttt{year=2023\&year=2024}, the API returned \texttt{200 OK} and appeared to use the first value.
+
+\subsection{Scenario 5: Extra Query Parameters and Path Variants}
+
+Unknown query parameters did not break this endpoint. The request with \texttt{foo=bar} returned \texttt{200 OK} and the request with both \texttt{year=2023} and \texttt{foo=bar} still applied the year filter correctly.
+
+The endpoint also kept the correct priority between ID validation and query filtering. A missing ID with a valid year, \texttt{GET /locations/999999?year=2023}, returned \texttt{404 Not Found}. An invalid ID with a valid year, \texttt{GET /locations/abc?year=2023}, returned \texttt{400 Bad Request}.
+
+Path variants were stricter, the routes \texttt{GET /locations/1/} and \texttt{GET /locations//1} returned \texttt{404 Not Found}.
+
+\subsection{Scenario 6: Unsupported Methods}
+
+The same route was also tested with other HTTP methods. The \texttt{HEAD /locations/1} request returned \texttt{200 OK} with headers and no body, which is normal. The \texttt{DELETE /locations/1} request returned \texttt{405 Method Not Allowed}, which is also the expected response for an unsupported method.
+
+\subsection{Response Time Notes}
+
+Most smoke checks completed in less than one second. A few requests were slower but still acceptable:
+
+\begin{itemize}
+    \item \texttt{GET /locations/1?year=2015}:\qquad about \texttt{1.27s}
+    \item \texttt{GET /locations/1.5}:\qquad about \texttt{1.25s}
+    \item \texttt{GET /locations/0}:\qquad about \texttt{0.65s}
+\end{itemize}

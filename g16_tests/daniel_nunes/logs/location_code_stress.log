@@ -1,0 +1,14 @@
+STRESS TEST FINISHED - FINAL SUMMARY
+Endpoint: GET /locations/code/{code}
+Host: http://8.233.225.83/api/v1
+Total requests: 215739
+Failures: 0
+Failure ratio: 0.00%
+Average RPS: 696.64
+Average latency: 748.8ms
+Median latency: 120ms
+p90 latency: 1300ms
+p95 latency: 4400ms
+p98 latency: 9000ms
+p99 latency: 12000ms
+Max latency: 22558.5ms
