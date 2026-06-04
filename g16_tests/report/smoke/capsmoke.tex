@@ -155,5 +155,45 @@ Most smoke checks completed in less than one second. A few requests were slower 
 
 \section{Endpoint \texttt{GET /locations} - Daniel Sousa}
 
-\section{Endpoint \texttt{POST /auth/login} - Daniel Carvalho}
+The goal of this endpoint is to return the list of European locations available in the platform. According to the API specification, \texttt{GET /locations} has one successful scenario: it should return \texttt{200 OK} with a JSON array of location summaries.
 
+The smoke test was implemented with Locust using one virtual user for a short execution. Besides checking the HTTP status code, the test also validated the response body against the main fields defined in \texttt{combinedAPI.yaml}. Each item in the returned array was expected to include:
+
+\begin{itemize}
+    \item \texttt{id}
+    \item \texttt{name}
+    \item \texttt{country\_code}
+\end{itemize}
+
+\subsection{Scenario 1: List Locations 200 OK}
+
+The request tested was:
+
+\begin{itemize}
+    \item \texttt{GET /locations}
+\end{itemize}
+
+All smoke test requests returned \texttt{200 OK}. The response was valid JSON, the body was a non-empty array, and every location object contained the required fields. No functional failures were captured by Locust, and the API contract was respected.
+
+\begin{table}[H]
+    \centering
+    \caption{Smoke test summary for \texttt{GET /locations}}
+    \begin{tabular}{p{0.45\textwidth} p{0.4\textwidth}}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & \texttt{20} \\
+    Failures & \texttt{0} \\
+    Error rate & \texttt{0\%} \\
+    Median response time & \texttt{47ms} \\
+    Average response time & \texttt{62.7ms} \\
+    95th percentile & \texttt{230ms} \\
+    Maximum response time & \texttt{231.2ms} \\
+    Average response size & \texttt{1406B} \\\hline
+    \end{tabular}
+\end{table}
+
+\subsection{Conclusion}
+
+The endpoint behaved as expected in the smoke test. It matched the API specification by returning a list of locations with the documented summary fields, and all responses were well below the smoke latency threshold of \texttt{800ms}. No inconsistencies were found between the implemented behaviour and the successful response described in \texttt{combinedAPI.yaml}.
+
+\section{Endpoint \texttt{POST /auth/login} - Daniel Carvalho}

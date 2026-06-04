@@ -74,4 +74,49 @@ For that reason I suggest fixing the global endpoint and increasing the infrastr
 
 \section{Endpoint \texttt{GET /locations/compare} - Daniel Sousa}
 
+The goal of this endpoint is to compare multiple locations side by side. According to the API specification, \texttt{GET /locations/compare} requires the query parameter \texttt{ids}, with at least two comma-separated location identifiers. The optional \texttt{metrics} parameter can be used to restrict the comparison to specific metrics.
+
+The stress test was implemented with Locust and used the following request:
+
+\begin{itemize}
+    \item \texttt{GET /locations/compare?ids=1,2,3\&metrics=hpi,crime,life\_expectancy}
+\end{itemize}
+
+This request follows the contract in \texttt{combinedAPI.yaml}: it compares three valid locations and asks for three metrics from the documented enum. The test validated that the API returned \texttt{200 OK}, that the body was valid JSON, that the response was an array with at least two locations, and that each item contained \texttt{id}, \texttt{name}, \texttt{country\_code} and \texttt{metrics}.
+
+\subsection{Load Profile}
+
+The stress test used a staged load profile. It started with a slow ramp-up to 10 virtual users, increased to 50 users, then to 100 users, and finally introduced a spike to 200 users before reducing the load again. This profile was useful to observe both normal behaviour and degradation under peak concurrency.
+
+\subsection{Results}
+
+The endpoint remained functionally correct during the run: the failures recorded by Locust were caused by the test latency limit of \texttt{3000ms}, not by unexpected status codes or invalid response bodies. In other words, when responses arrived within the accepted time window, they matched the API contract.
+
+\begin{table}[H]
+    \centering
+    \caption{Stress test summary for \texttt{GET /locations/compare}}
+    \begin{tabular}{p{0.45\textwidth} p{0.4\textwidth}}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & \texttt{18858} \\
+    Failures & \texttt{1067} \\
+    Error rate & \texttt{5.66\%} \\
+    Median response time & \texttt{57ms} \\
+    Average response time & \texttt{607.1ms} \\
+    90th percentile & \texttt{1200ms} \\
+    95th percentile & \texttt{3600ms} \\
+    99th percentile & \texttt{9900ms} \\
+    Maximum response time & \texttt{22546.9ms} \\
+    Average throughput & \texttt{38.16 requests/s} \\\hline
+    \end{tabular}
+\end{table}
+
+\newpage
+
+The median response time stayed very low at \texttt{57ms}, which shows that the endpoint is fast for most requests. However, the upper percentiles increased significantly during the heavier phases. The 95th percentile reached \texttt{3600ms}, already above the stress threshold, and the maximum response time reached approximately \texttt{22.5s}. The failure log confirms this pattern, with repeated entries such as \texttt{Latência 3667ms excede limite stress (3000ms)}.
+
+\subsection{Conclusion}
+
+The stress test did not reveal a specification mismatch for \texttt{GET /locations/compare}. The endpoint returned the expected data structure for valid comparison requests. The main issue is performance under high concurrency: once the test reached the stress and spike phases, a relevant number of requests took more than \texttt{3000ms}. This suggests that the comparison endpoint or its underlying data access layer should be optimized before the system is expected to support around 100 to 200 concurrent users.
+
 \section{Endpoint \texttt{GET /locations/top} - Daniel Carvalho}
