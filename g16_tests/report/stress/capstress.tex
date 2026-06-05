@@ -49,7 +49,7 @@ The response times were also affected by the high load. The average response tim
     \centering
     \includegraphics[width=\textwidth]{images/francisco/total_requests_per_second_1780506598.451.png}
     \caption{Graphs from Locust showing the results of the stress test}
-    \label{fig:stress_total_requests_per_second}
+    \label{fig:stress_total_requests_per_second_filtered}
 \end{figure}
 
 \begin{figure}[H]
@@ -71,6 +71,45 @@ The stress testing revealed two issues in the target API:
 For that reason I suggest fixing the global endpoint and increasing the infrastructure resources to handle the high load.
 
 \section{Endpoint \texttt{GET /locations/code/{code}} - Daniel Nunes}
+This endpoint fetches the location data by country code and has the option for results to be filtered by year.
+
+\subsection{The test}
+
+Locust was used for the stress test, it generates requests with a very small wait time between them in order to impose stress on the system. Each virtual user sends requests to the endpoint with a random country code and a random year. The tested country codes and years were:
+
+\begin{itemize}
+    \item \texttt{AT}, \texttt{BE}, \texttt{DE}, \texttt{ES}, \texttt{FR}, \texttt{IE}, \texttt{IT}, \texttt{NL}, \texttt{PT}, \texttt{SE}
+    \item \texttt{2020}, \texttt{2021}, \texttt{2022}, \texttt{2023}, \texttt{2024}
+\end{itemize}
+
+For this test, a request was only counted as successful if both the HTTP response and the response body were correct. Also, the number of users was set to increase by 100 every 30 seconds until reaching 1000 concurrent users. After that the test ramped down to 0 users.
+
+\subsection{Results}
+The final results from Locust were:
+
+\begin{itemize}
+    \item Total requests: \texttt{24762}
+    \item Failures: \texttt{1416}
+    \item Failure ratio: \texttt{5.72\%}
+    \item Average RPS: \texttt{42.85}
+    \item Average response time: \texttt{681.4ms}
+    \item Minimum response time: \texttt{38ms}
+    \item Median response time: \texttt{72ms}
+    \item p90 response time: \texttt{1250ms}
+    \item p95 response time: \texttt{3700ms}
+    \item p98 response time: \texttt{7600ms}
+    \item p99 response time: \texttt{9800ms}
+    \item Maximum response time: \texttt{21486.7ms}
+\end{itemize}
+
+Overall, the endpoint remained functionally correct for most of the run, but the stress threshold was exceeded during the peak load stages. The recorded failures were caused by requests taking longer than the accepted latency limit.
+
+The response time distribution shows that the service became saturated under heavier load. The median response time remained low at \texttt{72ms} but the tail latency increased significantly. A relevant portion of requests experienced multi-second latency during the highest load stages, with the 95th percentile reaching \texttt{3700ms}.
+
+\subsection{Conclusion}
+
+The main limitation found in this endpoint was performance degradation under high concurrency. The failure ratio of \texttt{5.72\%} and the high p95 and p99 response times show that the endpoint is stable in terms of correctness, but not yet comfortable at the level of load enforced by this test.
+
 
 \section{Endpoint \texttt{GET /locations/compare} - Daniel Sousa}
 
