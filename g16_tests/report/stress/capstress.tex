@@ -150,8 +150,6 @@ The endpoint remained functionally correct during the run: the failures recorded
     \end{tabular}
 \end{table}
 
-\newpage
-
 The median response time stayed very low at \texttt{57ms}, which shows that the endpoint is fast for most requests. However, the upper percentiles increased significantly during the heavier phases. The 95th percentile reached \texttt{3600ms}, already above the stress threshold, and the maximum response time reached approximately \texttt{22.5s}. The failure log confirms this pattern, with repeated entries such as \texttt{Latência 3667ms excede limite stress (3000ms)}.
 
 \subsection{Conclusion}

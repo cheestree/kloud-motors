@@ -225,6 +225,8 @@ The test validated that the response was valid JSON, that \texttt{id} was an int
 
 After the first registration, the same request was sent again. The API returned \texttt{409 Conflict}, which is the expected behaviour because the username and email were already registered.
 
+\newpage 
+
 \subsection{Scenario 3: Login Happy Path 200 OK}
 
 The login request with the registered username and email returned \texttt{200 OK}, and the response body was valid JSON. However, the response did not match the expected shape checked by the script. The test expected a \texttt{User} object in the response body, but received \texttt{None} for that field.
