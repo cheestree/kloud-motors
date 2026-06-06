@@ -20,10 +20,6 @@ info:
     - **Auction Module**: Allow sellers to list cars under an auction format.
     - **Listing details and comparison**: Provide detailed information on each listing and allow users to compare multiple listings side by side based on price, mileage, year and location.
 tags:
-- name: Health
-  description: Gateway health endpoint
-- name: Observability
-  description: Gateway metrics endpoint
 - name: Chat
   description: Buyer-Seller communication endpoints
 - name: Geographical Market Insights
