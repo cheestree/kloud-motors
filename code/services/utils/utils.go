@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -81,21 +82,21 @@ func GetEnvInt32(key string, fallback int32) int32 {
 	return int32(parsed)
 }
 
-func StringPtr(value string) *string {
+func StringPtrIfNotEmpty(value string) *string {
 	if value == "" {
 		return nil
 	}
 	return &value
 }
 
-func Int32Ptr(value int32) *int32 {
+func PositiveInt32Ptr(value int32) *int32 {
 	if value <= 0 {
 		return nil
 	}
 	return &value
 }
 
-func Int64PtrFromInt32(value int32) *int64 {
+func PositiveInt64PtrFromInt32(value int32) *int64 {
 	if value <= 0 {
 		return nil
 	}
@@ -103,7 +104,7 @@ func Int64PtrFromInt32(value int32) *int64 {
 	return &converted
 }
 
-func Int64PtrFromFloat(value float64) *int64 {
+func PositiveInt64PtrFromFloat(value float64) *int64 {
 	if value <= 0 {
 		return nil
 	}
@@ -111,7 +112,7 @@ func Int64PtrFromFloat(value float64) *int64 {
 	return &converted
 }
 
-func NullableString(value string) interface{} {
+func SQLNullableNonEmptyString(value string) interface{} {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
 		return nil
@@ -119,41 +120,74 @@ func NullableString(value string) interface{} {
 	return trimmed
 }
 
-func NullableInt32(value int32) interface{} {
+func SQLNullablePositiveInt32(value int32) interface{} {
 	if value <= 0 {
 		return nil
 	}
 	return value
 }
 
-func NullableInt64(value int64) interface{} {
+func SQLNullablePositiveInt64(value int64) interface{} {
 	if value <= 0 {
 		return nil
 	}
 	return value
 }
 
-func NullableInt64Ptr(value *int64) interface{} {
+func SQLNullableInt64FromPtr(value *int64) interface{} {
 	if value == nil {
 		return nil
 	}
 	return *value
 }
 
-func ParseInt32(s string) int32 {
+func Int32ValueFromPtrOrZero(value *int32) int32 {
+	if value == nil {
+		return 0
+	}
+	return *value
+}
+
+func Int64ValueFromPtrOrZero(value *int64) int64 {
+	if value == nil {
+		return 0
+	}
+	return *value
+}
+
+func BoolPtrToProtoBoolValue(value *bool) *wrapperspb.BoolValue {
+	if value == nil {
+		return nil
+	}
+	return wrapperspb.Bool(*value)
+}
+
+func ParseOptionalBoolProtoBoolValue(raw string) (*wrapperspb.BoolValue, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return nil, nil
+	}
+	value, err := strconv.ParseBool(trimmed)
+	if err != nil {
+		return nil, err
+	}
+	return wrapperspb.Bool(value), nil
+}
+
+func ParseInt32OrZero(s string) int32 {
 	var v int32
 	_, _ = fmt.Sscan(s, &v)
 	return v
 }
 
-func ParseInt32WithDefault(s string, def int32) int32 {
+func ParseInt32OrDefaultIfEmpty(s string, def int32) int32 {
 	if s == "" {
 		return def
 	}
-	return ParseInt32(s)
+	return ParseInt32OrZero(s)
 }
 
-func ParseInt64(s string) int64 {
+func ParseInt64OrZero(s string) int64 {
 	var v int64
 	_, _ = fmt.Sscan(s, &v)
 	return v

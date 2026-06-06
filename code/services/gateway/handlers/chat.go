@@ -97,8 +97,8 @@ func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	req := &chatpb.GetChatHistoryRequest{
 		ChatId: chatID,
 		UserId: userID,
-		Limit:  utils.ParseInt32WithDefault(q.Get(queryLimit), 20),
-		Skip:   utils.ParseInt32(q.Get(querySkip)),
+		Limit:  utils.ParseInt32OrDefaultIfEmpty(q.Get(queryLimit), 20),
+		Skip:   utils.ParseInt32OrZero(q.Get(querySkip)),
 	}
 	resp, err := chatClient.GetChatHistory(ctx, req)
 	if err != nil {

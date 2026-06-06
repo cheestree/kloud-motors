@@ -47,19 +47,19 @@ func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 
 	var yearFrom, yearTo, limit, skip *int32
 	if s := q.Get(queryYearFrom); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		yearFrom = &v
 	}
 	if s := q.Get(queryYearTo); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		yearTo = &v
 	}
 	if s := q.Get(queryLimit); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		limit = &v
 	}
 	if s := q.Get(querySkip); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		skip = &v
 	}
 
@@ -130,11 +130,11 @@ func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 
 	var limit, skip *int32
 	if s := q.Get(queryLimit); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		limit = &v
 	}
 	if s := q.Get(querySkip); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		skip = &v
 	}
 	req := &geopb.PriceComparisonRequest{
@@ -167,11 +167,11 @@ func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 	}
 	var yearFrom, yearTo *int32
 	if s := q.Get(queryYearFrom); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		yearFrom = &v
 	}
 	if s := q.Get(queryYearTo); s != "" {
-		v := utils.ParseInt32(s)
+		v := utils.ParseInt32OrZero(s)
 		yearTo = &v
 	}
 	var fuelType *string

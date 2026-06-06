@@ -3,30 +3,60 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
+	"reflect"
 	"strings"
 
 	listingpb "services/listing/proto"
 	searchpb "services/search/proto"
 	"services/utils"
 
-	"google.golang.org/protobuf/types/known/wrapperspb"
+	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/schema"
 )
+
+type ListingSearchQuery struct {
+	Make        string `schema:"make" validate:"omitempty"`
+	Model       string `schema:"model" validate:"omitempty"`
+	Year        *int32 `schema:"year" validate:"omitempty,gte=1886"`
+	MinPrice    *int64 `schema:"minPrice" validate:"omitempty,gte=0"`
+	MaxPrice    *int64 `schema:"maxPrice" validate:"omitempty,gte=0"`
+	MaxMileage  *int32 `schema:"maxMileage" validate:"omitempty,gte=0"`
+	FuelType    string `schema:"fuelType" validate:"omitempty"`
+	Page        int32  `schema:"page" validate:"gte=1"`
+	PageSize    int32  `schema:"pageSize" validate:"gte=1,lte=100"`
+	IncludeSold *bool  `schema:"includeSold" validate:"omitempty"`
+}
+
+var (
+	queryDecoder   = schema.NewDecoder()
+	queryValidator = validator.New()
+)
+
+func init() {
+	queryDecoder.IgnoreUnknownKeys(true)
+	queryValidator.RegisterTagNameFunc(func(field reflect.StructField) string {
+		name := strings.SplitN(field.Tag.Get("schema"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+}
 
 func HandleListings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:
 		q := r.URL.Query()
-		includeSold, err := parseOptionalBoolWrapper(q.Get(queryIncludeSold))
+		includeSold, err := utils.ParseOptionalBoolProtoBoolValue(q.Get(queryIncludeSold))
 		if err != nil {
-			http.Error(w, "Invalid includeSold query parameter", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Invalid includeSold query parameter", nil)
 			return
 		}
 
 		resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
-			Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-			PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSizeV2), 20),
+			Page:        utils.ParseInt32OrDefaultIfEmpty(q.Get(queryPage), 1),
+			PageSize:    utils.ParseInt32OrDefaultIfEmpty(q.Get(queryPageSizeV2), 20),
 			IncludeSold: includeSold,
 		})
 		if err != nil {
@@ -37,13 +67,13 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		authUserID, err := authenticatedUserIDFromRequest(r)
 		if err != nil {
-			http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, msgUnauthorized, nil)
 			return
 		}
 
 		var req listingpb.CreateListingRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, msgInvalidBody, http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, msgInvalidBody, nil)
 			return
 		}
 		req.SellerId = authUserID
@@ -55,35 +85,25 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusCreated, resp)
 	default:
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 	}
 }
 
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	q := r.URL.Query()
-	ctx := r.Context()
-	includeSold, err := parseOptionalBoolWrapper(q.Get(queryIncludeSold))
-	if err != nil {
-		http.Error(w, "Invalid includeSold query parameter", http.StatusBadRequest)
+	query := ListingSearchQuery{
+		Page:     1,
+		PageSize: 20,
+	}
+	if err := bindAndValidateQuery(r, &query); err != nil {
+		writeRequestError(w, "Invalid query parameters", err)
 		return
 	}
 
-	resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
-		Make:        q.Get(queryMake),
-		Model:       q.Get(queryModel),
-		Year:        utils.ParseInt32(q.Get(queryYear)),
-		MinPrice:    utils.ParseInt64(q.Get(queryMinPrice)),
-		MaxPrice:    utils.ParseInt64(q.Get(queryMaxPrice)),
-		MaxMileage:  utils.ParseInt32(q.Get(queryMaxMileage)),
-		FuelType:    q.Get(queryFuelTypeV2),
-		Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-		PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSizeV2), 20),
-		IncludeSold: includeSold,
-	})
+	resp, err := searchClient.Search(r.Context(), query.SearchRequest())
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -91,21 +111,31 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func parseOptionalBoolWrapper(raw string) (*wrapperspb.BoolValue, error) {
-	trimmed := strings.TrimSpace(raw)
-	if trimmed == "" {
-		return nil, nil
+func bindAndValidateQuery(r *http.Request, target interface{}) error {
+	if err := queryDecoder.Decode(target, r.URL.Query()); err != nil {
+		return err
 	}
-	value, err := strconv.ParseBool(trimmed)
-	if err != nil {
-		return nil, err
+	return queryValidator.Struct(target)
+}
+
+func (q ListingSearchQuery) SearchRequest() *searchpb.SearchRequest {
+	return &searchpb.SearchRequest{
+		Make:        q.Make,
+		Model:       q.Model,
+		Year:        utils.Int32ValueFromPtrOrZero(q.Year),
+		MinPrice:    utils.Int64ValueFromPtrOrZero(q.MinPrice),
+		MaxPrice:    utils.Int64ValueFromPtrOrZero(q.MaxPrice),
+		MaxMileage:  utils.Int32ValueFromPtrOrZero(q.MaxMileage),
+		FuelType:    q.FuelType,
+		Page:        q.Page,
+		PageSize:    q.PageSize,
+		IncludeSold: utils.BoolPtrToProtoBoolValue(q.IncludeSold),
 	}
-	return wrapperspb.Bool(value), nil
 }
 
 func HandleCompare(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
 	q := r.URL.Query()
@@ -115,7 +145,7 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 		if s == "" {
 			continue
 		}
-		ids = append(ids, utils.ParseInt64(s))
+		ids = append(ids, utils.ParseInt64OrZero(s))
 	}
 	ctx := r.Context()
 	resp, err := listingClient.CompareListings(ctx, &listingpb.CompareListingsRequest{Ids: ids})
@@ -129,10 +159,10 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 || parts[3] == "" {
-		http.Error(w, "Missing listing id", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Missing listing id", nil)
 		return
 	}
-	id := utils.ParseInt64(parts[3])
+	id := utils.ParseInt64OrZero(parts[3])
 	ctx := r.Context()
 
 	switch r.Method {
@@ -146,13 +176,13 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		authUserID, err := authenticatedUserIDFromRequest(r)
 		if err != nil {
-			http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, msgUnauthorized, nil)
 			return
 		}
 
 		var req listingpb.UpdateListingRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, msgInvalidBody, http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, msgInvalidBody, nil)
 			return
 		}
 		req.Id = id
@@ -167,7 +197,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		authUserID, err := authenticatedUserIDFromRequest(r)
 		if err != nil {
-			http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, msgUnauthorized, nil)
 			return
 		}
 
@@ -177,11 +207,11 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !resp.GetDeleted() {
-			http.Error(w, msgNotFound, http.StatusNotFound)
+			writeError(w, http.StatusNotFound, msgNotFound, nil)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
 	default:
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 	}
 }

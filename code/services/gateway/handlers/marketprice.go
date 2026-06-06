@@ -21,10 +21,10 @@ func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 		Model: q.Get(queryModel), // query param: "model"
 	}
 	if s := q.Get(queryYearFrom); s != "" {
-		req.YearFrom = utils.ParseInt32(s) // query param: "year_from"
+		req.YearFrom = utils.ParseInt32OrZero(s) // query param: "year_from"
 	}
 	if s := q.Get(queryYearTo); s != "" {
-		req.YearTo = utils.ParseInt32(s) // query param: "year_to"
+		req.YearTo = utils.ParseInt32OrZero(s) // query param: "year_to"
 	}
 
 	resp, err := marketpriceClient.GetAverageMarketPrice(ctx, req)

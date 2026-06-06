@@ -21,7 +21,7 @@ func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	sellerID := parts[3]
 	ctx := r.Context()
-	req := &sellerpb.GetSellerProfileRequest{SellerId: utils.ParseInt64(sellerID)}
+	req := &sellerpb.GetSellerProfileRequest{SellerId: utils.ParseInt64OrZero(sellerID)}
 	resp, err := sellerClient.GetSellerProfile(ctx, req)
 	if err != nil {
 		writeServiceError(w, err)
