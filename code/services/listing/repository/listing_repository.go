@@ -616,7 +616,7 @@ func (r *ListingRepository) GetListingSummary(ctx context.Context, id int64) (*s
 	}
 	return &shared.ListingSummary{
 		Id:           idValue,
-		SellerId:     int32(dealerID),
+		SellerId:     dealerID,
 		Make:         makeName,
 		Model:        modelName,
 		Year:         int32(yearValue.Int64),
@@ -731,7 +731,7 @@ func (r *ListingRepository) GetListingSummaries(ctx context.Context, ids []int64
 
 		listings = append(listings, &shared.ListingSummary{
 			Id:           idValue,
-			SellerId:     int32(dealerID),
+			SellerId:     dealerID,
 			Make:         makeName,
 			Model:        modelName,
 			Year:         int32(yearValue.Int64),
