@@ -80,6 +80,8 @@ The response times were also affected by the high load. The average response tim
     \label{tab:stress_phase2}
 \end{table}
 
+\newpage 
+
 \subsection{Conclusion}
 
 The stress testing revealed two issues in the target API:
@@ -105,23 +107,32 @@ Locust was used for the stress test, it generates requests with a very small wai
 
 For this test, a request was only counted as successful if both the HTTP response and the response body were correct. Also, the number of users was set to increase by 100 every 30 seconds until reaching 1000 concurrent users. After that the test ramped down to 0 users.
 
+\newpage
+
 \subsection{Results}
 The final results from Locust were:
 
-\begin{itemize}
-    \item Total requests: \texttt{24762}
-    \item Failures: \texttt{1416}
-    \item Failure ratio: \texttt{5.72\%}
-    \item Average RPS: \texttt{42.85}
-    \item Average response time: \texttt{681.4ms}
-    \item Minimum response time: \texttt{38ms}
-    \item Median response time: \texttt{72ms}
-    \item p90 response time: \texttt{1250ms}
-    \item p95 response time: \texttt{3700ms}
-    \item p98 response time: \texttt{7600ms}
-    \item p99 response time: \texttt{9800ms}
-    \item Maximum response time: \texttt{21486.7ms}
-\end{itemize}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & 24,762 \\
+    Failures & 1,416 \\
+    Failure ratio & 5.72\% \\
+    Average RPS & 42.85 \\
+    Average response time & 681.4 ms \\
+    Minimum response time & 38 ms \\
+    Median response time & 72 ms \\
+    p90 response time & 1,250 ms \\
+    p95 response time & 3,700 ms \\
+    p98 response time & 7,600 ms \\
+    p99 response time & 9,800 ms \\
+    Maximum response time & 21,486.7 ms \\\hline
+    \end{tabular}
+    \caption{Stress test summary for \texttt{GET /locations/code/\{code\}}}
+    \label{tab:stress_locations_code}
+\end{table}
 
 Overall, the endpoint remained functionally correct for most of the run, but the stress threshold was exceeded during the peak load stages. The recorded failures were caused by requests taking longer than the accepted latency limit.
 
@@ -218,8 +229,6 @@ The endpoint behaved correctly during the whole run. Locust recorded \texttt{255
     Average throughput & \texttt{51.62 requests/s} \\\hline
     \end{tabular}
 \end{table}
-
-\newpage
 
 The Locust graphs show that the endpoint remained stable even during the 200 user spike. The median response time stayed around \texttt{37ms}, and the 95th percentile stayed at \texttt{190ms}. The maximum response time was \texttt{2972ms}, which was close to the stress threshold but still below the configured limit.
 
