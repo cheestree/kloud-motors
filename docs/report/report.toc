@@ -1,0 +1,12 @@
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{\numberline {1}Introduction}{1}{}%
+\contentsline {chapter}{\numberline {2}API specification}{3}{}%
+\contentsline {chapter}{\numberline {3}Functional and non-functional requirements}{5}{}%
+\contentsline {chapter}{\numberline {4}Architecture}{7}{}%
+\contentsline {chapter}{\numberline {5}Implementation}{9}{}%
+\contentsline {chapter}{\numberline {6}Deployment scripts and tuning}{11}{}%
+\contentsline {chapter}{\numberline {7}CI/CD pipeline}{13}{}%
+\contentsline {chapter}{\numberline {8}Group 16 Evaluation}{15}{}%
+\contentsline {chapter}{\numberline {9}CloudyDay improvements}{17}{}%
+\contentsline {chapter}{\numberline {10}Cost analysis}{19}{}%
+\contentsline {chapter}{\numberline {11}Conclusion}{21}{}%
