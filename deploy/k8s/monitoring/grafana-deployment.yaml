@@ -33,8 +33,6 @@ spec:
                 secretKeyRef:
                   name: grafana-admin
                   key: admin-password
-            - name: GF_SERVER_ROOT_URL
-              value: http://grafana.exemplo.com
           volumeMounts:
             - name: grafana-datasources
               mountPath: /etc/grafana/provisioning/datasources

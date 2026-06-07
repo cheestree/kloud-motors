@@ -5,8 +5,6 @@ info:
   description: |
     Protected endpoints declare `bearerAuth` and require `Authorization: Bearer <id_token>`, where `id_token` is returned by `/api/user/login`, `/api/user/register`, or `/api/user/refresh`.
 
-    Requests to the deployed gateway also use `Host: kloud-motors.com`.
-
     Query parameters use the names documented per endpoint. Listing search endpoints accept `pageSize` and return `page_size` in JSON responses; auction endpoints accept and return `page_size`.
 
     Successful responses with a JSON body are documented under `application/json`. Error responses currently return `text/plain` and the reusable error components describe the common triggers for each status code.
@@ -34,8 +32,6 @@ tags:
   description: Seller management and profiling
 - name: Listings
   description: Filtered car search and listing comparison
-servers:
-  - url: https://kloud-motors.com
 paths:
   "/api/user/login":
     post:
@@ -46,8 +42,6 @@ paths:
         Exchanges an email and password for a Firebase ID token through the
         Kloud Motors gateway. The Firebase API key remains server-side.
       operationId: loginUser
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -83,8 +77,6 @@ paths:
         Creates a Firebase Auth user and returns tokens plus the internal
         Kloud Motors user id.
       operationId: registerUser
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -122,8 +114,6 @@ paths:
         Exchanges a Firebase refresh token for a new ID token through the
         Kloud Motors gateway. The Firebase API key remains server-side.
       operationId: refreshUserToken
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -158,8 +148,6 @@ paths:
         Requires `Authorization: Bearer <id_token>` from login, registration, or refresh.
         Returns the chats visible to the authenticated user.
       operationId: getChats
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       responses:
@@ -184,8 +172,6 @@ paths:
       summary: Open or create a buyer-seller chat session
       description: The authenticated user is derived from the bearer token; clients only provide the seller and listing IDs. Returns 404 when the referenced seller or listing cannot be resolved.
       operationId: openChat
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -228,7 +214,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ChatIdPath"
       - "$ref": "#/components/parameters/LimitQuery"
       - "$ref": "#/components/parameters/SkipQuery"
@@ -263,7 +248,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ChatIdPath"
       responses:
         '101':
@@ -288,7 +272,6 @@ paths:
       description: Requires `brand` and `model`. Invalid filters, pagination values, or enum values return 400; upstream geo-service timeouts or overloads are surfaced as 502.
       operationId: getMarketInsightsAggregates
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/MetricsQuery"
@@ -322,7 +305,6 @@ paths:
       description: Requires `brand` and `model`. `group_by`, `sort_by`, and `order` must match the documented enum values.
       operationId: getPriceComparison
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/GroupByQuery"
@@ -353,7 +335,6 @@ paths:
       description: Requires `brand` and `model`; optional filters narrow the statistics by location, year range, or fuel type.
       operationId: getListingStatsByLocation
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/LocationQuery"
@@ -383,7 +364,6 @@ paths:
       description: Calculates average, minimum, and maximum market price for a brand/model and optional year range. Returns 404 when no matching market data is found.
       operationId: getAverageMarketPrice
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/YearFromQuery"
@@ -412,7 +392,6 @@ paths:
       summary: List auctions
       operationId: listAuctions
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionStatusQuery"
       - "$ref": "#/components/parameters/PageQuery"
       - "$ref": "#/components/parameters/PageSizeSnakeQuery"
@@ -434,8 +413,6 @@ paths:
       - Auction
       summary: Create an auction
       operationId: createAuction
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -479,7 +456,6 @@ paths:
       summary: Get auction details
       operationId: getAuction
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '200':
@@ -506,7 +482,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '204':
@@ -534,7 +509,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       requestBody:
         required: true
@@ -570,7 +544,6 @@ paths:
       summary: Get auction bids
       operationId: getAuctionBids
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       - "$ref": "#/components/parameters/PageQuery"
       - "$ref": "#/components/parameters/PageSizeSnakeQuery"
@@ -600,7 +573,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '101':
@@ -621,8 +593,6 @@ paths:
       - Users
       summary: Get the authenticated user's favorite listing IDs
       operationId: getFavoriteListings
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       responses:
@@ -649,7 +619,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
@@ -678,7 +647,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
@@ -705,8 +673,6 @@ paths:
       - Users
       summary: Get user previews
       operationId: getUsersPreview
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -740,7 +706,6 @@ paths:
       summary: Get seller profile
       operationId: getSellerProfile
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/SellerIdPath"
       responses:
         '200':
@@ -765,8 +730,6 @@ paths:
       - Sellers
       summary: Get seller previews
       operationId: getSellersPreview
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -800,7 +763,6 @@ paths:
       description: Uses the camelCase `pageSize` query parameter and returns the effective page size in the snake_case `page_size` response field.
       operationId: getListings
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/PageQuery"
       - "$ref": "#/components/parameters/PageSizeCamelQuery"
       - "$ref": "#/components/parameters/IncludeSoldQuery"
@@ -824,8 +786,6 @@ paths:
       - Listings
       summary: Create a listing
       operationId: createListing
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -879,7 +839,6 @@ paths:
       description: Uses camelCase filter names such as `fuelType`, `minPrice`, and `pageSize`; the response keeps the existing JSON field name `page_size`.
       operationId: searchCars
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/MakeQuery"
       - "$ref": "#/components/parameters/ModelQuery"
       - "$ref": "#/components/parameters/YearQuery"
@@ -912,7 +871,6 @@ paths:
       summary: Compare listings
       operationId: compareListings
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/IdsQuery"
       responses:
         '200':
@@ -938,7 +896,6 @@ paths:
       summary: Get listing details
       operationId: getCarById
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       responses:
         '200':
@@ -965,7 +922,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       requestBody:
         required: true
@@ -1013,7 +969,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       responses:
         '204':
@@ -1037,16 +992,6 @@ components:
       scheme: bearer
       bearerFormat: Firebase ID token
   parameters:
-    HostHeader:
-      name: Host
-      in: header
-      required: true
-      description: Requests to the deployed gateway must target the Kloud Motors public host.
-      schema:
-        type: string
-        enum:
-        - kloud-motors.com
-      example: kloud-motors.com
     AuctionIdPath:
       name: auction_id
       in: path
