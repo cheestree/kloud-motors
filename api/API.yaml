@@ -68,6 +68,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/user/register":
     post:
       tags:
@@ -105,6 +109,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/user/refresh":
     post:
       tags:
@@ -139,6 +147,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat":
     get:
       tags:
@@ -165,6 +177,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat/open":
     post:
       tags:
@@ -204,6 +220,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat/{chat_id}":
     get:
       tags:
@@ -238,6 +258,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat/ws/{chat_id}":
     get:
       tags:
@@ -264,12 +288,16 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/market/insights/aggregates":
     get:
       tags:
       - Geographical Market Insights
       summary: Get aggregated market insights
-      description: Requires `brand` and `model`. Invalid filters, pagination values, or enum values return 400; upstream geo-service timeouts or overloads are surfaced as 502.
+      description: Requires `brand` and `model`. Invalid filters, pagination values, or enum values return 400; upstream geo-service overloads are surfaced as 503 and timeouts as 504.
       operationId: getMarketInsightsAggregates
       parameters:
       - "$ref": "#/components/parameters/BrandQueryRequired"
@@ -297,6 +325,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/market/price-comparison":
     get:
       tags:
@@ -327,6 +359,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/stats/by-location":
     get:
       tags:
@@ -356,6 +392,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/market/average-price":
     get:
       tags:
@@ -385,6 +425,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions":
     get:
       tags:
@@ -408,6 +452,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     post:
       tags:
       - Auction
@@ -449,6 +497,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/{auction_id}":
     get:
       tags:
@@ -474,6 +526,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     delete:
       tags:
       - Auction
@@ -500,6 +556,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/{auction_id}/bid":
     post:
       tags:
@@ -537,6 +597,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/{auction_id}/bids":
     get:
       tags:
@@ -564,6 +628,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/ws/{auction_id}":
     get:
       tags:
@@ -587,6 +655,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/users/me/favorites":
     get:
       tags:
@@ -610,6 +682,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/users/me/favorites/{listing_id}":
     post:
       tags:
@@ -639,6 +715,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     delete:
       tags:
       - Users
@@ -667,6 +747,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/users/preview":
     post:
       tags:
@@ -699,6 +783,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/sellers/{seller_id}":
     get:
       tags:
@@ -724,6 +812,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/sellers/preview":
     post:
       tags:
@@ -755,6 +847,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings":
     get:
       tags:
@@ -781,6 +877,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     post:
       tags:
       - Listings
@@ -831,6 +931,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/search":
     get:
       tags:
@@ -864,6 +968,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/compare":
     get:
       tags:
@@ -889,6 +997,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/{id}":
     get:
       tags:
@@ -914,6 +1026,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     put:
       tags:
       - Listings
@@ -961,6 +1077,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     delete:
       tags:
       - Listings
@@ -985,6 +1105,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
 components:
   securitySchemes:
     bearerAuth:
@@ -1271,12 +1395,26 @@ components:
         example: 2024
   responses:
     BadGatewayText:
-      description: Upstream service is unavailable, timed out, or could not be reached by the gateway. Current overload and circuit-breaker failures are surfaced as 502 rather than 429 or 503.
+      description: Upstream proxy or gateway communication failed.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: failed to connect websocket upstream
+    ServiceUnavailableText:
+      description: Upstream service is unavailable, the circuit breaker is open, or the gateway is overloaded.
       content:
         text/plain:
           schema:
             type: string
             example: upstream service is unavailable
+    GatewayTimeoutText:
+      description: Upstream service call exceeded the gateway deadline.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: context deadline exceeded
     BadRequestText:
       description: Invalid request body, missing required query/path field, unsupported enum value, malformed ID, or invalid pagination/filter value.
       content:

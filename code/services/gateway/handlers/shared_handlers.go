@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -67,6 +68,10 @@ func writeServiceError(w http.ResponseWriter, err error) {
 }
 
 func httpStatusFromServiceError(err error) int {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return http.StatusGatewayTimeout
+	}
+
 	switch status.Code(err) {
 	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
 		return http.StatusBadRequest
@@ -78,8 +83,10 @@ func httpStatusFromServiceError(err error) int {
 		return http.StatusNotFound
 	case codes.AlreadyExists, codes.Aborted:
 		return http.StatusConflict
+	case codes.DeadlineExceeded:
+		return http.StatusGatewayTimeout
 	case codes.Unavailable:
-		return http.StatusBadGateway
+		return http.StatusServiceUnavailable
 	default:
 		return http.StatusInternalServerError
 	}
