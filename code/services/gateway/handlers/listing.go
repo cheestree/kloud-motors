@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,7 +25,7 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
 			Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-			PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSizeV2), 20),
+			PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
 			IncludeSold: includeSold,
 		})
 		if err != nil {
@@ -42,7 +41,7 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var req listingpb.CreateListingRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := decodeJSONBody(r, &req); err != nil {
 			http.Error(w, msgInvalidBody, http.StatusBadRequest)
 			return
 		}
@@ -81,7 +80,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 		MaxMileage:  utils.ParseInt32(q.Get(queryMaxMileage)),
 		FuelType:    q.Get(queryFuelTypeV2),
 		Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-		PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSizeV2), 20),
+		PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
 		IncludeSold: includeSold,
 	})
 	if err != nil {
@@ -151,7 +150,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var req listingpb.UpdateListingRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := decodeJSONBody(r, &req); err != nil {
 			http.Error(w, msgInvalidBody, http.StatusBadRequest)
 			return
 		}

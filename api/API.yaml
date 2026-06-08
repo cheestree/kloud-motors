@@ -419,7 +419,7 @@ paths:
       - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionStatusQuery"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeSnakeQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       responses:
         '200':
           description: Auctions.
@@ -577,7 +577,7 @@ paths:
       - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeSnakeQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       responses:
         '200':
           description: Auction bids.
@@ -801,12 +801,11 @@ paths:
       tags:
       - Listings
       summary: Get listings
-      description: Uses the camelCase `pageSize` query parameter and returns the effective page size in the snake_case `page_size` response field.
       operationId: getListings
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeCamelQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       - "$ref": "#/components/parameters/IncludeSoldQuery"
       responses:
         '200':
@@ -880,7 +879,6 @@ paths:
       tags:
       - Listings
       summary: Search listings
-      description: Uses camelCase filter names such as `fuelType`, `minPrice`, and `pageSize`; the response keeps the existing JSON field name `page_size`.
       operationId: searchCars
       parameters:
       - "$ref": "#/components/parameters/HostHeader"
@@ -892,7 +890,7 @@ paths:
       - "$ref": "#/components/parameters/MaxMileageQuery"
       - "$ref": "#/components/parameters/FuelTypeCamelQuery"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeCamelQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       - "$ref": "#/components/parameters/IncludeSoldQuery"
       responses:
         '200':
@@ -1040,6 +1038,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: Firebase ID token
+      description: Send `Authorization: Bearer <token>` using the Firebase ID token returned by the user login, register or refresh endpoints.
   parameters:
     HostHeader:
       name: Host
@@ -1261,21 +1260,11 @@ components:
         format: int32
         minimum: 1
         default: 1
-    PageSizeCamelQuery:
+    PageSizeQuery:
       name: pageSize
       in: query
       required: false
-      description: Page size for listing search endpoints. Responses use the snake_case `page_size` field.
-      schema:
-        type: integer
-        format: int32
-        minimum: 1
-        default: 20
-    PageSizeSnakeQuery:
-      name: page_size
-      in: query
-      required: false
-      description: Page size for auction endpoints. Defaults to 20 at the gateway and caps the effective page size at 100.
+      description: Page size for paginated endpoints. Requests and responses use `pageSize`; defaults to 20 at the gateway and caps at 100.
       schema:
         type: integer
         format: int32
@@ -1672,10 +1661,10 @@ components:
         page:
           type: integer
           format: int32
-        page_size:
+        pageSize:
           type: integer
           format: int32
-          description: Effective auction page size, matching the `page_size` query parameter.
+          description: Effective auction page size, matching the `pageSize` query parameter.
     GetAuctionResponse:
       type: object
       properties:
@@ -1710,10 +1699,10 @@ components:
         page:
           type: integer
           format: int32
-        page_size:
+        pageSize:
           type: integer
           format: int32
-          description: Effective auction page size, matching the `page_size` query parameter.
+          description: Effective auction page size, matching the `pageSize` query parameter.
     ListingDetailsResponse:
       type: object
       properties:
@@ -1881,10 +1870,10 @@ components:
         page:
           type: integer
           format: int32
-        page_size:
+        pageSize:
           type: integer
           format: int32
-          description: Effective listing page size. Listing endpoints accept the query parameter as `pageSize` but return this field as `page_size`.
+          description: Effective listing page size, matching the `pageSize` query parameter.
         listings:
           type: array
           items:

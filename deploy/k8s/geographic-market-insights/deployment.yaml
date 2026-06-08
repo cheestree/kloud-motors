@@ -6,7 +6,7 @@ metadata:
   labels:
     app: geographic-market-insights-service
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: geographic-market-insights-service
@@ -51,10 +51,10 @@ spec:
 
           resources:
             requests:
-              cpu: "250m"
-              memory: "384Mi"
+              cpu: "500m"
+              memory: "512Mi"
             limits:
-              cpu: "1"
+              cpu: "1500m"
               memory: "1Gi"
         - name: cloud-sql-proxy
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0

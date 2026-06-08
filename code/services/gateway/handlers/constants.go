@@ -35,7 +35,7 @@ const (
 const (
 	queryStatus   = "status"
 	queryPage     = "page"
-	queryPageSize = "page_size"
+	queryPageSize = "pageSize"
 
 	queryMetrics   = "metrics"
 	queryGroupBy   = "group_by"
@@ -58,7 +58,6 @@ const (
 	queryMaxMileage  = "maxMileage"
 	queryIncludeSold = "includeSold"
 	queryFuelTypeV2  = "fuelType"
-	queryPageSizeV2  = "pageSize"
 	queryIDs         = "ids"
 )
 

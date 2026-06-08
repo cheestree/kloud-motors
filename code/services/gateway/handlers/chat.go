@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -35,7 +34,7 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req chatpb.OpenChatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSONBody(r, &req); err != nil {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}

@@ -76,6 +76,15 @@ func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
+func decodeJSONBody(r *http.Request, dst interface{}) error {
+	contentType := strings.ToLower(strings.TrimSpace(r.Header.Get(headerContentType)))
+	if contentType == "" || !strings.HasPrefix(contentType, contentTypeJSON) {
+		return errors.New("Content-Type must be application/json")
+	}
+
+	return json.NewDecoder(r.Body).Decode(dst)
+}
+
 func writeServiceError(w http.ResponseWriter, err error) {
 	http.Error(w, err.Error(), httpStatusFromServiceError(err))
 }

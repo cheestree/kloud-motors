@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -36,7 +35,7 @@ func HandleGetSellersPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req sellerpb.SellersPreviewRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSONBody(r, &req); err != nil {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}

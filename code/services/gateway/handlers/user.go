@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -27,7 +26,7 @@ func HandleUserRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req userpb.RefreshTokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSONBody(r, &req); err != nil {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}
@@ -51,7 +50,7 @@ func handleUserAuth(w http.ResponseWriter, r *http.Request, authFn func(context.
 	}
 
 	var req userpb.AuthRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSONBody(r, &req); err != nil {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}
@@ -129,7 +128,7 @@ func HandleGetUsersPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req userpb.UsersPreviewRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSONBody(r, &req); err != nil {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}

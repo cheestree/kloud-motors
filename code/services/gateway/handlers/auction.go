@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -38,7 +37,7 @@ func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, resp)
 	case http.MethodPost:
 		var req auctionpb.CreateAuctionRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := decodeJSONBody(r, &req); err != nil {
 			http.Error(w, msgInvalidBody, http.StatusBadRequest)
 			return
 		}
@@ -115,7 +114,7 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			var req auctionpb.PlaceBidRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := decodeJSONBody(r, &req); err != nil {
 				http.Error(w, msgInvalidBody, http.StatusBadRequest)
 				return
 			}
