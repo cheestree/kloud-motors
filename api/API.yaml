@@ -3,19 +3,17 @@ info:
   title: Kloud Motors - Online Car Dealer
   version: 1.0.0
   description: |
-    Protected endpoints declare `bearerAuth` and require `Authorization: Bearer <id_token>`, where `id_token` is returned by `/api/user/login`, `/api/user/register`, or `/api/user/refresh`.
+    Protected endpoints declare `bearerAuth` and require the exact header `Authorization: Bearer <token>`, where `<token>` is the Firebase ID token returned by `/api/user/login`, `/api/user/register` or `/api/user/refresh`.
 
     Requests to the deployed gateway also use `Host: kloud-motors.com`.
 
-    Query parameters use the names documented per endpoint. Listing search endpoints accept `pageSize` and return `page_size` in JSON responses; auction endpoints accept and return `page_size`.
-
-    Successful responses with a JSON body are documented under `application/json`. Error responses currently return `text/plain` and the reusable error components describe the common triggers for each status code.
+    Requests with a JSON body must send `Content-Type: application/json`. Successful responses with a JSON body are documented under `application/json`. Error responses currently return `text/plain` and the reusable error components describe the common triggers for each status code.
 
     - **Market Price Analysis**: Calculate the average price of cars based on brand, model, year, and location.
     - **Filtered Search**: Allow users to search for cars based on specific criteria(make, model, year, price range, mileage, fuel type, location).
     - **Geographical Market Insights**: Analyze car availability and price variations across different regions.
     - **Seller Management & Profiling**: Distinguish between professional dealers and private sellers.
-    - **Buyer–Seller Communication**: Enable real-time messaging between the buyer and the seller of a specific listing.
+    - **Buyer-Seller Communication**: Enable real-time messaging between the buyer and the seller of a specific listing.
     - **Visitor & User Registration**: Track and register platform visitors, registered users can save favourite listings.
     - **Auction Module**: Allow sellers to list cars under an auction format.
     - **Listing details and comparison**: Provide detailed information on each listing and allow users to compare multiple listings side by side based on price, mileage, year and location.
