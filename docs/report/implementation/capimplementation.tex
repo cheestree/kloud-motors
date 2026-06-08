@@ -1,1 +1,108 @@
 \chapter{Implementation} \label{cap:implementation}
+
+The implementation of Kloud Motors follows the architecture described in the previous chapter. The system is implemented mainly in Go and is organised as a set of independent services under \texttt{code/services}. Each service exposes a gRPC API through Protocol Buffers, while the gateway exposes the public REST and WebSocket API consumed by clients.
+
+\section{Code Organisation}
+
+The project separates application code, infrastructure configuration, deployment manifests, scripts, API documentation, and tests. The main implementation directories are:
+
+\begin{itemize}
+    \item \texttt{code/services}: Go microservices, gRPC contracts, repositories, service logic, gateway handlers, shared types, Redis integration, and observability helpers.
+    \item \texttt{code/setup}: dataset preparation and database loading scripts for listings, users, sellers, chat, and auctions.
+    \item \texttt{deploy/k8s}: Kubernetes manifests for services, deployments, configuration, secrets, autoscaling, ingress, monitoring, Redis, and backups.
+    \item \texttt{terraform}: Terraform configuration for reproducible GCP infrastructure.
+    \item \texttt{scripts}: local, cloud, and GitHub setup scripts used to prepare, deploy, seed, back up, restore, and operate the platform.
+    \item \texttt{api/API.yaml}: OpenAPI specification for the public gateway API.
+\end{itemize}
+
+The Go services share a single module in \texttt{code/services}. Service contracts are declared in \texttt{.proto} files and compiled into Go code. This keeps the internal service boundaries explicit and allows the gateway and dependent services to use typed gRPC clients instead of ad hoc HTTP calls.
+
+\section{Gateway Implementation}
+
+The gateway is the only public application entry point. It registers all public routes under \texttt{/api}, exposes \texttt{/metrics} for Prometheus, and connects to the internal services using gRPC clients configured from environment variables. The gateway handles:
+
+\begin{itemize}
+    \item REST routes for listings, search, market insights, market price, users, favourites, sellers, chats, auctions, and health checks.
+    \item WebSocket proxy routes for chat and auction live updates.
+    \item Firebase ID token validation for protected operations.
+    \item Conversion between HTTP request parameters or JSON bodies and the corresponding gRPC request messages.
+    \item Translation of gRPC errors into appropriate HTTP responses.
+    \item Prometheus metrics collection and OpenTelemetry HTTP instrumentation.
+\end{itemize}
+
+Authentication is enforced at gateway level for operations that require a logged-in user, such as managing favourites, opening chats, retrieving chat history, creating listings, managing auctions, and placing bids. After a Firebase token is validated, the gateway resolves the Firebase user identifier into an internal user identifier through the user service. This allows the internal services to work with stable platform identifiers without exposing authentication details across all business services.
+
+The gateway also wraps downstream gRPC clients with circuit breakers. Each circuit breaker opens after repeated consecutive failures and returns a clear unavailable error while the downstream service is unhealthy. This prevents a failing service from exhausting resources in the gateway and causing cascading failures across unrelated user flows.
+
+\section{Domain Services}
+
+Each business capability is implemented in a dedicated service with its own service layer and persistence layer. The services follow the same general structure: request validation, domain  level checks, repository calls, conversion to gRPC responses, and consistent error mapping.
+
+\subsection{Listing and Search}
+
+The listing service owns listing details, listing summaries, comparison, creation, update, deletion, ownership checks, and sold state checks. It validates identifiers and listing mutations before calling the PostgreSQL repository. Listing detail and listing summary responses are cached in Redis using keys based on the listing identifier. Mutations invalidate the affected listing cache entries to avoid serving stale data.
+
+The search service implements paginated listing search. It normalises pagination defaults and maximum page size from environment configuration, builds a filter object from the request, and delegates the query to the PostgreSQL backed repository. Search results are cached in Redis using a hash of the normalised filter set, which allows repeated searches to be served without repeatedly scanning the database.
+
+\subsection{Market Price and Geographic Insights}
+
+The market price service computes price statistics for a selected brand and model, optionally constrained by year range. It queries the listing database and returns aggregate values such as average, minimum, and maximum price.
+
+The geographic market insights service exposes location oriented analytics over the same listing data. It supports price comparison by district, city, or country, aggregate metrics with filters, and statistics for a specific location. Pagination, sorting, and filtering are handled at service and repository level so the gateway can remain a thin public API adapter.
+
+\subsection{Users and Sellers}
+
+The user service integrates with Firebase authentication for registration, login, and token refresh flows. It also stores and resolves internal user data, manages favourite listings, and provides preview data used by upstream services and API responses.
+
+The seller service provides seller profile retrieval, seller previews, and seller verification. Other services use it to validate seller specific operations. For example, chat creation verifies that the target seller exists before a chat session is opened.
+
+\subsection{Chat}
+
+The chat service manages buyer-seller conversations. It stores chat index data in PostgreSQL and can store chat messages through the configured message repository. When a user opens a chat, the service validates the seller, checks the listing summary, verifies listing ownership, prevents conversations for sold listings, and reuses an existing chat when one already exists for the same buyer and listing.
+
+Real-time messaging is handled through a WebSocket server. The gateway authenticates the public WebSocket request and proxies it to the chat service. Google Pub/Sub is used to distribute chat events between service replicas, allowing WebSocket clients connected to different pods to receive the same live updates.
+
+\newpage
+
+\subsection{Auctions}
+
+The auction service manages auction listing, creation, deletion, bidding, bid retrieval, and live updates. Auction creation validates the listing identifier, seller identifier, starting price, end time, listing availability, and listing ownership before inserting the auction. Pagination is normalised with default and maximum page sizes.
+
+Auction bids and status updates are broadcast through the auction WebSocket hub. As with chat, Google Pub/Sub allows auction updates to be propagated across replicas when the service is horizontally scaled.
+
+\section{Persistence and Data Loading}
+
+The platform uses PostgreSQL databases separated by domain. Listing, search, market price, and geographic analytics read from the listing database. User, seller, chat, and auction data are stored in separate databases. This separation keeps ownership clear while allowing read heavy marketplace services to share the same listing source of truth.
+
+The dataset preparation scripts under \texttt{code/setup} transform the original dataset into service specific CSV files and initialise the databases. Local setup scripts prepare the environment, start Docker Compose services, and seed the databases. Cloud setup scripts create or configure cloud databases and restore data when needed.
+
+Firestore is supported by the chat service for cloud oriented message persistence. Google Cloud Storage is used by the backup workflow to store exported Cloud SQL data.
+
+\section{Caching, Resilience, and Observability}
+
+Redis is implemented as a cache aside layer. Listing details, listing summaries, and search results first check Redis. On a cache miss, the service queries PostgreSQL and writes the response back to Redis with the configured cache behaviour. Write operations that change listing data remove affected listing cache keys.
+
+Resilience is implemented through circuit breakers around gateway gRPC clients and selected cross service calls in chat and auction. This is especially important for flows where one service depends on another, such as chat depending on listing and seller validation, or auction depending on listing availability and ownership checks.
+
+Observability is implemented with Prometheus and OpenTelemetry. The gateway exposes Prometheus metrics and wraps HTTP handling with instrumentation. Services initialise OpenTelemetry tracing with service names, propagate trace context, and export traces to Google Cloud Trace when the exporter can be initialised.
+
+\newpage
+
+\section{Deployment Implementation}
+
+Each service has a Dockerfile and Kubernetes manifests. Kubernetes deployments define containers, configuration, secrets, probes, and resource settings. Services expose stable internal DNS names for gRPC communication, while ingress routes public traffic to the gateway. HorizontalPodAutoscaler resources are defined for scalable services.
+
+The deployment layer also includes:
+
+\begin{itemize}
+    \item Redis manifests for the cache layer.
+    \item Prometheus and Grafana manifests for monitoring.
+    \item Backup CronJob manifests for scheduled Cloud SQL exports.
+    \item Kustomize configuration to apply the complete platform consistently.
+    \item Terraform files to define GCP infrastructure as code.
+    \item GitHub and cloud scripts to configure service accounts, bootstrap environments, build images, push images, and apply Kubernetes changes.
+\end{itemize}
+
+\section{Testing Support}
+
+The implementation includes unit and integration tests for the main service layers and repositories, covering listing, search, market price, geographic insights, seller, and user behaviour. These tests exercise public API flows, validate error handling, and measure behaviour under load. The combination of service tests and integration tests is used to verify both the functional requirements and the non-functional improvements introduced in the architecture.
