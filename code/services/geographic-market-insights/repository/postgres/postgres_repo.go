@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"services/geographic-market-insights/repository"
+	"services/utils"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -34,7 +35,7 @@ func NewPostgresRepo(ctx context.Context, cfg repository.DBConfig) (*RelationalR
 		cfg.Table = "automotive_data"
 	}
 
-	pool, err := pgxpool.New(ctx, cfg.Dsn)
+	pool, err := utils.NewPgxPool(ctx, cfg.Dsn)
 	if err != nil {
 		return nil, fmt.Errorf("create postgres pool: %w", err)
 	}

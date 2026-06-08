@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -173,6 +174,27 @@ func TryServe(grpcServer *grpc.Server, lis net.Listener) {
 	}
 }
 
+func ConfigureSQLDB(db *sql.DB) {
+	db.SetMaxOpenConns(GetEnvInt("DB_MAX_OPEN_CONNS", 20))
+	db.SetMaxIdleConns(GetEnvInt("DB_MAX_IDLE_CONNS", 10))
+	db.SetConnMaxLifetime(time.Duration(GetEnvInt("DB_CONN_MAX_LIFETIME_SECONDS", 300)) * time.Second)
+	db.SetConnMaxIdleTime(time.Duration(GetEnvInt("DB_CONN_MAX_IDLE_TIME_SECONDS", 120)) * time.Second)
+}
+
+func NewPgxPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+	cfg, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.MaxConns = int32(GetEnvInt("DB_MAX_OPEN_CONNS", 20))
+	cfg.MinConns = int32(GetEnvInt("DB_MIN_IDLE_CONNS", 2))
+	cfg.MaxConnLifetime = time.Duration(GetEnvInt("DB_CONN_MAX_LIFETIME_SECONDS", 300)) * time.Second
+	cfg.MaxConnIdleTime = time.Duration(GetEnvInt("DB_CONN_MAX_IDLE_TIME_SECONDS", 120)) * time.Second
+
+	return pgxpool.NewWithConfig(ctx, cfg)
+}
+
 func TryConnectDB(databaseURL string, timeout int, tries int) *sql.DB {
 	var db *sql.DB
 	var err error
@@ -185,10 +207,7 @@ func TryConnectDB(databaseURL string, timeout int, tries int) *sql.DB {
 
 			err = db.PingContext(ctx)
 			if err == nil {
-				db.SetMaxOpenConns(10)
-				db.SetMaxIdleConns(5)
-				db.SetConnMaxLifetime(5 * time.Minute)
-				db.SetConnMaxIdleTime(2 * time.Minute)
+				ConfigureSQLDB(db)
 
 				return db
 			}
@@ -224,10 +243,7 @@ func TryConnectGorm(databaseURL string, timeout int, tries int) *gorm.DB {
 		cancel()
 
 		if err == nil {
-			sqlDB.SetMaxOpenConns(10)
-			sqlDB.SetMaxIdleConns(5)
-			sqlDB.SetConnMaxLifetime(5 * time.Minute)
-			sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+			ConfigureSQLDB(sqlDB)
 
 			return db
 		}
