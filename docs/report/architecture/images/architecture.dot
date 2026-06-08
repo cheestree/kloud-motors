@@ -1,0 +1,173 @@
+digraph architecture {
+  graph [
+    rankdir=LR,
+    bgcolor="white",
+    pad="0.35",
+    nodesep="0.5",
+    ranksep="0.7",
+    splines=polyline,
+    fontname="Helvetica",
+    fontsize=20,
+    labelloc=t
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    color="#333333",
+    fillcolor="white",
+    fontname="Helvetica",
+    fontsize=13,
+    margin="0.12,0.08"
+  ];
+
+  edge [
+    color="#555555",
+    fontname="Helvetica",
+    fontsize=11,
+    arrowsize=0.8
+  ];
+
+  subgraph cluster_client {
+    label="Client applications";
+    color="#a5d6a7";
+    style="rounded,filled";
+    fillcolor="#f1f8e9";
+    fontsize=18;
+
+    client_content [label="Browser / API consumers", fillcolor="#e8f5e9", penwidth=2];
+  }
+
+  subgraph cluster_ingress {
+    label="NGINX Ingress";
+    color="#a5d6a7";
+    style="rounded,filled";
+    fillcolor="#f1f8e9";
+    fontsize=18;
+
+    ingress_content [label="kloud-motors.com\n/api + WebSocket routes", fillcolor="#e8f5e9", penwidth=2];
+  }
+
+  subgraph cluster_gateway {
+    label="Gateway service";
+    color="#90caf9";
+    style="rounded,filled";
+    fillcolor="#f3f9fe";
+    fontsize=18;
+
+    gateway_content [label="REST API\nWebSocket proxy\nFirebase token validation\nPrometheus metrics", fillcolor="#e3f2fd", penwidth=2];
+  }
+
+  subgraph cluster_services {
+    label="Go microservices";
+    color="#dddddd";
+    style="rounded,filled";
+    fillcolor="#fbfbfb";
+    fontsize=18;
+
+    subgraph cluster_marketplace {
+      label="Marketplace";
+      color="#dddddd";
+      style="rounded,filled";
+      fillcolor="#fbfbfb";
+      fontsize=16;
+
+      marketplace_content [label="Listing\nSearch\nMarket price\nGeo insights", fillcolor="#ffffff"];
+    }
+
+    subgraph cluster_accounts {
+      label="Accounts";
+      color="#dddddd";
+      style="rounded,filled";
+      fillcolor="#fbfbfb";
+      fontsize=16;
+
+      accounts_content [label="User\nSeller", fillcolor="#ffffff"];
+    }
+
+    subgraph cluster_realtime {
+      label="Real-time";
+      color="#dddddd";
+      style="rounded,filled";
+      fillcolor="#fbfbfb";
+      fontsize=16;
+
+      realtime_content [label="Chat\nAuction", fillcolor="#ffffff"];
+    }
+  }
+
+  subgraph cluster_data {
+    label="Data and cloud services";
+    color="#f0d98a";
+    style="rounded,filled";
+    fillcolor="#fffdf0";
+    fontsize=18;
+
+    redis [shape=cylinder, label="Redis\nlisting/search cache", fillcolor="#fff9c4"];
+    sqldb [shape=cylinder, label="Cloud SQL PostgreSQL\nlisting, user, seller,\nchat, auction DBs", fillcolor="#fff9c4"];
+    subgraph cluster_firebase {
+      label="Firebase Auth";
+      color="#d1c4e9";
+      style="rounded,filled";
+      fillcolor="#f7f3fb";
+      fontsize=16;
+
+      firebase_content [label="ID token provider", fillcolor="#ede7f6"];
+    }
+
+    firestore [shape=cylinder, label="Firestore\nchat messages", fillcolor="#ede7f6"];
+
+    subgraph cluster_pubsub {
+      label="Google Pub/Sub";
+      color="#d1c4e9";
+      style="rounded,filled";
+      fillcolor="#f7f3fb";
+      fontsize=16;
+
+      pubsub_content [label="real-time events", fillcolor="#ede7f6"];
+    }
+  }
+
+  subgraph cluster_platform {
+    label="Platform and operations";
+    color="#f4c27b";
+    style="rounded,filled";
+    fillcolor="#fff7ed";
+    fontsize=18;
+
+    platform_content [label="GitHub Actions + Terraform + GKE\nArtifact Registry\nPrometheus/Grafana\nBackup CronJob + Cloud Storage", fillcolor="#fff3e0", penwidth=2];
+  }
+
+  legend [shape=plain, label=<
+    <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6" COLOR="#777777" BGCOLOR="#ffffff">
+      <TR><TD COLSPAN="3"><B>Connection types</B></TD></TR>
+      <TR><TD><B>Sample</B></TD><TD><B>Type</B></TD></TR>
+      <TR><TD><FONT COLOR="#555555">------&gt;</FONT></TD><TD>HTTP / WS, data access, cache, events</TD></TR>
+      <TR><TD><FONT COLOR="#1565c0">------&gt;</FONT></TD><TD>gRPC service calls</TD></TR>
+      <TR><TD><FONT COLOR="#c62828">------&gt;</FONT></TD><TD>gRPC + WebSocket real-time flow</TD></TR>
+      <TR><TD><FONT COLOR="#6a1b9a">- - - &gt;</FONT></TD><TD>authentication / token validation</TD></TR>
+      <TR><TD><FONT COLOR="#ef6c00">- - - &gt;</FONT></TD><TD>deploy, observe, provision, backup</TD></TR>
+    </TABLE>
+  >];
+
+  client_content -> ingress_content;
+  ingress_content -> gateway_content;
+
+  gateway_content -> marketplace_content [color="#1565c0"];
+  gateway_content -> accounts_content [color="#1565c0"];
+  gateway_content -> realtime_content [color="#c62828"];
+
+  marketplace_content -> redis;
+  marketplace_content -> sqldb;
+  accounts_content -> sqldb;
+  realtime_content -> sqldb;
+  realtime_content -> firestore;
+  realtime_content -> pubsub_content;
+
+  gateway_content -> firebase_content [style=dashed, color="#6a1b9a"];
+  accounts_content -> firebase_content [style=dashed, color="#6a1b9a"];
+
+  platform_content -> ingress_content [style=dashed, color="#ef6c00"];
+  platform_content -> gateway_content [style=dashed, color="#ef6c00"];
+  platform_content -> sqldb [style=dashed, color="#ef6c00"];
+}
