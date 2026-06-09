@@ -1,1 +1,19 @@
-\chapter{CloudyDay improvements} \label{cap:improvements}
+\chapter{Cloudy Day Improvements} \label{cap:improvements}
+
+After the Cloudy Day tests, a series of improvements were implemented to address bottlenecks and edge cases identified. The improvements focused on four main areas: API validation, timeout management, database optimization, and deployment configuration.
+
+\section{Gateway Validation and Error Handling}
+
+Input validation was implemented at the API Gateway layer to prevent malformed requests from reaching the deeper services. Query parameters such as \texttt{group\_by}, \texttt{sort\_by}, \texttt{order}, \texttt{limit}, \texttt{skip}, and temporal filters (\texttt{year}, \texttt{year\_from}, \texttt{year\_to}) are now validated. Invalid parameters return a \texttt{400 Bad Request} HTTP response with better endpoint-specific error messages.
+
+\section{Timeouts and Overload Behavior}
+
+To help the system handle network delays and traffic spikes better, we applied the \texttt{context.WithTimeout} pattern to all gRPC calls. This means that if an operation takes too long, it automatically stops and returns a \texttt{503 Service Unavailable} or \texttt{504 Gateway Timeout}. Additionally, circuit breaker implementations were reviewed and improved, and simple concurrency limits were established for resource-intensive endpoints.
+
+\section{Database and Query Optimization}
+
+Data retrieval operations were optimized by refactoring SQL queries, specifically reviewing \texttt{JOIN} operations, \texttt{GROUP BY} clauses, and the \texttt{PERCENTILE\_CONT} function. Database indexes were created, including a composite index on \texttt{automotive\_data(brand\_id, model\_id, model\_year, ask\_price)}, indexes for location and \texttt{fuel\_type\_id}, and functional indexes for case-insensitive searches (\texttt{LOWER(name)}, \texttt{LOWER(city)}).
+
+\section{Deployment and Documentation Refinements}
+
+At the infrastructure level, Kubernetes Horizontal Pod Autoscaler (HPA) settings were improved, increasing the \texttt{minReplicas} for resource-heavy services, while database connection pools were adjusted. Finally, API documentation inconsistencies were resolved, such as standardizing the \texttt{page\_size} parameter, explicitly defining \texttt{Authorization: Bearer <token>} requirements, and ensuring proper \texttt{Content-Type: application/json} response headers.
