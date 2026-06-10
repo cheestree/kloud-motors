@@ -153,7 +153,7 @@ func (r *SearchRepository) Search(ctx context.Context, filters domain.SearchPara
 		); err != nil {
 			return nil, 0, err
 		}
-		s.SellerId = int32(dealerID)
+		s.SellerId = dealerID
 		listings = append(listings, s)
 	}
 	if err := rows.Err(); err != nil {

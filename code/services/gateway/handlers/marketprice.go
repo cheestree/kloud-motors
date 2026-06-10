@@ -3,31 +3,23 @@ package handlers
 import (
 	"net/http"
 
-	marketpricepb "services/marketprice/proto"
-	"services/utils"
+	marketpricerequests "services/gateway/handlers/marketprice"
 )
 
 func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
 
-	q := r.URL.Query()
+	query := marketpricerequests.AveragePriceQuery{}
+	if err := marketpricerequests.BindAndValidateQuery(r, &query); err != nil {
+		writeRequestError(w, "Invalid average price filters: brand and model are required; year_from and year_to must be at least 0 with year_to >= year_from", err)
+		return
+	}
 	ctx := r.Context()
 
-	req := &marketpricepb.AveragePriceRequest{
-		Brand: q.Get(queryBrand), // query param: "brand"
-		Model: q.Get(queryModel), // query param: "model"
-	}
-	if s := q.Get(queryYearFrom); s != "" {
-		req.YearFrom = utils.ParseInt32(s) // query param: "year_from"
-	}
-	if s := q.Get(queryYearTo); s != "" {
-		req.YearTo = utils.ParseInt32(s) // query param: "year_to"
-	}
-
-	resp, err := marketpriceClient.GetAverageMarketPrice(ctx, req)
+	resp, err := marketpriceClient.GetAverageMarketPrice(ctx, marketpricerequests.BuildAveragePriceRequest(query))
 	if err != nil {
 		writeServiceError(w, err)
 		return

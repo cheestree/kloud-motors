@@ -20,17 +20,41 @@ func newServiceCircuitBreaker(name string) *gobreaker.CircuitBreaker {
 		MaxRequests: 1,
 		Interval:    30 * time.Second,
 		Timeout:     15 * time.Second,
+		IsSuccessful: func(err error) bool {
+			return !isBreakerFailure(err)
+		},
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
 			return counts.ConsecutiveFailures >= 3
 		},
 	})
 }
 
-func withBreaker[T any](breaker *gobreaker.CircuitBreaker, serviceName string, fn func() (T, error)) (T, error) {
+const defaultGRPCCallTimeout = 5 * time.Second
+
+func isBreakerFailure(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+
+	switch status.Code(err) {
+	case codes.DeadlineExceeded, codes.Unavailable, codes.ResourceExhausted, codes.Internal, codes.Unknown, codes.DataLoss:
+		return true
+	default:
+		return false
+	}
+}
+
+func withBreaker[T any](ctx context.Context, breaker *gobreaker.CircuitBreaker, serviceName string, fn func(context.Context) (T, error)) (T, error) {
 	var zero T
 
+	callCtx, cancel := context.WithTimeout(ctx, defaultGRPCCallTimeout)
+	defer cancel()
+
 	result, err := breaker.Execute(func() (any, error) {
-		return fn()
+		return fn(callCtx)
 	})
 	if err != nil {
 		if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
@@ -60,13 +84,13 @@ func newBreakerListingClient(inner listingproto.ListingServiceClient) listingpro
 }
 
 func (c *breakerListingClient) CheckListingOwnership(ctx context.Context, in *listingproto.CheckListingOwnershipRequest, opts ...grpc.CallOption) (*listingproto.CheckListingOwnershipResponse, error) {
-	return withBreaker(c.breaker, "listing service", func() (*listingproto.CheckListingOwnershipResponse, error) {
+	return withBreaker(ctx, c.breaker, "listing service", func(ctx context.Context) (*listingproto.CheckListingOwnershipResponse, error) {
 		return c.ListingServiceClient.CheckListingOwnership(ctx, in, opts...)
 	})
 }
 
 func (c *breakerListingClient) CheckListingOpen(ctx context.Context, in *listingproto.CheckListingOpenRequest, opts ...grpc.CallOption) (*listingproto.CheckListingOpenResponse, error) {
-	return withBreaker(c.breaker, "listing service", func() (*listingproto.CheckListingOpenResponse, error) {
+	return withBreaker(ctx, c.breaker, "listing service", func(ctx context.Context) (*listingproto.CheckListingOpenResponse, error) {
 		return c.ListingServiceClient.CheckListingOpen(ctx, in, opts...)
 	})
 }

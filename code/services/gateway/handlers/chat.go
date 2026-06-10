@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	chatpb "services/chat/proto"
-	"services/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -93,11 +92,21 @@ func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	chatID := parts[3]
 	ctx := r.Context()
 	q := r.URL.Query()
+	limit, fieldErr := parseInt32Query(q, queryLimit, 20, 1)
+	if fieldErr != nil {
+		writeError(w, http.StatusBadRequest, "Invalid chat history pagination parameters", []fieldError{*fieldErr})
+		return
+	}
+	skip, fieldErr := parseInt32Query(q, querySkip, 0, 0)
+	if fieldErr != nil {
+		writeError(w, http.StatusBadRequest, "Invalid chat history pagination parameters", []fieldError{*fieldErr})
+		return
+	}
 	req := &chatpb.GetChatHistoryRequest{
 		ChatId: chatID,
 		UserId: userID,
-		Limit:  utils.ParseInt32WithDefault(q.Get(queryLimit), 20),
-		Skip:   utils.ParseInt32(q.Get(querySkip)),
+		Limit:  limit,
+		Skip:   skip,
 	}
 	resp, err := chatClient.GetChatHistory(ctx, req)
 	if err != nil {

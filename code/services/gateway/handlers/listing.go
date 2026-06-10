@@ -1,33 +1,25 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
-	"strconv"
-	"strings"
 
-	listingpb "services/listing/proto"
-	searchpb "services/search/proto"
-	"services/utils"
+	listingrequests "services/gateway/handlers/listing"
 
-	"google.golang.org/protobuf/types/known/wrapperspb"
+	"github.com/go-playground/validator/v10"
 )
 
 func HandleListings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:
-		q := r.URL.Query()
-		includeSold, err := parseOptionalBoolWrapper(q.Get(queryIncludeSold))
-		if err != nil {
-			http.Error(w, "Invalid includeSold query parameter", http.StatusBadRequest)
+		query := listingrequests.DefaultListingListQuery()
+		if err := listingrequests.BindAndValidateQuery(r, &query); err != nil {
+			writeRequestError(w, "Invalid listing pagination parameters", err)
 			return
 		}
 
-		resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
-			Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-			PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
-			IncludeSold: includeSold,
-		})
+		resp, err := searchClient.Search(ctx, query.SearchRequest())
 		if err != nil {
 			writeServiceError(w, err)
 			return
@@ -36,53 +28,40 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		authUserID, err := authenticatedUserIDFromRequest(r)
 		if err != nil {
-			http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, msgUnauthorized, nil)
 			return
 		}
 
-		var req listingpb.CreateListingRequest
-		if err := decodeJSONBody(r, &req); err != nil {
-			http.Error(w, msgInvalidBody, http.StatusBadRequest)
+		var body listingrequests.ListingMutationBody
+		if err := listingrequests.BindAndValidateJSON(r, &body); err != nil {
+			writeRequestError(w, "Invalid listing creation body", err)
 			return
 		}
-		req.SellerId = authUserID
+		req := listingrequests.BuildCreateListingRequest(body, authUserID)
 
-		resp, err := listingClient.CreateListing(ctx, &req)
+		resp, err := listingClient.CreateListing(ctx, req)
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusCreated, resp)
 	default:
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 	}
 }
 
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	q := r.URL.Query()
-	ctx := r.Context()
-	includeSold, err := parseOptionalBoolWrapper(q.Get(queryIncludeSold))
-	if err != nil {
-		http.Error(w, "Invalid includeSold query parameter", http.StatusBadRequest)
+	query := listingrequests.DefaultListingSearchQuery()
+	if err := listingrequests.BindAndValidateQuery(r, &query); err != nil {
+		writeRequestError(w, "Invalid listing search filters: year must be between at least 1886; minPrice, maxPrice, and maxMileage cannot be negative; page must be at least 1; pageSize must be between 1 and 100", err)
 		return
 	}
 
-	resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
-		Make:        q.Get(queryMake),
-		Model:       q.Get(queryModel),
-		Year:        utils.ParseInt32(q.Get(queryYear)),
-		MinPrice:    utils.ParseInt64(q.Get(queryMinPrice)),
-		MaxPrice:    utils.ParseInt64(q.Get(queryMaxPrice)),
-		MaxMileage:  utils.ParseInt32(q.Get(queryMaxMileage)),
-		FuelType:    q.Get(queryFuelTypeV2),
-		Page:        utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-		PageSize:    utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
-		IncludeSold: includeSold,
-	})
+	resp, err := searchClient.Search(r.Context(), query.SearchRequest())
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -90,34 +69,26 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func parseOptionalBoolWrapper(raw string) (*wrapperspb.BoolValue, error) {
-	trimmed := strings.TrimSpace(raw)
-	if trimmed == "" {
-		return nil, nil
-	}
-	value, err := strconv.ParseBool(trimmed)
-	if err != nil {
-		return nil, err
-	}
-	return wrapperspb.Bool(value), nil
-}
-
 func HandleCompare(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	q := r.URL.Query()
-	idStrs := strings.Split(q.Get(queryIDs), ",")
-	var ids []int64
-	for _, s := range idStrs {
-		if s == "" {
-			continue
-		}
-		ids = append(ids, utils.ParseInt64(s))
+	ids, err := listingrequests.ParseCommaSeparatedInt64s(r.URL.Query().Get(queryIDs))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid listing comparison parameters", []fieldError{{
+			Field:   queryIDs,
+			Message: "must be a comma-separated list of positive integers",
+		}})
+		return
+	}
+	query := listingrequests.ListingCompareQuery{IDs: ids}
+	if err := listingrequests.Validate(query); err != nil {
+		writeRequestError(w, "Invalid listing comparison parameters", err)
+		return
 	}
 	ctx := r.Context()
-	resp, err := listingClient.CompareListings(ctx, &listingpb.CompareListingsRequest{Ids: ids})
+	resp, err := listingClient.CompareListings(ctx, listingrequests.BuildCompareListingsRequest(ids))
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -126,17 +97,28 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleGetListing(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 || parts[3] == "" {
-		http.Error(w, "Missing listing id", http.StatusBadRequest)
+	id, err := listingrequests.ListingIDFromPath(r)
+	if err != nil {
+		if errors.Is(err, listingrequests.ErrMissingListingID) {
+			writeError(w, http.StatusBadRequest, "Missing listing id", nil)
+			return
+		}
+		var validationErrs validator.ValidationErrors
+		if errors.As(err, &validationErrs) {
+			writeRequestError(w, "Invalid listing id", err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, "Invalid listing id", []fieldError{{
+			Field:   "id",
+			Message: "must be a positive integer",
+		}})
 		return
 	}
-	id := utils.ParseInt64(parts[3])
 	ctx := r.Context()
 
 	switch r.Method {
 	case http.MethodGet:
-		resp, err := listingClient.GetListingDetails(ctx, &listingpb.ListingDetailsRequest{Id: id})
+		resp, err := listingClient.GetListingDetails(ctx, listingrequests.BuildListingDetailsRequest(id))
 		if err != nil {
 			writeServiceError(w, err)
 			return
@@ -145,19 +127,18 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		authUserID, err := authenticatedUserIDFromRequest(r)
 		if err != nil {
-			http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, msgUnauthorized, nil)
 			return
 		}
 
-		var req listingpb.UpdateListingRequest
-		if err := decodeJSONBody(r, &req); err != nil {
-			http.Error(w, msgInvalidBody, http.StatusBadRequest)
+		var body listingrequests.ListingMutationBody
+		if err := listingrequests.BindAndValidateJSON(r, &body); err != nil {
+			writeRequestError(w, "Invalid listing update body", err)
 			return
 		}
-		req.Id = id
-		req.SellerId = authUserID
+		req := listingrequests.BuildUpdateListingRequest(body, id, authUserID)
 
-		resp, err := listingClient.UpdateListing(ctx, &req)
+		resp, err := listingClient.UpdateListing(ctx, req)
 		if err != nil {
 			writeServiceError(w, err)
 			return
@@ -166,21 +147,21 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		authUserID, err := authenticatedUserIDFromRequest(r)
 		if err != nil {
-			http.Error(w, msgUnauthorized, http.StatusUnauthorized)
+			writeError(w, http.StatusUnauthorized, msgUnauthorized, nil)
 			return
 		}
 
-		resp, err := listingClient.DeleteListing(ctx, &listingpb.DeleteListingRequest{Id: id, SellerId: authUserID})
+		resp, err := listingClient.DeleteListing(ctx, listingrequests.BuildDeleteListingRequest(id, authUserID))
 		if err != nil {
 			writeServiceError(w, err)
 			return
 		}
 		if !resp.GetDeleted() {
-			http.Error(w, msgNotFound, http.StatusNotFound)
+			writeError(w, http.StatusNotFound, msgNotFound, nil)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
 	default:
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 	}
 }

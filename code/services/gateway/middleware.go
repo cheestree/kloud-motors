@@ -35,6 +35,23 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func ConcurrencyLimitMiddleware(limit int, next http.HandlerFunc) http.HandlerFunc {
+	if limit <= 0 {
+		return next
+	}
+
+	sem := make(chan struct{}, limit)
+	return func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case sem <- struct{}{}:
+			defer func() { <-sem }()
+			next(w, r)
+		default:
+			http.Error(w, "gateway is overloaded", http.StatusServiceUnavailable)
+		}
+	}
+}
+
 func RegisterMetrics() {
 	prometheus.MustRegister(requestTotal)
 	prometheus.MustRegister(requestDuration)

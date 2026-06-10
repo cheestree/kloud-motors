@@ -23,8 +23,8 @@ def main():
         conn.execute(text("DROP TABLE IF EXISTS chat CASCADE;"))
         conn.execute(text("""
             CREATE TABLE chat (
-                user_id INTEGER,
-                listing_id INTEGER,
+                user_id BIGINT,
+                listing_id BIGINT,
                 brand VARCHAR(255) NOT NULL,
                 model VARCHAR(255) NOT NULL,
                 chat_id UUID NOT NULL DEFAULT gen_random_uuid(),
