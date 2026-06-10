@@ -5,7 +5,11 @@ set -e
 INSTANCE_NAME="cn-db-instance"
 
 echo "Deleting old databases on $INSTANCE_NAME..."
-gcloud sql databases delete listing_db user_db chat_db seller_db auction_db --instance=$INSTANCE_NAME --quiet || true
+gcloud sql databases delete listing_db --instance=$INSTANCE_NAME --quiet || true
+gcloud sql databases delete user_db --instance=$INSTANCE_NAME --quiet || true
+gcloud sql databases delete chat_db --instance=$INSTANCE_NAME --quiet || true
+gcloud sql databases delete seller_db --instance=$INSTANCE_NAME --quiet || true
+gcloud sql databases delete auction_db --instance=$INSTANCE_NAME --quiet || true
 
 echo "Creating new empty databases..."
 gcloud sql databases create listing_db --instance=$INSTANCE_NAME

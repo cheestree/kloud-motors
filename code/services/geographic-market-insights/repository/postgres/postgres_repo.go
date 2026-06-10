@@ -67,8 +67,12 @@ func (db *RelationalRepo) FetchAggregates(ctx context.Context, filters repositor
 
 	whereSQL, args := buildBaseFilters(filters)
 	if len(locations) > 0 {
-		args = append(args, locations)
-		whereSQL += fmt.Sprintf(" AND LOWER(%s) = ANY(SELECT LOWER(unnest($%d::text[])))", groupExpr, len(args))
+		lowered := make([]string, len(locations))
+		for i, l := range locations {
+			lowered[i] = strings.ToLower(strings.TrimSpace(l))
+		}
+		args = append(args, lowered)
+		whereSQL += fmt.Sprintf(" AND LOWER(%s) = ANY($%d)", groupExpr, len(args))
 	}
 
 	args = append(args, limit+1, skip)
@@ -171,9 +175,12 @@ func (db *RelationalRepo) FetchByLocation(ctx context.Context, filters repositor
 	location *string) (repository.StatsRow, error) {
 	whereSQL, args := buildBaseFilters(filters)
 	if location != nil && strings.TrimSpace(*location) != "" {
-		args = append(args, strings.TrimSpace(*location))
+		loc := strings.ToLower(strings.TrimSpace(*location))
+		args = append(args, loc)
 		idx := len(args)
-		whereSQL += fmt.Sprintf(" AND (LOWER(f.district) = LOWER($%d) OR LOWER(f.city) = LOWER($%d) OR LOWER(f.country) = LOWER($%d) OR LOWER(f.state) = LOWER($%d))", idx, idx, idx, idx)
+		whereSQL += fmt.Sprintf(
+			" AND (LOWER(f.district) = $%d OR LOWER(f.city) = $%d OR LOWER(f.country) = $%d OR LOWER(f.state) = $%d)",
+			idx, idx, idx, idx)
 	}
 
 	q := fmt.Sprintf(`
@@ -181,7 +188,10 @@ func (db *RelationalRepo) FetchByLocation(ctx context.Context, filters repositor
 			COALESCE(MIN(f.ask_price), 0)::int AS min_price,
 			COALESCE(MAX(f.ask_price), 0)::int AS max_price,
 			COALESCE(AVG(f.ask_price)::bigint, 0)::int AS avg_price,
-			COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY f.ask_price)::bigint, 0)::int AS median_price
+			COALESCE(
+				(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY f.ask_price))::bigint,
+				0
+			)::int AS median_price
 		%s
 		%s`, db.baseFromSQL(), whereSQL)
 
@@ -193,8 +203,11 @@ func (db *RelationalRepo) FetchByLocation(ctx context.Context, filters repositor
 }
 
 func buildBaseFilters(filters repository.Filters) (string, []any) {
-	clauses := []string{"LOWER(b.name) = LOWER($1)", "LOWER(m.name) = LOWER($2)", "f.ask_price IS NOT NULL"}
-	args := []any{strings.TrimSpace(filters.Brand), strings.TrimSpace(filters.Model)}
+	clauses := []string{"LOWER(b.name) = $1", "LOWER(m.name) = $2", "f.ask_price IS NOT NULL"}
+	args := []any{
+		strings.ToLower(strings.TrimSpace(filters.Brand)),
+		strings.ToLower(strings.TrimSpace(filters.Model)),
+	}
 
 	if filters.YearFrom != nil {
 		args = append(args, *filters.YearFrom)
@@ -205,8 +218,8 @@ func buildBaseFilters(filters repository.Filters) (string, []any) {
 		clauses = append(clauses, fmt.Sprintf("f.model_year <= $%d", len(args)))
 	}
 	if filters.FuelType != nil && strings.TrimSpace(*filters.FuelType) != "" {
-		args = append(args, strings.TrimSpace(*filters.FuelType))
-		clauses = append(clauses, fmt.Sprintf("LOWER(ft.name) = LOWER($%d)", len(args)))
+		args = append(args, strings.ToLower(strings.TrimSpace(*filters.FuelType)))
+		clauses = append(clauses, fmt.Sprintf("LOWER(ft.name) = $%d", len(args)))
 	}
 
 	return "WHERE " + strings.Join(clauses, " AND "), args

@@ -5,6 +5,7 @@ import argparse
 import os
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
 
 import pandas as pd
@@ -387,6 +388,16 @@ def main() -> int:
         print(f"Processed {rows_processed} rows...", end="\r", flush=True)
 
     print(f"\nDone. Total rows upserted: {rows_processed}")
+
+    sql_path = Path(__file__).parent / "create_indexes.sql"
+    if sql_path.exists():
+        print("Creating performance indexes...")
+        with engine.begin() as conn:
+            conn.execute(text(sql_path.read_text()))
+        print("Indexes created successfully.")
+    else:
+        print(f"Warning: index script not found at {sql_path}", file=sys.stderr)
+
     return 0
 
 

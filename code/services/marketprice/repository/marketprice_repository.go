@@ -36,13 +36,13 @@ func (r *Repository) GetAverageMarketPrice(
 	argId := 1
 
 	if brand != "" {
-		query += fmt.Sprintf(` AND b.name = $%d`, argId)
-		args = append(args, strings.ToUpper(brand))
+		query += fmt.Sprintf(` AND LOWER(b.name) = $%d`, argId)
+		args = append(args, strings.ToLower(brand))
 		argId++
 	}
 	if model != "" {
-		query += fmt.Sprintf(` AND m.name = $%d`, argId)
-		args = append(args, model)
+		query += fmt.Sprintf(` AND LOWER(m.name) = $%d`, argId)
+		args = append(args, strings.ToLower(model))
 		argId++
 	}
 	if yearFrom != 0 {
