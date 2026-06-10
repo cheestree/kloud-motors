@@ -17,6 +17,7 @@ import (
 	"services/observability"
 	sellerproto "services/seller/proto"
 	"services/utils"
+	"strings"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -62,7 +63,12 @@ func main() {
 		defer pubsub.Close()
 	}
 
-	firestoreProjectID := utils.GetEnv("FIREBASE_PROJECT_ID", utils.GetEnv("GCP_PROJECT_ID", ""))
+	firestoreProjectID := strings.TrimSpace(os.Getenv("FIREBASE_PROJECT_ID"))
+	if firestoreProjectID == "" {
+		logger.Error("firebase is required for chat", "missing_env", "FIREBASE_PROJECT_ID")
+		os.Exit(1)
+	}
+
 	var messageRepo repository.MessageRepo
 	firestoreRepo, err := firestore.NewFirestoreMessageRepo(
 		ctx,
@@ -71,11 +77,11 @@ func main() {
 		utils.GetEnv("FIRESTORE_MESSAGES_COLLECTION", "messages"),
 	)
 	if err != nil {
-		logger.Error("firestore init failed, continuing without message persistence", "error", err)
-	} else {
-		messageRepo = firestoreRepo
-		defer messageRepo.Close()
+		logger.Error("firestore init failed", "error", err)
+		os.Exit(1)
 	}
+	messageRepo = firestoreRepo
+	defer messageRepo.Close()
 
 	repoConfig := repository.DBConfig{
 		Host:   utils.GetEnv("POSTGRES_DSN", ""),
@@ -137,7 +143,7 @@ func setupServiceClients() (*serviceClients, error) {
 
 func setupGRPC(messageStore repository.MessageRepo, indexStore repository.ChatIndexRepo, clients *serviceClients) error {
 	grpcPort := utils.GetEnv("CHAT_GRPC_PORT", "50052")
-	grpcLis, err := net.Listen("tcp", ":" + grpcPort)
+	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
 	if err != nil {
 		return err
 	}

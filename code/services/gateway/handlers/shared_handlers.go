@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -13,8 +14,6 @@ import (
 	"github.com/gorilla/schema"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 type errorResponse struct {
@@ -74,18 +73,6 @@ func authenticatedUserIDFromRequest(r *http.Request) (int64, error) {
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set(headerContentType, contentTypeJSON)
 	w.WriteHeader(status)
-
-	if msg, ok := payload.(proto.Message); ok {
-		marshaler := protojson.MarshalOptions{
-			EmitUnpopulated: true,
-			UseProtoNames:   true,
-		}
-		b, err := marshaler.Marshal(msg)
-		if err == nil {
-			_, _ = w.Write(b)
-			return
-		}
-	}
 
 	_ = json.NewEncoder(w).Encode(payload)
 }
@@ -196,6 +183,10 @@ func schemaFieldError(key string, err error) fieldError {
 }
 
 func httpStatusFromServiceError(err error) int {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return http.StatusGatewayTimeout
+	}
+
 	switch status.Code(err) {
 	case codes.InvalidArgument, codes.FailedPrecondition, codes.OutOfRange:
 		return http.StatusBadRequest
@@ -207,8 +198,10 @@ func httpStatusFromServiceError(err error) int {
 		return http.StatusNotFound
 	case codes.AlreadyExists, codes.Aborted:
 		return http.StatusConflict
+	case codes.DeadlineExceeded:
+		return http.StatusGatewayTimeout
 	case codes.Unavailable:
-		return http.StatusBadGateway
+		return http.StatusServiceUnavailable
 	default:
 		return http.StatusInternalServerError
 	}

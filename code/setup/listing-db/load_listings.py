@@ -16,7 +16,6 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
-    Integer,
     MetaData,
     SmallInteger,
     Table,
@@ -171,7 +170,7 @@ def build_dimension_tables(metadata: MetaData) -> Dict[str, Table]:
         return Table(
             table_name,
             metadata,
-            Column("id", Integer, primary_key=True),
+            Column("id", BigInteger, primary_key=True),
             Column("name", Text, nullable=False, unique=True),
         )
 
@@ -179,8 +178,8 @@ def build_dimension_tables(metadata: MetaData) -> Dict[str, Table]:
     tables["model"] = Table(
         "model",
         metadata,
-        Column("id", Integer, primary_key=True),
-        Column("brand_id", Integer, ForeignKey("brand.id"), nullable=False),
+        Column("id", BigInteger, primary_key=True),
+        Column("brand_id", BigInteger, ForeignKey("brand.id"), nullable=False),
         Column("name", Text, nullable=False),
         UniqueConstraint("brand_id", "name", name="uq_model_brand_name"),
     )
@@ -191,7 +190,7 @@ def create_fact_table(table_name: str, metadata: MetaData) -> Table:
     return Table(
         table_name,
         metadata,
-        Column("id", Integer, primary_key=True, autoincrement=True),
+        Column("id", BigInteger, primary_key=True, autoincrement=True),
         Column("vin",                  Text,       unique=True, nullable=False),
         Column("stock_num",            Text),
         Column("first_seen",           DateTime),
@@ -212,13 +211,13 @@ def create_fact_table(table_name: str, metadata: MetaData) -> Table:
         Column("transmission_speeds",  SmallInteger),
         Column("trim",                 Text),
         Column("turbo",                Text),
-        Column("brand_id",             Integer, ForeignKey("brand.id")),
-        Column("model_id",             Integer, ForeignKey("model.id")),
-        Column("fuel_type_id",         Integer, ForeignKey("fuel_type.id")),
-        Column("transmission_id",      Integer, ForeignKey("transmission.id")),
-        Column("drive_type_id",        Integer, ForeignKey("drive_type.id")),
-        Column("body_class_id",        Integer, ForeignKey("body_class.id")),
-        Column("electrification_level_id", Integer, ForeignKey("electrification_level.id")),
+        Column("brand_id",             BigInteger, ForeignKey("brand.id")),
+        Column("model_id",             BigInteger, ForeignKey("model.id")),
+        Column("fuel_type_id",         BigInteger, ForeignKey("fuel_type.id")),
+        Column("transmission_id",      BigInteger, ForeignKey("transmission.id")),
+        Column("drive_type_id",        BigInteger, ForeignKey("drive_type.id")),
+        Column("body_class_id",        BigInteger, ForeignKey("body_class.id")),
+        Column("electrification_level_id", BigInteger, ForeignKey("electrification_level.id")),
         Column("district",             Text),
         Column("city",                 Text),
         Column("country",              Text),
