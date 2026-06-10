@@ -1,4 +1,4 @@
-package handlers
+package listing
 
 import (
 	"errors"
@@ -11,13 +11,10 @@ import (
 
 func TestBindAndValidateListingListQueryKeepsDefaults(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/listings", nil)
-	query := ListingListQuery{
-		Page:     1,
-		PageSize: 20,
-	}
+	query := DefaultListingListQuery()
 
-	if err := bindAndValidateQuery(req, &query); err != nil {
-		t.Fatalf("bindAndValidateQuery returned error: %v", err)
+	if err := BindAndValidateQuery(req, &query); err != nil {
+		t.Fatalf("BindAndValidateQuery returned error: %v", err)
 	}
 
 	if query.Page != 1 || query.PageSize != 20 || query.IncludeSold != nil {
@@ -27,13 +24,10 @@ func TestBindAndValidateListingListQueryKeepsDefaults(t *testing.T) {
 
 func TestBindAndValidateListingSearchQueryParsesTypedFilters(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/listings/search?make=Honda&model=Civic&year=2020&minPrice=10000&maxPrice=20000&maxMileage=50000&fuelType=gasoline&page=2&pageSize=50&includeSold=true", nil)
-	query := ListingSearchQuery{
-		Page:     1,
-		PageSize: 20,
-	}
+	query := DefaultListingSearchQuery()
 
-	if err := bindAndValidateQuery(req, &query); err != nil {
-		t.Fatalf("bindAndValidateQuery returned error: %v", err)
+	if err := BindAndValidateQuery(req, &query); err != nil {
+		t.Fatalf("BindAndValidateQuery returned error: %v", err)
 	}
 
 	if query.Make != "Honda" || query.Model != "Civic" || query.FuelType != "gasoline" {
@@ -61,14 +55,11 @@ func TestBindAndValidateListingSearchQueryParsesTypedFilters(t *testing.T) {
 
 func TestBindAndValidateListingListQueryRejectsInvalidPagination(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/listings?page=0&pageSize=101", nil)
-	query := ListingListQuery{
-		Page:     1,
-		PageSize: 20,
-	}
+	query := DefaultListingListQuery()
 
-	err := bindAndValidateQuery(req, &query)
+	err := BindAndValidateQuery(req, &query)
 	if err == nil {
-		t.Fatal("bindAndValidateQuery returned nil, want validation error")
+		t.Fatal("BindAndValidateQuery returned nil, want validation error")
 	}
 
 	var validationErrs validator.ValidationErrors
@@ -91,14 +82,11 @@ func TestBindAndValidateListingListQueryRejectsInvalidPagination(t *testing.T) {
 
 func TestBindAndValidateListingSearchQueryRejectsBadTypes(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/listings/search?year=not-a-year&includeSold=maybe", nil)
-	query := ListingSearchQuery{
-		Page:     1,
-		PageSize: 20,
-	}
+	query := DefaultListingSearchQuery()
 
-	err := bindAndValidateQuery(req, &query)
+	err := BindAndValidateQuery(req, &query)
 	if err == nil {
-		t.Fatal("bindAndValidateQuery returned nil, want schema conversion error")
+		t.Fatal("BindAndValidateQuery returned nil, want schema conversion error")
 	}
 
 	var schemaErrs schema.MultiError
