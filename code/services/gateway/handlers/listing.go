@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	listingpb "services/listing/proto"
@@ -27,6 +29,43 @@ type ListingSearchQuery struct {
 	IncludeSold *bool  `schema:"includeSold" validate:"omitempty"`
 }
 
+type ListingListQuery struct {
+	Page        int32 `schema:"page" validate:"gte=1"`
+	PageSize    int32 `schema:"pageSize" validate:"gte=1,lte=100"`
+	IncludeSold *bool `schema:"includeSold" validate:"omitempty"`
+}
+
+type ListingMutationBody struct {
+	Vin          string  `json:"vin" validate:"notblank"`
+	Make         string  `json:"make" validate:"notblank"`
+	Model        string  `json:"model" validate:"notblank"`
+	Year         int32   `json:"year" validate:"gte=1886,lte=2100"`
+	Price        float64 `json:"price" validate:"gte=0"`
+	Mileage      int32   `json:"mileage" validate:"gte=0"`
+	City         string  `json:"city" validate:"omitempty"`
+	District     string  `json:"district" validate:"omitempty"`
+	State        string  `json:"state" validate:"omitempty"`
+	Country      string  `json:"country" validate:"omitempty"`
+	FuelType     string  `json:"fuel_type" validate:"omitempty"`
+	BodyClass    string  `json:"body_class" validate:"omitempty"`
+	DriveType    string  `json:"drive_type" validate:"omitempty"`
+	Transmission string  `json:"transmission" validate:"omitempty"`
+	Trim         string  `json:"trim" validate:"omitempty"`
+	Color        string  `json:"color" validate:"omitempty"`
+	IsNew        bool    `json:"is_new" validate:"omitempty"`
+	IsSold       bool    `json:"is_sold" validate:"omitempty"`
+}
+
+type ListingIDPath struct {
+	ID int64 `schema:"id" validate:"gt=0"`
+}
+
+type ListingCompareQuery struct {
+	IDs []int64 `schema:"ids" validate:"min=1,dive,gt=0"`
+}
+
+var errMissingListingID = errors.New("missing listing id")
+
 var (
 	queryDecoder   = schema.NewDecoder()
 	queryValidator = validator.New()
@@ -34,12 +73,20 @@ var (
 
 func init() {
 	queryDecoder.IgnoreUnknownKeys(true)
+	queryValidator.RegisterValidation("notblank", func(field validator.FieldLevel) bool {
+		return strings.TrimSpace(field.Field().String()) != ""
+	})
 	queryValidator.RegisterTagNameFunc(func(field reflect.StructField) string {
-		name := strings.SplitN(field.Tag.Get("schema"), ",", 2)[0]
-		if name == "-" {
-			return ""
+		for _, tag := range []string{"schema", "json"} {
+			name := strings.SplitN(field.Tag.Get(tag), ",", 2)[0]
+			if name == "-" {
+				return ""
+			}
+			if name != "" {
+				return name
+			}
 		}
-		return name
+		return ""
 	})
 }
 
@@ -47,18 +94,16 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:
-		q := r.URL.Query()
-		includeSold, err := utils.ParseOptionalBoolProtoBoolValue(q.Get(queryIncludeSold))
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "Invalid includeSold query parameter", nil)
+		query := ListingListQuery{
+			Page:     1,
+			PageSize: 20,
+		}
+		if err := bindAndValidateQuery(r, &query); err != nil {
+			writeRequestError(w, "Invalid query parameters", err)
 			return
 		}
 
-		resp, err := searchClient.Search(ctx, &searchpb.SearchRequest{
-			Page:        utils.ParseInt32OrDefaultIfEmpty(q.Get(queryPage), 1),
-			PageSize:    utils.ParseInt32OrDefaultIfEmpty(q.Get(queryPageSizeV2), 20),
-			IncludeSold: includeSold,
-		})
+		resp, err := searchClient.Search(ctx, query.SearchRequest())
 		if err != nil {
 			writeServiceError(w, err)
 			return
@@ -71,11 +116,12 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var req listingpb.CreateListingRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, msgInvalidBody, nil)
+		var body ListingMutationBody
+		if err := bindAndValidateJSON(r, &body); err != nil {
+			writeRequestError(w, msgInvalidBody, err)
 			return
 		}
+		req := body.CreateListingRequest()
 		req.SellerId = authUserID
 
 		resp, err := listingClient.CreateListing(ctx, &req)
@@ -118,6 +164,21 @@ func bindAndValidateQuery(r *http.Request, target interface{}) error {
 	return queryValidator.Struct(target)
 }
 
+func bindAndValidateJSON(r *http.Request, target interface{}) error {
+	if err := json.NewDecoder(r.Body).Decode(target); err != nil {
+		return err
+	}
+	return queryValidator.Struct(target)
+}
+
+func (q ListingListQuery) SearchRequest() *searchpb.SearchRequest {
+	return &searchpb.SearchRequest{
+		Page:        q.Page,
+		PageSize:    q.PageSize,
+		IncludeSold: utils.BoolPtrToProtoBoolValue(q.IncludeSold),
+	}
+}
+
 func (q ListingSearchQuery) SearchRequest() *searchpb.SearchRequest {
 	return &searchpb.SearchRequest{
 		Make:        q.Make,
@@ -133,19 +194,68 @@ func (q ListingSearchQuery) SearchRequest() *searchpb.SearchRequest {
 	}
 }
 
+func (b ListingMutationBody) CreateListingRequest() listingpb.CreateListingRequest {
+	return listingpb.CreateListingRequest{
+		Vin:          b.Vin,
+		Make:         b.Make,
+		Model:        b.Model,
+		Year:         b.Year,
+		Price:        b.Price,
+		Mileage:      b.Mileage,
+		City:         b.City,
+		District:     b.District,
+		State:        b.State,
+		Country:      b.Country,
+		FuelType:     b.FuelType,
+		BodyClass:    b.BodyClass,
+		DriveType:    b.DriveType,
+		Transmission: b.Transmission,
+		Trim:         b.Trim,
+		Color:        b.Color,
+		IsNew:        b.IsNew,
+		IsSold:       b.IsSold,
+	}
+}
+
+func (b ListingMutationBody) UpdateListingRequest() listingpb.UpdateListingRequest {
+	return listingpb.UpdateListingRequest{
+		Vin:          b.Vin,
+		Make:         b.Make,
+		Model:        b.Model,
+		Year:         b.Year,
+		Price:        b.Price,
+		Mileage:      b.Mileage,
+		City:         b.City,
+		District:     b.District,
+		State:        b.State,
+		Country:      b.Country,
+		FuelType:     b.FuelType,
+		BodyClass:    b.BodyClass,
+		DriveType:    b.DriveType,
+		Transmission: b.Transmission,
+		Trim:         b.Trim,
+		Color:        b.Color,
+		IsNew:        b.IsNew,
+	}
+}
+
 func HandleCompare(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	q := r.URL.Query()
-	idStrs := strings.Split(q.Get(queryIDs), ",")
-	var ids []int64
-	for _, s := range idStrs {
-		if s == "" {
-			continue
-		}
-		ids = append(ids, utils.ParseInt64OrZero(s))
+	ids, err := parseCommaSeparatedInt64s(r.URL.Query().Get(queryIDs))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid query parameters", []fieldError{{
+			Field:   queryIDs,
+			Message: "must be a comma-separated list of positive integers",
+		}})
+		return
+	}
+	query := ListingCompareQuery{IDs: ids}
+	if err := queryValidator.Struct(query); err != nil {
+		writeRequestError(w, "Invalid query parameters", err)
+		return
 	}
 	ctx := r.Context()
 	resp, err := listingClient.CompareListings(ctx, &listingpb.CompareListingsRequest{Ids: ids})
@@ -157,12 +267,23 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleGetListing(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 || parts[3] == "" {
-		writeError(w, http.StatusBadRequest, "Missing listing id", nil)
+	id, err := listingIDFromPath(r)
+	if err != nil {
+		if errors.Is(err, errMissingListingID) {
+			writeError(w, http.StatusBadRequest, "Missing listing id", nil)
+			return
+		}
+		var validationErrs validator.ValidationErrors
+		if errors.As(err, &validationErrs) {
+			writeRequestError(w, "Invalid path parameters", err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, "Invalid path parameters", []fieldError{{
+			Field:   "id",
+			Message: "must be a positive integer",
+		}})
 		return
 	}
-	id := utils.ParseInt64OrZero(parts[3])
 	ctx := r.Context()
 
 	switch r.Method {
@@ -180,11 +301,12 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var req listingpb.UpdateListingRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, msgInvalidBody, nil)
+		var body ListingMutationBody
+		if err := bindAndValidateJSON(r, &body); err != nil {
+			writeRequestError(w, msgInvalidBody, err)
 			return
 		}
+		req := body.UpdateListingRequest()
 		req.Id = id
 		req.SellerId = authUserID
 
@@ -214,4 +336,43 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 	}
+}
+
+func listingIDFromPath(r *http.Request) (int64, error) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 4 || parts[3] == "" {
+		return 0, errMissingListingID
+	}
+
+	id, err := strconv.ParseInt(parts[3], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	path := ListingIDPath{ID: id}
+	if err := queryValidator.Struct(path); err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func parseCommaSeparatedInt64s(raw string) ([]int64, error) {
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+
+	idStrs := strings.Split(raw, ",")
+	ids := make([]int64, 0, len(idStrs))
+	for _, s := range idStrs {
+		trimmed := strings.TrimSpace(s)
+		if trimmed == "" {
+			return nil, strconv.ErrSyntax
+		}
+		id, err := strconv.ParseInt(trimmed, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }

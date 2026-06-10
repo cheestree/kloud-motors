@@ -152,12 +152,18 @@ func errorFieldsFromError(err error) []fieldError {
 
 func validationErrorMessage(err validator.FieldError) string {
 	switch err.Tag() {
+	case "gt":
+		return "must be greater than " + err.Param()
 	case "gte":
 		return "must be greater than or equal to " + err.Param()
 	case "lte":
 		return "must be less than or equal to " + err.Param()
+	case "min":
+		return "must contain at least " + err.Param() + " item(s)"
 	case "oneof":
 		return "must be one of: " + err.Param()
+	case "notblank":
+		return "is required"
 	case "required":
 		return "is required"
 	default:
