@@ -14,7 +14,7 @@ func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 
 	query := georequests.AggregatesQuery{}
 	if err := georequests.BindAndValidateQuery(r, &query); err != nil {
-		writeRequestError(w, "Invalid query parameters", err)
+		writeRequestError(w, "Invalid geo aggregate filters", err)
 		return
 	}
 	ctx := r.Context()
@@ -35,7 +35,7 @@ func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 
 	query := georequests.PriceComparisonQuery{}
 	if err := georequests.BindAndValidateQuery(r, &query); err != nil {
-		writeRequestError(w, "Invalid query parameters", err)
+		writeRequestError(w, "Invalid price comparison filters", err)
 		return
 	}
 	ctx := r.Context()
@@ -56,7 +56,7 @@ func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 
 	query := georequests.ByLocationQuery{}
 	if err := georequests.BindAndValidateQuery(r, &query); err != nil {
-		writeRequestError(w, "Invalid query parameters", err)
+		writeRequestError(w, "Invalid location statistics filters", err)
 		return
 	}
 	ctx := r.Context()

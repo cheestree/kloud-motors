@@ -15,7 +15,7 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		query := listingrequests.DefaultListingListQuery()
 		if err := listingrequests.BindAndValidateQuery(r, &query); err != nil {
-			writeRequestError(w, "Invalid query parameters", err)
+			writeRequestError(w, "Invalid listing pagination parameters", err)
 			return
 		}
 
@@ -34,7 +34,7 @@ func HandleListings(w http.ResponseWriter, r *http.Request) {
 
 		var body listingrequests.ListingMutationBody
 		if err := listingrequests.BindAndValidateJSON(r, &body); err != nil {
-			writeRequestError(w, msgInvalidBody, err)
+			writeRequestError(w, "Invalid listing creation body", err)
 			return
 		}
 		req := listingrequests.BuildCreateListingRequest(body, authUserID)
@@ -57,7 +57,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	query := listingrequests.DefaultListingSearchQuery()
 	if err := listingrequests.BindAndValidateQuery(r, &query); err != nil {
-		writeRequestError(w, "Invalid query parameters", err)
+		writeRequestError(w, "Invalid listing search filters", err)
 		return
 	}
 
@@ -76,7 +76,7 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 	}
 	ids, err := listingrequests.ParseCommaSeparatedInt64s(r.URL.Query().Get(queryIDs))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid query parameters", []fieldError{{
+		writeError(w, http.StatusBadRequest, "Invalid listing comparison parameters", []fieldError{{
 			Field:   queryIDs,
 			Message: "must be a comma-separated list of positive integers",
 		}})
@@ -84,7 +84,7 @@ func HandleCompare(w http.ResponseWriter, r *http.Request) {
 	}
 	query := listingrequests.ListingCompareQuery{IDs: ids}
 	if err := listingrequests.Validate(query); err != nil {
-		writeRequestError(w, "Invalid query parameters", err)
+		writeRequestError(w, "Invalid listing comparison parameters", err)
 		return
 	}
 	ctx := r.Context()
@@ -105,10 +105,10 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 		}
 		var validationErrs validator.ValidationErrors
 		if errors.As(err, &validationErrs) {
-			writeRequestError(w, "Invalid path parameters", err)
+			writeRequestError(w, "Invalid listing id", err)
 			return
 		}
-		writeError(w, http.StatusBadRequest, "Invalid path parameters", []fieldError{{
+		writeError(w, http.StatusBadRequest, "Invalid listing id", []fieldError{{
 			Field:   "id",
 			Message: "must be a positive integer",
 		}})
@@ -133,7 +133,7 @@ func HandleGetListing(w http.ResponseWriter, r *http.Request) {
 
 		var body listingrequests.ListingMutationBody
 		if err := listingrequests.BindAndValidateJSON(r, &body); err != nil {
-			writeRequestError(w, msgInvalidBody, err)
+			writeRequestError(w, "Invalid listing update body", err)
 			return
 		}
 		req := listingrequests.BuildUpdateListingRequest(body, id, authUserID)

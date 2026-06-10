@@ -23,10 +23,10 @@ func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 		}
 		var validationErrs validator.ValidationErrors
 		if errors.As(err, &validationErrs) {
-			writeRequestError(w, "Invalid path parameters", err)
+			writeRequestError(w, "Invalid seller id", err)
 			return
 		}
-		writeError(w, http.StatusBadRequest, "Invalid path parameters", []fieldError{{
+		writeError(w, http.StatusBadRequest, "Invalid seller id", []fieldError{{
 			Field:   "seller_id",
 			Message: "must be a positive integer",
 		}})
@@ -49,7 +49,7 @@ func HandleGetSellersPreview(w http.ResponseWriter, r *http.Request) {
 	}
 	var body sellerrequests.SellersPreviewBody
 	if err := sellerrequests.BindAndValidateJSON(r, &body); err != nil {
-		writeRequestError(w, msgInvalidBody, err)
+		writeRequestError(w, "Invalid seller preview body", err)
 		return
 	}
 	ctx := r.Context()

@@ -28,7 +28,7 @@ func HandleUserRefresh(w http.ResponseWriter, r *http.Request) {
 
 	var body userrequests.RefreshTokenBody
 	if err := userrequests.BindAndValidateJSON(r, &body); err != nil {
-		writeRequestError(w, msgInvalidBody, err)
+		writeRequestError(w, "Invalid refresh token body", err)
 		return
 	}
 
@@ -48,7 +48,7 @@ func handleUserAuth(w http.ResponseWriter, r *http.Request, authFn func(context.
 
 	var body userrequests.AuthBody
 	if err := userrequests.BindAndValidateJSON(r, &body); err != nil {
-		writeRequestError(w, msgInvalidBody, err)
+		writeRequestError(w, "Invalid authentication body", err)
 		return
 	}
 
@@ -88,10 +88,10 @@ func HandleFavoriteListing(w http.ResponseWriter, r *http.Request) {
 		}
 		var validationErrs validator.ValidationErrors
 		if errors.As(err, &validationErrs) {
-			writeRequestError(w, "Invalid path parameters", err)
+			writeRequestError(w, "Invalid favorite listing id", err)
 			return
 		}
-		writeError(w, http.StatusBadRequest, "Invalid path parameters", []fieldError{{
+		writeError(w, http.StatusBadRequest, "Invalid favorite listing id", []fieldError{{
 			Field:   "listing_id",
 			Message: "must be a positive integer",
 		}})
@@ -130,7 +130,7 @@ func HandleGetUsersPreview(w http.ResponseWriter, r *http.Request) {
 	}
 	var body userrequests.UsersPreviewBody
 	if err := userrequests.BindAndValidateJSON(r, &body); err != nil {
-		writeRequestError(w, msgInvalidBody, err)
+		writeRequestError(w, "Invalid user preview body", err)
 		return
 	}
 	ctx := r.Context()

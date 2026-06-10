@@ -14,7 +14,7 @@ func HandleAveragePrice(w http.ResponseWriter, r *http.Request) {
 
 	query := marketpricerequests.AveragePriceQuery{}
 	if err := marketpricerequests.BindAndValidateQuery(r, &query); err != nil {
-		writeRequestError(w, "Invalid query parameters", err)
+		writeRequestError(w, "Invalid average price filters", err)
 		return
 	}
 	ctx := r.Context()
