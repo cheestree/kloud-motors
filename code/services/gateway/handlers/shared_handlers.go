@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 
 	userpb "services/user/proto"
@@ -99,6 +101,31 @@ func writeError(w http.ResponseWriter, status int, message string, fields []fiel
 	})
 }
 
+func parseInt32Query(q url.Values, name string, defaultValue int32, minValue int32) (int32, *fieldError) {
+	raw := strings.TrimSpace(q.Get(name))
+	if raw == "" {
+		return defaultValue, nil
+	}
+
+	parsed, err := strconv.ParseInt(raw, 10, 32)
+	if err != nil {
+		return 0, &fieldError{
+			Field:   name,
+			Message: "must be a valid int32",
+		}
+	}
+
+	value := int32(parsed)
+	if value < minValue {
+		return 0, &fieldError{
+			Field:   name,
+			Message: "must be greater than or equal to " + strconv.FormatInt(int64(minValue), 10),
+		}
+	}
+
+	return value, nil
+}
+
 func errorFieldsFromError(err error) []fieldError {
 	if err == nil {
 		return nil
@@ -142,6 +169,8 @@ func validationErrorMessage(err validator.FieldError) string {
 	case "gt":
 		return "must be greater than " + err.Param()
 	case "gte":
+		return "must be greater than or equal to " + err.Param()
+	case "gtefield":
 		return "must be greater than or equal to " + err.Param()
 	case "lte":
 		return "must be less than or equal to " + err.Param()

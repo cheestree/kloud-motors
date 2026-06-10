@@ -34,7 +34,7 @@ type ListingMutationBody struct {
 	Vin          string  `json:"vin" validate:"notblank"`
 	Make         string  `json:"make" validate:"notblank"`
 	Model        string  `json:"model" validate:"notblank"`
-	Year         int32   `json:"year" validate:"gte=1886,lte=2100"`
+	Year         int32   `json:"year" validate:"gte=1886"`
 	Price        float64 `json:"price" validate:"gte=0"`
 	Mileage      int32   `json:"mileage" validate:"gte=0"`
 	City         string  `json:"city" validate:"omitempty"`

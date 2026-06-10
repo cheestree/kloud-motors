@@ -57,7 +57,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	query := listingrequests.DefaultListingSearchQuery()
 	if err := listingrequests.BindAndValidateQuery(r, &query); err != nil {
-		writeRequestError(w, "Invalid listing search filters", err)
+		writeRequestError(w, "Invalid listing search filters: year must be between at least 1886; minPrice, maxPrice, and maxMileage cannot be negative; page must be at least 1; pageSize must be between 1 and 100", err)
 		return
 	}
 

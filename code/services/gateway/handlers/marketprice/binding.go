@@ -31,6 +31,7 @@ func init() {
 		}
 		return ""
 	})
+	validatorV10.RegisterStructValidation(validateAveragePriceYearRange, AveragePriceQuery{})
 }
 
 func BindAndValidateQuery(r *http.Request, target interface{}) error {
@@ -42,4 +43,12 @@ func BindAndValidateQuery(r *http.Request, target interface{}) error {
 
 func Validate(target interface{}) error {
 	return validatorV10.Struct(target)
+}
+
+func validateAveragePriceYearRange(sl validator.StructLevel) {
+	query := sl.Current().Interface().(AveragePriceQuery)
+	if query.YearFrom == nil || query.YearTo == nil || *query.YearTo >= *query.YearFrom {
+		return
+	}
+	sl.ReportError(*query.YearTo, "year_to", "year_to", "gtefield", "year_from")
 }

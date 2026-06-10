@@ -100,3 +100,21 @@ func TestBindAndValidateListingSearchQueryRejectsBadTypes(t *testing.T) {
 		t.Fatalf("schema errors = %v, want includeSold conversion error", schemaErrs)
 	}
 }
+
+func TestBindAndValidateListingSearchQueryRejectsYearBeforeMinimum(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/listings/search?year=1885", nil)
+	query := DefaultListingSearchQuery()
+
+	err := BindAndValidateQuery(req, &query)
+	if err == nil {
+		t.Fatal("BindAndValidateQuery returned nil, want validation error")
+	}
+
+	var validationErrs validator.ValidationErrors
+	if !errors.As(err, &validationErrs) {
+		t.Fatalf("error = %T, want validator.ValidationErrors", err)
+	}
+	if validationErrs[0].Field() != "year" || validationErrs[0].Tag() != "gte" {
+		t.Fatalf("validation error = field %q tag %q, want year gte", validationErrs[0].Field(), validationErrs[0].Tag())
+	}
+}

@@ -31,6 +31,8 @@ func init() {
 		}
 		return ""
 	})
+	validatorV10.RegisterStructValidation(validateAggregatesYearRange, AggregatesQuery{})
+	validatorV10.RegisterStructValidation(validateByLocationYearRange, ByLocationQuery{})
 }
 
 func BindAndValidateQuery(r *http.Request, target interface{}) error {
@@ -42,4 +44,21 @@ func BindAndValidateQuery(r *http.Request, target interface{}) error {
 
 func Validate(target interface{}) error {
 	return validatorV10.Struct(target)
+}
+
+func validateAggregatesYearRange(sl validator.StructLevel) {
+	query := sl.Current().Interface().(AggregatesQuery)
+	reportInvalidYearRange(sl, query.YearFrom, query.YearTo)
+}
+
+func validateByLocationYearRange(sl validator.StructLevel) {
+	query := sl.Current().Interface().(ByLocationQuery)
+	reportInvalidYearRange(sl, query.YearFrom, query.YearTo)
+}
+
+func reportInvalidYearRange(sl validator.StructLevel, yearFrom, yearTo *int32) {
+	if yearFrom == nil || yearTo == nil || *yearTo >= *yearFrom {
+		return
+	}
+	sl.ReportError(*yearTo, "year_to", "year_to", "gtefield", "year_from")
 }

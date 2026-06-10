@@ -21,8 +21,8 @@ type AggregatesQuery struct {
 	Metrics   []string `schema:"metrics" validate:"omitempty,dive,oneof=avg_price median_price count"`
 	GroupBy   string   `schema:"group_by" validate:"omitempty,oneof=district city country"`
 	Locations []string `schema:"locations" validate:"omitempty,dive,notblank"`
-	YearFrom  *int32   `schema:"year_from" validate:"omitempty,gte=1886,lte=2100"`
-	YearTo    *int32   `schema:"year_to" validate:"omitempty,gte=1886,lte=2100"`
+	YearFrom  *int32   `schema:"year_from" validate:"omitempty,gte=0"`
+	YearTo    *int32   `schema:"year_to" validate:"omitempty,gte=0"`
 	FuelType  string   `schema:"fuel_type" validate:"omitempty"`
 	Limit     *int32   `schema:"limit" validate:"omitempty,gte=1"`
 	Skip      *int32   `schema:"skip" validate:"omitempty,gte=0"`
@@ -42,8 +42,8 @@ type ByLocationQuery struct {
 	Brand    string `schema:"brand" validate:"notblank"`
 	Model    string `schema:"model" validate:"notblank"`
 	Location string `schema:"location" validate:"omitempty"`
-	YearFrom *int32 `schema:"year_from" validate:"omitempty,gte=1886,lte=2100"`
-	YearTo   *int32 `schema:"year_to" validate:"omitempty,gte=1886,lte=2100"`
+	YearFrom *int32 `schema:"year_from" validate:"omitempty,gte=0"`
+	YearTo   *int32 `schema:"year_to" validate:"omitempty,gte=0"`
 	FuelType string `schema:"fuel_type" validate:"omitempty"`
 }
 

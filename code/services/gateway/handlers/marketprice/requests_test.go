@@ -74,8 +74,20 @@ func TestBindAndValidateAveragePriceQueryRejectsBadYearType(t *testing.T) {
 	}
 }
 
-func TestBindAndValidateAveragePriceQueryRejectsOutOfRangeYear(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/market/average-price?brand=Honda&model=Civic&year_from=1800", nil)
+func TestBindAndValidateAveragePriceQueryAllowsZeroYearFrom(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/market/average-price?brand=Honda&model=Civic&year_from=0&year_to=2024", nil)
+	query := AveragePriceQuery{}
+
+	if err := BindAndValidateQuery(req, &query); err != nil {
+		t.Fatalf("BindAndValidateQuery returned error: %v", err)
+	}
+	if query.YearFrom == nil || *query.YearFrom != 0 {
+		t.Fatalf("YearFrom = %v, want pointer to 0", query.YearFrom)
+	}
+}
+
+func TestBindAndValidateAveragePriceQueryRejectsNegativeYear(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/market/average-price?brand=Honda&model=Civic&year_from=-1", nil)
 	query := AveragePriceQuery{}
 
 	err := BindAndValidateQuery(req, &query)
@@ -89,5 +101,23 @@ func TestBindAndValidateAveragePriceQueryRejectsOutOfRangeYear(t *testing.T) {
 	}
 	if validationErrs[0].Field() != "year_from" || validationErrs[0].Tag() != "gte" {
 		t.Fatalf("validation error = field %q tag %q, want year_from gte", validationErrs[0].Field(), validationErrs[0].Tag())
+	}
+}
+
+func TestBindAndValidateAveragePriceQueryRejectsInvertedYearRange(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/market/average-price?brand=Honda&model=Civic&year_from=2024&year_to=2018", nil)
+	query := AveragePriceQuery{}
+
+	err := BindAndValidateQuery(req, &query)
+	if err == nil {
+		t.Fatal("BindAndValidateQuery returned nil, want validation error")
+	}
+
+	var validationErrs validator.ValidationErrors
+	if !errors.As(err, &validationErrs) {
+		t.Fatalf("error = %T, want validator.ValidationErrors", err)
+	}
+	if validationErrs[0].Field() != "year_to" || validationErrs[0].Tag() != "gtefield" {
+		t.Fatalf("validation error = field %q tag %q, want year_to gtefield", validationErrs[0].Field(), validationErrs[0].Tag())
 	}
 }
