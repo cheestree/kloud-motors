@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"services/chat/repository"
+	"services/utils"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -26,7 +27,7 @@ func NewPostgresRepo(ctx context.Context, cfg repository.DBConfig) (*RelationalR
 		cfg.Table = "chat"
 	}
 
-	pool, err := pgxpool.New(ctx, cfg.Host)
+	pool, err := utils.NewPgxPool(ctx, cfg.Host)
 	if err != nil {
 		return nil, fmt.Errorf("create postgres pool: %w", err)
 	}

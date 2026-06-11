@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -9,7 +8,6 @@ import (
 	"strings"
 
 	auctionpb "services/auction/proto"
-	"services/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,10 +23,28 @@ func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		q := r.URL.Query()
+		status := q.Get(queryStatus)
+		if status != "" && status != "ACTIVE" && status != "COMPLETED" && status != "CANCELLED" {
+			writeError(w, http.StatusBadRequest, "Invalid auction status", []fieldError{{
+				Field:   queryStatus,
+				Message: "must be one of: ACTIVE COMPLETED CANCELLED",
+			}})
+			return
+		}
+		page, fieldErr := parseInt32Query(q, queryPage, 1, 1)
+		if fieldErr != nil {
+			writeError(w, http.StatusBadRequest, "Invalid auction pagination parameters", []fieldError{*fieldErr})
+			return
+		}
+		limit, fieldErr := parseInt32Query(q, queryPageSize, 20, 1)
+		if fieldErr != nil {
+			writeError(w, http.StatusBadRequest, "Invalid auction pagination parameters", []fieldError{*fieldErr})
+			return
+		}
 		req := &auctionpb.ListAuctionsRequest{
-			Status: q.Get(queryStatus),
-			Page:   utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-			Limit:  utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
+			Status: status,
+			Page:   page,
+			Limit:  limit,
 		}
 		resp, err := auctionClient.ListAuctions(ctx, req)
 		if err != nil {
@@ -38,7 +54,7 @@ func HandleAuctions(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, resp)
 	case http.MethodPost:
 		var req auctionpb.CreateAuctionRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := decodeJSONBody(r, &req); err != nil {
 			http.Error(w, msgInvalidBody, http.StatusBadRequest)
 			return
 		}
@@ -115,7 +131,7 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			var req auctionpb.PlaceBidRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			if err := decodeJSONBody(r, &req); err != nil {
 				http.Error(w, msgInvalidBody, http.StatusBadRequest)
 				return
 			}
@@ -133,10 +149,20 @@ func HandleAuctionByIDRoutes(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			q := r.URL.Query()
+			page, fieldErr := parseInt32Query(q, queryPage, 1, 1)
+			if fieldErr != nil {
+				writeError(w, http.StatusBadRequest, "Invalid auction bids pagination parameters", []fieldError{*fieldErr})
+				return
+			}
+			limit, fieldErr := parseInt32Query(q, queryPageSize, 20, 1)
+			if fieldErr != nil {
+				writeError(w, http.StatusBadRequest, "Invalid auction bids pagination parameters", []fieldError{*fieldErr})
+				return
+			}
 			req := &auctionpb.GetAuctionBidsRequest{
 				AuctionId: auctionID,
-				Page:      utils.ParseInt32WithDefault(q.Get(queryPage), 1),
-				Limit:     utils.ParseInt32WithDefault(q.Get(queryPageSize), 20),
+				Page:      page,
+				Limit:     limit,
 			}
 			resp, err := auctionClient.GetAuctionBids(ctx, req)
 			if err != nil {

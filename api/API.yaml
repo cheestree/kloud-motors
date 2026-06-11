@@ -3,27 +3,23 @@ info:
   title: Kloud Motors - Online Car Dealer
   version: 1.0.0
   description: |
-    Protected endpoints declare `bearerAuth` and require `Authorization: Bearer <id_token>`, where `id_token` is returned by `/api/user/login`, `/api/user/register`, or `/api/user/refresh`.
+    Protected endpoints declare `bearerAuth` and require the exact header `Authorization: Bearer <token>`, where `<token>` is the Firebase ID token returned by `/api/user/login`, `/api/user/register` or `/api/user/refresh`.
 
     Requests to the deployed gateway also use `Host: kloud-motors.com`.
 
     Query parameters use the names documented per endpoint. Listing search endpoints accept `pageSize` and return `page_size` in JSON responses; auction endpoints accept and return `page_size`.
 
-    Successful responses with a JSON body are documented under `application/json`. Error responses currently return `text/plain` and the reusable error components describe the common triggers for each status code.
+    Successful responses with a JSON body are documented under `application/json`. Gateway validation errors commonly return a JSON error object with endpoint-specific text and field-level details; some legacy/proxy errors still return `text/plain`.
 
     - **Market Price Analysis**: Calculate the average price of cars based on brand, model, year, and location.
     - **Filtered Search**: Allow users to search for cars based on specific criteria(make, model, year, price range, mileage, fuel type, location).
     - **Geographical Market Insights**: Analyze car availability and price variations across different regions.
     - **Seller Management & Profiling**: Distinguish between professional dealers and private sellers.
-    - **Buyer–Seller Communication**: Enable real-time messaging between the buyer and the seller of a specific listing.
+    - **Buyer-Seller Communication**: Enable real-time messaging between the buyer and the seller of a specific listing.
     - **Visitor & User Registration**: Track and register platform visitors, registered users can save favourite listings.
     - **Auction Module**: Allow sellers to list cars under an auction format.
     - **Listing details and comparison**: Provide detailed information on each listing and allow users to compare multiple listings side by side based on price, mileage, year and location.
 tags:
-- name: Health
-  description: Gateway health endpoint
-- name: Observability
-  description: Gateway metrics endpoint
 - name: Chat
   description: Buyer-Seller communication endpoints
 - name: Geographical Market Insights
@@ -38,8 +34,6 @@ tags:
   description: Seller management and profiling
 - name: Listings
   description: Filtered car search and listing comparison
-servers:
-  - url: https://kloud-motors.com
 paths:
   "/api/user/login":
     post:
@@ -50,8 +44,6 @@ paths:
         Exchanges an email and password for a Firebase ID token through the
         Kloud Motors gateway. The Firebase API key remains server-side.
       operationId: loginUser
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -78,6 +70,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/user/register":
     post:
       tags:
@@ -87,8 +83,6 @@ paths:
         Creates a Firebase Auth user and returns tokens plus the internal
         Kloud Motors user id.
       operationId: registerUser
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -117,6 +111,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/user/refresh":
     post:
       tags:
@@ -126,8 +124,6 @@ paths:
         Exchanges a Firebase refresh token for a new ID token through the
         Kloud Motors gateway. The Firebase API key remains server-side.
       operationId: refreshUserToken
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -153,6 +149,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat":
     get:
       tags:
@@ -162,8 +162,6 @@ paths:
         Requires `Authorization: Bearer <id_token>` from login, registration, or refresh.
         Returns the chats visible to the authenticated user.
       operationId: getChats
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       responses:
@@ -181,6 +179,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat/open":
     post:
       tags:
@@ -188,8 +190,6 @@ paths:
       summary: Open or create a buyer-seller chat session
       description: The authenticated user is derived from the bearer token; clients only provide the seller and listing IDs. Returns 404 when the referenced seller or listing cannot be resolved.
       operationId: openChat
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -222,6 +222,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat/{chat_id}":
     get:
       tags:
@@ -232,7 +236,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ChatIdPath"
       - "$ref": "#/components/parameters/LimitQuery"
       - "$ref": "#/components/parameters/SkipQuery"
@@ -257,6 +260,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/chat/ws/{chat_id}":
     get:
       tags:
@@ -267,7 +274,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ChatIdPath"
       responses:
         '101':
@@ -284,15 +290,18 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/market/insights/aggregates":
     get:
       tags:
       - Geographical Market Insights
       summary: Get aggregated market insights
-      description: Requires `brand` and `model`. Invalid filters, pagination values, or enum values return 400; upstream geo-service timeouts or overloads are surfaced as 502.
+      description: Requires `brand` and `model`. `metrics`, `group_by`, `year_from`, `year_to`, `limit`, and `skip` are validated at the gateway; `year_from` and `year_to` must be at least 0, and `year_to` must be greater than or equal to `year_from`. Invalid filters, pagination values, enum values, or inverted year ranges return 400. Upstream geo-service overloads are surfaced as 503 and timeouts as 504.
       operationId: getMarketInsightsAggregates
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/MetricsQuery"
@@ -318,15 +327,18 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/market/price-comparison":
     get:
       tags:
       - Geographical Market Insights
       summary: Compare prices across locations
-      description: Requires `brand` and `model`. `group_by`, `sort_by`, and `order` must match the documented enum values.
+      description: Requires `brand` and `model`. `group_by`, `sort_by`, `order`, `limit`, and `skip` are validated at the gateway; invalid enum or pagination values return 400.
       operationId: getPriceComparison
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/GroupByQuery"
@@ -349,15 +361,18 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/stats/by-location":
     get:
       tags:
       - Geographical Market Insights
       summary: Get listing price statistics by location
-      description: Requires `brand` and `model`; optional filters narrow the statistics by location, year range, or fuel type.
+      description: Requires `brand` and `model`; optional filters narrow the statistics by location, year range, or fuel type. `year_from` and `year_to` must be at least 0, and `year_to` must be greater than or equal to `year_from`.
       operationId: getListingStatsByLocation
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/LocationQuery"
@@ -379,15 +394,18 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/market/average-price":
     get:
       tags:
       - Market Price Analysis
       summary: Get average market price
-      description: Calculates average, minimum, and maximum market price for a brand/model and optional year range. Returns 404 when no matching market data is found.
+      description: Calculates average, minimum, and maximum market price for a brand/model and optional year range. `year_from` and `year_to` must be at least 0, and `year_to` must be greater than or equal to `year_from`. Returns 404 when no matching market data is found.
       operationId: getAverageMarketPrice
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/BrandQueryRequired"
       - "$ref": "#/components/parameters/ModelQueryRequired"
       - "$ref": "#/components/parameters/YearFromQuery"
@@ -409,6 +427,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions":
     get:
       tags:
@@ -416,10 +438,9 @@ paths:
       summary: List auctions
       operationId: listAuctions
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionStatusQuery"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeSnakeQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       responses:
         '200':
           description: Auctions.
@@ -427,19 +448,23 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ListAuctionsResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequestText"
         '405':
           "$ref": "#/components/responses/MethodNotAllowedText"
         '500':
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     post:
       tags:
       - Auction
       summary: Create an auction
       operationId: createAuction
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -476,6 +501,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/{auction_id}":
     get:
       tags:
@@ -483,7 +512,6 @@ paths:
       summary: Get auction details
       operationId: getAuction
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '200':
@@ -502,6 +530,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     delete:
       tags:
       - Auction
@@ -510,7 +542,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '204':
@@ -529,6 +560,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/{auction_id}/bid":
     post:
       tags:
@@ -538,7 +573,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       requestBody:
         required: true
@@ -567,6 +601,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/{auction_id}/bids":
     get:
       tags:
@@ -574,10 +612,9 @@ paths:
       summary: Get auction bids
       operationId: getAuctionBids
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeSnakeQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       responses:
         '200':
           description: Auction bids.
@@ -595,6 +632,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/auctions/ws/{auction_id}":
     get:
       tags:
@@ -604,7 +645,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/AuctionIdPath"
       responses:
         '101':
@@ -619,14 +659,16 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/users/me/favorites":
     get:
       tags:
       - Users
       summary: Get the authenticated user's favorite listing IDs
       operationId: getFavoriteListings
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       responses:
@@ -644,6 +686,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/users/me/favorites/{listing_id}":
     post:
       tags:
@@ -653,7 +699,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
@@ -674,6 +719,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     delete:
       tags:
       - Users
@@ -682,7 +731,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPath"
       responses:
         '200':
@@ -703,14 +751,16 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/users/preview":
     post:
       tags:
       - Users
       summary: Get user previews
       operationId: getUsersPreview
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -737,6 +787,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/sellers/{seller_id}":
     get:
       tags:
@@ -744,7 +798,6 @@ paths:
       summary: Get seller profile
       operationId: getSellerProfile
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/SellerIdPath"
       responses:
         '200':
@@ -763,14 +816,16 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/sellers/preview":
     post:
       tags:
       - Sellers
       summary: Get seller previews
       operationId: getSellersPreview
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       requestBody:
         required: true
         content:
@@ -796,17 +851,19 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings":
     get:
       tags:
       - Listings
       summary: Get listings
-      description: Uses the camelCase `pageSize` query parameter and returns the effective page size in the snake_case `page_size` response field.
       operationId: getListings
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeCamelQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       - "$ref": "#/components/parameters/IncludeSoldQuery"
       responses:
         '200':
@@ -823,13 +880,15 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     post:
       tags:
       - Listings
       summary: Create a listing
       operationId: createListing
-      parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       security:
       - bearerAuth: []
       requestBody:
@@ -875,15 +934,18 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/search":
     get:
       tags:
       - Listings
       summary: Search listings
-      description: Uses camelCase filter names such as `fuelType`, `minPrice`, and `pageSize`; the response keeps the existing JSON field name `page_size`.
+      description: Uses camelCase filter names such as `fuelType`, `minPrice`, and `pageSize`; the response keeps the existing JSON field name `page_size`. `year` must be greater than or equal to 1886, price and mileage filters cannot be negative, and invalid filter values return 400.
       operationId: searchCars
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/MakeQuery"
       - "$ref": "#/components/parameters/ModelQuery"
       - "$ref": "#/components/parameters/YearQuery"
@@ -892,7 +954,7 @@ paths:
       - "$ref": "#/components/parameters/MaxMileageQuery"
       - "$ref": "#/components/parameters/FuelTypeCamelQuery"
       - "$ref": "#/components/parameters/PageQuery"
-      - "$ref": "#/components/parameters/PageSizeCamelQuery"
+      - "$ref": "#/components/parameters/PageSizeQuery"
       - "$ref": "#/components/parameters/IncludeSoldQuery"
       responses:
         '200':
@@ -909,6 +971,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/compare":
     get:
       tags:
@@ -916,7 +982,6 @@ paths:
       summary: Compare listings
       operationId: compareListings
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/IdsQuery"
       responses:
         '200':
@@ -935,6 +1000,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
   "/api/listings/{id}":
     get:
       tags:
@@ -942,7 +1011,6 @@ paths:
       summary: Get listing details
       operationId: getCarById
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       responses:
         '200':
@@ -961,6 +1029,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     put:
       tags:
       - Listings
@@ -969,7 +1041,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       requestBody:
         required: true
@@ -978,6 +1049,10 @@ paths:
             schema:
               "$ref": "#/components/schemas/UpdateListingRequest"
             example:
+              vin: 1HGCM82633A004352
+              make: Toyota
+              model: Corolla
+              year: 2021
               price: 17900
               mileage: 42500
               city: Lisbon
@@ -1009,6 +1084,10 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
     delete:
       tags:
       - Listings
@@ -1017,7 +1096,6 @@ paths:
       security:
       - bearerAuth: []
       parameters:
-      - "$ref": "#/components/parameters/HostHeader"
       - "$ref": "#/components/parameters/ListingIdPlainPath"
       responses:
         '204':
@@ -1034,23 +1112,18 @@ paths:
           "$ref": "#/components/responses/InternalServerErrorText"
         '502':
           "$ref": "#/components/responses/BadGatewayText"
+        '503':
+          "$ref": "#/components/responses/ServiceUnavailableText"
+        '504':
+          "$ref": "#/components/responses/GatewayTimeoutText"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: Firebase ID token
+      bearerFormat: "Firebase ID token"
+      description: "Send `Authorization: Bearer <token>` using the Firebase ID token returned by the user login, register or refresh endpoints."
   parameters:
-    HostHeader:
-      name: Host
-      in: header
-      required: true
-      description: Requests to the deployed gateway must target the Kloud Motors public host.
-      schema:
-        type: string
-        enum:
-        - kloud-motors.com
-      example: kloud-motors.com
     AuctionIdPath:
       name: auction_id
       in: path
@@ -1158,7 +1231,7 @@ components:
       name: limit
       in: query
       required: false
-      description: Defaults to 20 when omitted. Negative values or non-integer values are invalid; geo endpoints cap the effective limit at 100 by default and chat history may be capped by service configuration.
+      description: Defaults to 20 when omitted. Must be an integer greater than or equal to 1; invalid values return 400.
       schema:
         type: integer
         format: int32
@@ -1261,21 +1334,11 @@ components:
         format: int32
         minimum: 1
         default: 1
-    PageSizeCamelQuery:
+    PageSizeQuery:
       name: pageSize
       in: query
       required: false
-      description: Page size for listing search endpoints. Responses use the snake_case `page_size` field.
-      schema:
-        type: integer
-        format: int32
-        minimum: 1
-        default: 20
-    PageSizeSnakeQuery:
-      name: page_size
-      in: query
-      required: false
-      description: Page size for auction endpoints. Defaults to 20 at the gateway and caps the effective page size at 100.
+      description: Page size for paginated endpoints. Requests and responses use `pageSize`; defaults to 20 at the gateway and caps at 100.
       schema:
         type: integer
         format: int32
@@ -1286,7 +1349,7 @@ components:
       name: skip
       in: query
       required: false
-      description: Zero-based offset. Negative values are invalid for chat history; geo endpoints normalize negative values to 0.
+      description: Zero-based offset. Must be an integer greater than or equal to 0; invalid values return 400.
       schema:
         type: integer
         format: int32
@@ -1307,42 +1370,69 @@ components:
       name: year
       in: query
       required: false
+      description: Vehicle model year. Must be greater than or equal to 1886 when present.
       schema:
         type: integer
         format: int32
+        minimum: 1886
     YearFromQuery:
       name: year_from
       in: query
       required: false
-      description: Inclusive lower bound for vehicle model year.
+      description: Inclusive lower bound for vehicle model year. Must be greater than or equal to 0; when `year_to` is also present, `year_to` must be greater than or equal to `year_from`.
       schema:
         type: integer
         format: int32
+        minimum: 0
         example: 2018
     YearToQuery:
       name: year_to
       in: query
       required: false
-      description: Inclusive upper bound for vehicle model year.
+      description: Inclusive upper bound for vehicle model year. Must be greater than or equal to 0 and greater than or equal to `year_from` when both are present.
       schema:
         type: integer
         format: int32
+        minimum: 0
         example: 2024
   responses:
     BadGatewayText:
-      description: Upstream service is unavailable, timed out, or could not be reached by the gateway. Current overload and circuit-breaker failures are surfaced as 502 rather than 429 or 503.
+      description: Upstream proxy or gateway communication failed.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: failed to connect websocket upstream
+    ServiceUnavailableText:
+      description: Upstream service is unavailable, the circuit breaker is open, or the gateway is overloaded.
       content:
         text/plain:
           schema:
             type: string
             example: upstream service is unavailable
-    BadRequestText:
-      description: Invalid request body, missing required query/path field, unsupported enum value, malformed ID, or invalid pagination/filter value.
+    GatewayTimeoutText:
+      description: Upstream service call exceeded the gateway deadline.
       content:
         text/plain:
           schema:
             type: string
-            example: brand and model are required
+            example: context deadline exceeded
+    BadRequestText:
+      description: Invalid request body, missing required query/path field, unsupported enum value, malformed ID, or invalid pagination/filter value. Validation errors include endpoint-specific text and may include field-level details.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/ErrorResponse"
+          example:
+            error: bad_request
+            message: "Invalid aggregate filters: brand and model are required; metrics must be avg_price, median_price, or count; group_by must be district, city, or country; year_from and year_to must be at least 0 with year_to >= year_from; limit must be at least 1; skip must be at least 0"
+            fields:
+            - field: year_to
+              message: must be greater than or equal to year_from
+        text/plain:
+          schema:
+            type: string
+            example: Invalid request body
     ConflictText:
       description: Request conflicts with current resource state, such as creating a duplicate resource or performing an action that is no longer valid.
       content:
@@ -1386,6 +1476,25 @@ components:
             type: string
             example: Unauthorized
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: bad_request
+        message:
+          type: string
+        fields:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
     Aggregates:
       type: object
       properties:
@@ -1528,6 +1637,10 @@ components:
             "$ref": "#/components/schemas/ListingDetailsResponse"
     CreateAuctionRequest:
       type: object
+      required:
+      - listing_id
+      - starting_price
+      - end_time
       properties:
         listing_id:
           type: integer
@@ -1555,6 +1668,11 @@ components:
           "$ref": "#/components/schemas/Auction"
     CreateListingRequest:
       type: object
+      required:
+      - vin
+      - make
+      - model
+      - year
       properties:
         vin:
           type: string
@@ -1672,10 +1790,10 @@ components:
         page:
           type: integer
           format: int32
-        page_size:
+        pageSize:
           type: integer
           format: int32
-          description: Effective auction page size, matching the `page_size` query parameter.
+          description: Effective auction page size, matching the `pageSize` query parameter.
     GetAuctionResponse:
       type: object
       properties:
@@ -1710,10 +1828,10 @@ components:
         page:
           type: integer
           format: int32
-        page_size:
+        pageSize:
           type: integer
           format: int32
-          description: Effective auction page size, matching the `page_size` query parameter.
+          description: Effective auction page size, matching the `pageSize` query parameter.
     ListingDetailsResponse:
       type: object
       properties:
@@ -1810,6 +1928,9 @@ components:
           format: int32
     OpenChatRequest:
       type: object
+      required:
+      - seller_id
+      - listing_id
       properties:
         user_id:
           type: integer
@@ -1846,6 +1967,8 @@ components:
           nullable: true
     PlaceBidRequest:
       type: object
+      required:
+      - bid_amount
       properties:
         auction_id:
           type: string
@@ -1881,10 +2004,10 @@ components:
         page:
           type: integer
           format: int32
-        page_size:
+        pageSize:
           type: integer
           format: int32
-          description: Effective listing page size. Listing endpoints accept the query parameter as `pageSize` but return this field as `page_size`.
+          description: Effective listing page size, matching the `pageSize` query parameter.
         listings:
           type: array
           items:
@@ -1944,6 +2067,11 @@ components:
           format: int32
     UpdateListingRequest:
       type: object
+      required:
+      - vin
+      - make
+      - model
+      - year
       properties:
         id:
           type: integer

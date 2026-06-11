@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"services/listing/repository"
-	"services/shared"
 	"services/redis/cache"
+	"services/shared"
 )
 
 type ListingService struct {
@@ -236,8 +236,8 @@ func validateListingMutation(listing repository.ListingMutation) error {
 	if listing.Year <= 0 {
 		return fmt.Errorf("year must be a positive integer")
 	}
-	if listing.Year < 1886 || listing.Year > 2100 {
-		return fmt.Errorf("year must be between 1886 and 2100")
+	if listing.Year < 1886 {
+		return fmt.Errorf("year must be greater than or equal to 1886")
 	}
 	if listing.Price < 0 {
 		return fmt.Errorf("price cannot be negative")

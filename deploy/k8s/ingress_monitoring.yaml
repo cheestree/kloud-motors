@@ -8,8 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: grafana.exemplo.com
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

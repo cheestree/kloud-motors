@@ -8,7 +8,7 @@ from typing import Dict, List
 
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import Integer, MetaData, Table, Text, Column, String, Float, create_engine
+from sqlalchemy import BigInteger, MetaData, Table, Text, Column, String, Float, create_engine
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 load_dotenv("../../.env")
@@ -34,7 +34,7 @@ def define_sellers_table(table_name: str, metadata: MetaData) -> Table:
     return Table(
         table_name,
         metadata,
-        Column("id", Integer, primary_key=True),
+        Column("id", BigInteger, primary_key=True),
         Column("name", Text),
         Column("seller_type", String(50)),
         Column("contact_info", Text),

@@ -45,7 +45,7 @@ message ListAuctionsResponse {
   repeated Auction auctions = 1;
   int32 total = 2;
   int32 page = 3;
-  int32 page_size = 4;
+  int32 pageSize = 4;
 }
 
 message CreateAuctionRequest {
@@ -97,5 +97,5 @@ message GetAuctionBidsResponse {
   repeated Bid bids = 1;
   int32 total = 2;
   int32 page = 3;
-  int32 page_size = 4;
+  int32 pageSize = 4;
 }

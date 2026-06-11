@@ -9,13 +9,8 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
-  # tls:
-  #   - hosts:
-  #       - kloud-motors.com
-  #     secretName: tls-secret
   rules:
-    - host: kloud-motors.com
-      http:
+    - http:
         paths:
           - path: /api/chat/ws/
             pathType: Prefix
