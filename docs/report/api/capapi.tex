@@ -1,0 +1,118 @@
+\chapter{API specification} \label{cap:api}
+
+The Kloud Motors API follows a RESTful architecture. The endpoints have been categorized by their primary domain, such as User, Chat, Auctions, and Listings. Each table provides the HTTP method, the endpoint path, and a brief description of its functionality. The full OpenAPI specification file is provided as a separate attachment in \texttt{.yaml} format.
+
+\subsection{Users}
+\begin{table}[htpb]
+\centering
+\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+POST & /api/user/login & Authenticate a user with email and password \\
+POST & /api/user/register & Register a user with email and password \\
+POST & /api/user/refresh & Refresh a Firebase ID token \\
+GET* & /api/users/me/favorites & Get the authenticated user's favorite listing IDs \\
+POST* & /api/users/me/favorites/\{listing\_id\} & Add a listing to favorites \\
+DELETE* & /api/users/me/favorites/\{listing\_id\} & Remove a listing from favorites \\
+POST & /api/users/preview & Get user previews \\
+\bottomrule
+\multicolumn{3}{l}{\small \textit{* Requires Bearer Token authentication}}
+\end{tabular}
+\caption{User Management Endpoints}
+\label{tab:api_users}
+\end{table}
+
+\subsection{Chat}
+\begin{table}[htpb]
+\centering
+\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+GET* & /api/chat & Get user chats \\
+POST* & /api/chat/open & Open or create a buyer-seller chat session \\
+GET* & /api/chat/\{chat\_id\} & Get chat history \\
+GET* & /api/chat/ws/\{chat\_id\} & Chat WebSocket proxy \\
+\bottomrule
+\multicolumn{3}{l}{\small \textit{* Requires Bearer Token authentication}}
+\end{tabular}
+\caption{Buyer-Seller Communication Endpoints}
+\label{tab:api_chat}
+\end{table}
+
+\subsection{Market Insights \& Price Analysis}
+\begin{table}[htpb]
+\centering
+\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+GET & /api/market/insights/aggregates & Get aggregated market insights \\
+GET & /api/market/price-comparison & Compare prices across locations \\
+GET & /api/listings/stats/by-location & Get listing price statistics by location \\
+GET & /api/market/average-price & Get average market price \\
+\bottomrule
+\end{tabular}
+\caption{Geographical Market Insights and Pricing Endpoints}
+\label{tab:api_market}
+\end{table}
+
+\subsection{Auctions}
+\begin{table}[htpb]
+\centering
+\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+GET & /api/auctions & List auctions \\
+POST* & /api/auctions & Create an auction \\
+GET & /api/auctions/\{auction\_id\} & Get auction details \\
+DELETE* & /api/auctions/\{auction\_id\} & Delete an auction \\
+POST* & /api/auctions/\{auction\_id\}/bid & Place a bid \\
+GET & /api/auctions/\{auction\_id\}/bids & Get auction bids \\
+GET* & /api/auctions/ws/\{auction\_id\} & Auction WebSocket proxy \\
+\bottomrule
+\multicolumn{3}{l}{\small \textit{* Requires Bearer Token authentication}}
+\end{tabular}
+\caption{Auction Module Endpoints}
+\label{tab:api_auctions}
+\end{table}
+
+\subsection{Sellers}
+\begin{table}[htpb]
+\centering
+\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+GET & /api/sellers/\{seller\_id\} & Get seller profile \\
+POST & /api/sellers/preview & Get seller previews \\
+\bottomrule
+\end{tabular}
+\caption{Seller Management Endpoints}
+\label{tab:api_sellers}
+\end{table}
+
+\newpage 
+
+\subsection{Listings}
+\begin{table}[htpb]
+\centering
+\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+GET & /api/listings & Get listings \\
+POST* & /api/listings & Create a listing \\
+GET & /api/listings/search & Search listings \\
+GET & /api/listings/compare & Compare listings \\
+GET & /api/listings/\{id\} & Get listing details \\
+PUT* & /api/listings/\{id\} & Update a listing \\
+DELETE* & /api/listings/\{id\} & Delete a listing \\
+\bottomrule
+\multicolumn{3}{l}{\small \textit{* Requires Bearer Token authentication}}
+\end{tabular}
+\caption{Filtered Search and Listing Endpoints}
+\label{tab:api_listings}
+\end{table}

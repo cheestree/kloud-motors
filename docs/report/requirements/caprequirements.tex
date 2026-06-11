@@ -1,0 +1,188 @@
+\chapter{Functional and non-functional requirements} \label{cap:requirements}
+
+This chapter defines the requirements implemented by Kloud Motors. The functional requirements are organised around the main business use cases of the platform, while the non-functional requirements describe the cloud, operational, security, scalability, resilience, and maintainability properties supported by the current codebase and deployment artefacts.
+
+\section{Functional Requirements}
+
+\subsection{Listing Catalogue, Details, and Comparison}
+
+\begin{itemize}
+    \item The system shall expose a public endpoint to retrieve paginated listings through the REST gateway.
+    \item The system shall expose a public endpoint to retrieve detailed information for a single listing by identifier.
+    \item Listing details shall include vehicle identity and commercial fields such as make, model, year, price, mileage, location, fuel type, trim, transmission, colour, seller type, listed date, images, and sold state.
+    \item The system shall expose a public comparison endpoint that receives a set of listing identifiers and returns their detailed information side by side.
+    \item Authenticated users shall be able to create, update, and delete listings through the gateway.
+    \item Listing creation and update requests shall associate the listing with the authenticated user as seller.
+    \item Listing read and comparison operations shall be served by the listing service, with summary retrieval also available for upstream services such as chat and auctions.
+\end{itemize}
+
+\subsection{Filtered Search}
+
+\begin{itemize}
+    \item The system shall expose a public search endpoint for vehicle listings.
+    \item Search shall support filters for make, model, year, minimum price, maximum price, maximum mileage, fuel type, pagination, and whether sold listings are included.
+    \item The search service shall also support additional internal search fields present in the gRPC contract, including body class, drive type, transmission, and new/used state.
+    \item Search responses shall include the total number of matching listings, the current page, the page size, and listing summaries.
+    \item Search shall be backed by the listing PostgreSQL database and may use Redis to cache repeated query results.
+\end{itemize}
+
+\subsection{Market Price Analysis}
+
+\begin{itemize}
+    \item The system shall expose a public endpoint to calculate market price information for a selected vehicle brand and model.
+    \item Requests may optionally include \texttt{year\_from} and \texttt{year\_to} filters.
+    \item The market price response shall include the selected brand and model, average price, minimum price, maximum price, and listing count.
+    \item Market price calculations shall be performed by the market price service using listing data stored in PostgreSQL.
+\end{itemize}
+
+\subsection{Geographical Market Insights}
+
+\begin{itemize}
+    \item The system shall expose public endpoints for location-based market analysis.
+    \item The system shall support price comparison for a brand and model grouped by district, city, or country.
+    \item Price comparison requests may include sorting, order, limit, and skip parameters.
+    \item The system shall expose an aggregate endpoint that can compute average price, median price, and listing count.
+    \item Aggregate requests shall support grouping, optional location filters, optional year range filters, optional fuel type filters, and pagination controls.
+    \item The system shall expose a by-location statistics endpoint that returns minimum price, maximum price, average price, and median price for the selected market.
+    \item Geographical insights shall be served by a dedicated geographical market insights service connected to the listing database.
+\end{itemize}
+
+\subsection{Seller Management and Profiling}
+
+\begin{itemize}
+    \item The system shall expose a public endpoint to retrieve a seller profile by seller identifier.
+    \item Seller profile responses shall include seller identifier, name, seller type, contact information, and rating when available.
+    \item The seller service shall provide preview retrieval for multiple sellers to support upstream views that need compact seller information.
+    \item Seller data shall be served by the seller service and stored in the seller PostgreSQL database, while seller-related listing lookups may also use the listing database.
+\end{itemize}
+
+\subsection{User Registration, Authentication, and Favourites}
+
+\begin{itemize}
+    \item The system shall allow visitors to register with email and password.
+    \item The system shall allow registered users to log in with email and password.
+    \item The system shall allow clients to refresh authentication tokens.
+    \item Registration, login, and token refresh shall be handled by the user service through Firebase authentication.
+    \item The gateway shall validate Firebase ID tokens before allowing access to protected routes.
+    \item The gateway shall resolve a validated Firebase identity to an internal user identifier through the user service.
+    \item Authenticated users shall be able to retrieve their favourite listing identifiers.
+    \item Authenticated users shall be able to add a listing to favourites.
+    \item Authenticated users shall be able to remove a listing from favourites.
+    \item User profiles and favourite relationships shall be stored in the user PostgreSQL database.
+\end{itemize}
+
+\subsection{Buyer-Seller Communication}
+
+\begin{itemize}
+    \item Only authenticated users shall be allowed to open chat sessions, list their chats, retrieve chat history, or connect to the chat WebSocket route.
+    \item A chat session shall be associated with a listing, a buyer, and a seller.
+    \item The system shall expose a REST operation to open a chat or reuse an existing chat for the same listing and participants.
+    \item The system shall expose an endpoint to list the chats visible to the authenticated user.
+    \item The system shall expose an endpoint to retrieve chat history with limit and skip pagination.
+    \item The gateway shall proxy authenticated WebSocket traffic to the chat service.
+    \item Chat participant/index data shall be stored in PostgreSQL.
+    \item Chat message persistence shall use Firestore when configured.
+    \item Chat WebSocket events shall be distributable through Google Pub/Sub so that multiple replicas can receive live updates consistently.
+\end{itemize}
+
+\subsection{Auction Module}
+
+\begin{itemize}
+    \item The system shall expose a public endpoint to list auctions with pagination and optional status filtering.
+    \item The system shall expose public endpoints to retrieve auction details and auction bids.
+    \item Only authenticated users shall be allowed to create auctions, delete their auctions, place bids, or connect to the auction WebSocket route.
+    \item Auction creation requests shall associate the auction with the authenticated seller.
+    \item Bid requests shall associate the bid with the authenticated buyer.
+    \item The auction service shall validate listing-related operations through the listing service where required.
+    \item Auction and bid data shall be stored in the auction PostgreSQL database.
+    \item Auction WebSocket events shall be distributable through Google Pub/Sub so that multiple replicas can broadcast live updates consistently.
+\end{itemize}
+
+\section{Non-Functional Requirements}
+
+\subsection{API Gateway and Service Decomposition}
+
+\begin{itemize}
+    \item The platform shall expose the REST gateway as the single public HTTP entry point for application clients.
+    \item Public API routes shall be grouped under \texttt{/api}.
+    \item The gateway shall translate public HTTP requests into internal gRPC calls to the listing, search, user, seller, chat, market price, geographical market insights, and auction services.
+    \item WebSocket traffic for chat and auctions shall enter through the gateway and be proxied to the corresponding service.
+    \item Each main business capability shall be implemented as an independent Go service with its own gRPC contract.
+\end{itemize}
+
+\newpage 
+
+\subsection{Security and Access Control}
+
+\begin{itemize}
+    \item Protected operations shall require an \texttt{Authorization: Bearer} Firebase ID token.
+    \item Authentication credentials and Firebase API keys shall remain server-side and be provided through environment configuration.
+    \item The gateway shall reject protected requests with missing or invalid tokens.
+    \item Downstream services shall receive the resolved internal user identifier instead of trusting client-provided user identifiers for protected operations.
+    \item Kubernetes secrets, service-account files, environment files, and kubeconfigs shall be treated as sensitive deployment artefacts and must not be committed as regular source material.
+\end{itemize}
+
+\subsection{Persistence and Data Isolation}
+
+\begin{itemize}
+    \item Listing, user, seller, chat index, and auction data shall be stored in PostgreSQL databases.
+    \item Listing-oriented services such as listing, search, market price, and geographical insights shall use the listing database as their source of marketplace data.
+    \item Chat messages shall be persisted through Firestore when cloud configuration is available.
+    \item Database connection information shall be injected through environment variables and Kubernetes secrets/configmaps.
+    \item Local database initialisation and dataset loading shall be performed through the existing preparation and seed scripts.
+\end{itemize}
+
+\subsection{Scalability and Caching}
+
+\begin{itemize}
+    \item The platform shall be deployable to Kubernetes using the manifests under \texttt{deploy/k8s}.
+    \item Scalable services shall define Kubernetes HorizontalPodAutoscaler manifests where available.
+    \item Listing detail and listing summary retrieval shall support Redis-backed caching.
+    \item Search queries shall support Redis-backed caching using a stable key derived from the request parameters.
+    \item Cache entries shall use a configurable time-to-live.
+    \item Chat and auction WebSocket events shall support Google Pub/Sub so that live updates can work across horizontally scaled replicas.
+\end{itemize}
+
+\newpage 
+
+\subsection{Resilience and Failure Handling}
+
+\begin{itemize}
+    \item The gateway shall wrap downstream gRPC clients with circuit breakers to reduce cascading failures when services are unavailable or slow.
+    \item Chat and auction services shall also use circuit breakers for selected calls to dependent services such as listing and seller.
+    \item Service failures shall be translated into HTTP error responses at the gateway.
+    \item Services shall expose gRPC health checks where implemented.
+    \item Chat and auction services shall continue running without distributed WebSocket propagation if Pub/Sub initialisation fails, while logging the degraded mode.
+    \item Chat shall continue running without message persistence if Firestore initialisation fails, while retaining chat index behaviour when PostgreSQL is available.
+\end{itemize}
+
+\subsection{Observability and Monitoring}
+
+\begin{itemize}
+    \item The gateway shall expose Prometheus metrics at \texttt{/metrics}.
+    \item The gateway shall expose a health endpoint at \texttt{/api/health}.
+    \item Services shall use structured logging where implemented.
+    \item HTTP and gRPC boundaries shall be instrumented with OpenTelemetry in the gateway and main services.
+    \item Kubernetes monitoring manifests shall provide Prometheus and Grafana components for cluster-level monitoring.
+\end{itemize}
+
+\subsection{Deployment, Automation, and Reproducibility}
+
+\begin{itemize}
+    \item Local execution shall be supported through Docker Compose and the scripts in \texttt{scripts/local}.
+    \item Cloud deployment shall be supported through Kubernetes manifests and helper scripts under \texttt{scripts/cloud}.
+    \item The Kubernetes deployment shall use the \texttt{vehicles-prod} namespace.
+    \item The ingress shall route API and WebSocket traffic to the gateway.
+    \item CI shall run Go unit tests and Docker Compose based integration tests through GitHub Actions.
+    \item Terraform shall define core GCP infrastructure, including Cloud SQL, Cloud Storage for backups, Artifact Registry, Pub/Sub topics, service accounts, VPC networking, and GKE resources.
+    \item Terraform automation shall run format checks, plans, and production applies through the Terraform GitHub Actions workflow.
+\end{itemize}
+
+\subsection{Backup and Recovery}
+
+\begin{itemize}
+    \item The cloud deployment shall include a scheduled backup mechanism for the configured Cloud SQL databases.
+    \item Backups shall be exported to a configured Google Cloud Storage bucket.
+    \item The backup configuration shall list the databases to export, including listing, user, seller, auction, and chat databases.
+    \item Backup storage shall support lifecycle management through Terraform bucket configuration.
+\end{itemize}

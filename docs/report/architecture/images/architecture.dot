@@ -1,0 +1,194 @@
+digraph architecture {
+  graph [
+    rankdir=LR,
+    bgcolor="white",
+    pad="0.35",
+    nodesep="0.45",
+    ranksep="0.8",
+    splines=ortho,
+    fontname="Helvetica",
+    fontsize=20,
+    labelloc=t
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    color="#333333",
+    fillcolor="white",
+    fontname="Helvetica",
+    fontsize=13,
+    margin="0.12,0.08"
+  ];
+
+  edge [
+    color="#555555",
+    fontname="Helvetica",
+    fontsize=11,
+    arrowsize=0.8
+  ];
+
+  subgraph cluster_client {
+    label="Client applications";
+    color="#a5d6a7";
+    style="rounded,filled";
+    fillcolor="#f1f8e9";
+    fontsize=18;
+
+    client_content [label="Browser / API consumers", fillcolor="#e8f5e9", penwidth=2];
+  }
+
+  subgraph cluster_ingress {
+    label="NGINX Ingress";
+    color="#a5d6a7";
+    style="rounded,filled";
+    fillcolor="#f1f8e9";
+    fontsize=18;
+
+    ingress_content [label="kloud-motors.com\n/api + WebSocket routes", fillcolor="#e8f5e9", penwidth=2];
+  }
+
+  subgraph cluster_gateway {
+    label="Gateway service";
+    color="#90caf9";
+    style="rounded,filled";
+    fillcolor="#f3f9fe";
+    fontsize=18;
+
+    gateway_content [label="REST API\nWebSocket proxy\nFirebase token validation\nPrometheus metrics", fillcolor="#e3f2fd", penwidth=2];
+  }
+
+  subgraph cluster_services {
+    label="Go microservices";
+    color="#dddddd";
+    style="rounded,filled";
+    fillcolor="#fbfbfb";
+    fontsize=18;
+
+    subgraph cluster_marketplace {
+      label="";
+      color="#dddddd";
+      style="rounded,filled";
+      fillcolor="#fbfbfb";
+      fontsize=16;
+
+      listing_service [label="Listing", fillcolor="#ffffff"];
+      search_service [label="Search", fillcolor="#ffffff"];
+      marketprice_service [label="Market price", fillcolor="#ffffff"];
+      geo_service [label="Geo insights", fillcolor="#ffffff"];
+    }
+
+    subgraph cluster_accounts {
+      label="";
+      color="#dddddd";
+      style="rounded,filled";
+      fillcolor="#fbfbfb";
+      fontsize=16;
+
+      user_service [label="User", fillcolor="#ffffff"];
+      seller_service [label="Seller", fillcolor="#ffffff"];
+    }
+
+    subgraph cluster_realtime {
+      label="";
+      color="#dddddd";
+      style="rounded,filled";
+      fillcolor="#fbfbfb";
+      fontsize=16;
+
+      chat_service [label="Chat", fillcolor="#ffffff"];
+      auction_service [label="Auction", fillcolor="#ffffff"];
+    }
+  }
+
+  subgraph cluster_data {
+    label="Data and cloud services";
+    color="#f0d98a";
+    style="rounded,filled";
+    fillcolor="#fffdf0";
+    fontsize=18;
+
+    redis [shape=cylinder, label="Redis\ncache", fillcolor="#fff9c4"];
+    sqldb [shape=cylinder, label="Cloud SQL\nPostgreSQL", fillcolor="#fff9c4"];
+    subgraph cluster_firebase {
+      label="Firebase Auth";
+      color="#d1c4e9";
+      style="rounded,filled";
+      fillcolor="#f7f3fb";
+      fontsize=16;
+
+      firebase_content [label="ID tokens", fillcolor="#ede7f6"];
+    }
+
+    firestore [shape=cylinder, label="Firestore", fillcolor="#ede7f6"];
+
+    subgraph cluster_pubsub {
+      label="Google Pub/Sub";
+      color="#d1c4e9";
+      style="rounded,filled";
+      fillcolor="#f7f3fb";
+      fontsize=16;
+
+      pubsub_content [label="events", fillcolor="#ede7f6"];
+    }
+  }
+
+  subgraph cluster_platform {
+    label="Platform and operations";
+    color="#f4c27b";
+    style="rounded,filled";
+    fillcolor="#fff7ed";
+    fontsize=18;
+
+    platform_content [label="GitHub Actions + Terraform + GKE\nMonitoring + backups", fillcolor="#fff3e0", penwidth=2];
+  }
+
+  legend [shape=plain, label=<
+    <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6" COLOR="#777777" BGCOLOR="#ffffff">
+      <TR><TD COLSPAN="3"><B>Connection types</B></TD></TR>
+      <TR><TD><B>Sample</B></TD><TD><B>Type</B></TD></TR>
+      <TR><TD><FONT COLOR="#1565c0">------&gt;</FONT></TD><TD>gRPC service call</TD></TR>
+      <TR><TD><FONT COLOR="#c62828">------&gt;</FONT></TD><TD>WebSocket / real-time path</TD></TR>
+      <TR><TD><FONT COLOR="#555555">------&gt;</FONT></TD><TD>data, cache, or events</TD></TR>
+      <TR><TD><FONT COLOR="#6a1b9a">- - - &gt;</FONT></TD><TD>authentication</TD></TR>
+      <TR><TD><FONT COLOR="#ef6c00">- - - &gt;</FONT></TD><TD>platform operations</TD></TR>
+    </TABLE>
+  >];
+
+  client_content -> ingress_content;
+  ingress_content -> gateway_content;
+
+  gateway_content -> listing_service [color="#1565c0"];
+  gateway_content -> search_service [color="#1565c0"];
+  gateway_content -> marketprice_service [color="#1565c0"];
+  gateway_content -> geo_service [color="#1565c0"];
+  gateway_content -> user_service [color="#1565c0"];
+  gateway_content -> seller_service [color="#1565c0"];
+  gateway_content -> chat_service [color="#c62828"];
+  gateway_content -> auction_service [color="#c62828"];
+
+  chat_service -> listing_service [color="#1565c0"];
+  chat_service -> seller_service [color="#1565c0"];
+  auction_service -> listing_service [color="#1565c0"];
+
+  listing_service -> redis;
+  search_service -> redis;
+  listing_service -> sqldb;
+  search_service -> sqldb;
+  marketprice_service -> sqldb;
+  geo_service -> sqldb;
+  user_service -> sqldb;
+  seller_service -> sqldb;
+  chat_service -> sqldb;
+  auction_service -> sqldb;
+  chat_service -> firestore;
+  chat_service -> pubsub_content;
+  auction_service -> pubsub_content;
+
+  gateway_content -> firebase_content [style=dashed, color="#6a1b9a"];
+  user_service -> firebase_content [style=dashed, color="#6a1b9a"];
+
+  platform_content -> ingress_content [style=dashed, color="#ef6c00"];
+  platform_content -> gateway_content [style=dashed, color="#ef6c00"];
+  platform_content -> sqldb [style=dashed, color="#ef6c00"];
+}
