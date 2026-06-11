@@ -15,7 +15,7 @@ The Terraform configuration provisions the following main resources:
     \item A VPC, subnet, service account, and IAM bindings required by the workloads and Workload Identity.
 \end{itemize}
 
-On top of these cloud resources, the Kubernetes deployment runs the gateway, eight domain services, Redis, Cloud SQL proxy sidecars for the services that use Cloud SQL, a backup CronJob, ingress, and the monitoring stack with Prometheus, Grafana, and kube-state-metrics.
+On top of these cloud resources, the Kubernetes deployment runs the gateway, eight domain services, Redis, Cloud SQL proxy sidecars for the services that use Cloud SQL, a backup CronJob, ingress, and the monitoring stack with Prometheus, Grafana, and kube-state-metrics. Redis was deployed inside Kubernetes instead of as a separate managed Redis or Memorystore instance, using the already provisioned GKE node capacity and avoiding an additional managed service cost.
 
 \section{Main Cost Drivers}
 
@@ -26,6 +26,8 @@ The second important fixed cost is Cloud SQL. The project uses one small Postgre
 Storage costs are comparatively small. Artifact Registry stores the Docker images for the ten runtime containers. The backup bucket stores daily database exports and prepared dataset artifacts. The lifecycle rule reduces long-term backup cost by moving older backups to Coldline storage after 30 days, which is appropriate because old backups are rarely read but should remain available for recovery.
 
 Pub/Sub costs are expected to be low in the current workload. It is only used to distribute chat and auction WebSocket events between replicas. In a high-traffic deployment, Pub/Sub message volume would become more relevant, but in the current system compute and database costs dominate.
+
+\newpage 
 
 \section{Approximate Monthly Cost Structure}
 
@@ -64,7 +66,7 @@ Several implementation decisions reduce cost without removing important cloud fe
     \item \textbf{Pod-count awareness}: the deployment was kept within the practical 30-pod subscription limit, so autoscaling settings are useful for tests but cannot all reach their theoretical maximum at the same time.
     \item \textbf{Resource requests and limits}: Kubernetes manifests define CPU and memory requests and limits, preventing individual services from consuming all node resources during tests.
     \item \textbf{Horizontal Pod Autoscalers}: stateless services can scale up during load and scale down afterwards, reducing the need to keep many replicas permanently running.
-    \item \textbf{Redis caching}: repeated listing and search reads can be served from Redis, reducing Cloud SQL pressure during common read paths.
+    \item \textbf{Redis caching on Kubernetes}: repeated listing and search reads can be served from Redis, reducing Cloud SQL pressure during common read paths. Running Redis as a Kubernetes deployment also avoids the extra cost of a separate managed Redis instance for this prototype.
     \item \textbf{Backup lifecycle policy}: old backup objects are moved to Coldline storage after 30 days.
     \item \textbf{CI separation}: Docker Compose integration tests run in GitHub Actions runners instead of requiring a permanent cloud test environment.
 \end{itemize}
