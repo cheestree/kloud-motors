@@ -109,7 +109,22 @@ digraph architecture {
     fontsize=18;
 
     redis [shape=cylinder, label="Redis\ncache", fillcolor="#fff9c4"];
-    sqldb [shape=cylinder, label="Cloud SQL\nPostgreSQL", fillcolor="#fff9c4"];
+
+    subgraph cluster_cloudsql {
+      label="PostgreSQL databases";
+      color="#f0d98a";
+      style="rounded,filled";
+      fillcolor="#fffdf0";
+      fontsize=16;
+
+      cloudsql_instance [shape=box, label="Cloud SQL\ncn-db-instance", fillcolor="#fffde7", penwidth=2];
+      listing_db [shape=cylinder, label="listing_db\nPostgreSQL", fillcolor="#fff9c4"];
+      user_db [shape=cylinder, label="user_db\nPostgreSQL", fillcolor="#fff9c4"];
+      seller_db [shape=cylinder, label="seller_db\nPostgreSQL", fillcolor="#fff9c4"];
+      chat_db [shape=cylinder, label="chat_db\nPostgreSQL", fillcolor="#fff9c4"];
+      auction_db [shape=cylinder, label="auction_db\nPostgreSQL", fillcolor="#fff9c4"];
+    }
+
     subgraph cluster_firebase {
       label="Firebase Auth";
       color="#d1c4e9";
@@ -173,14 +188,15 @@ digraph architecture {
 
   listing_service -> redis;
   search_service -> redis;
-  listing_service -> sqldb;
-  search_service -> sqldb;
-  marketprice_service -> sqldb;
-  geo_service -> sqldb;
-  user_service -> sqldb;
-  seller_service -> sqldb;
-  chat_service -> sqldb;
-  auction_service -> sqldb;
+  listing_service -> listing_db;
+  search_service -> listing_db;
+  marketprice_service -> listing_db;
+  geo_service -> listing_db;
+  seller_service -> listing_db;
+  user_service -> user_db;
+  seller_service -> seller_db;
+  chat_service -> chat_db;
+  auction_service -> auction_db;
   chat_service -> firestore;
   chat_service -> pubsub_content;
   auction_service -> pubsub_content;
@@ -190,5 +206,5 @@ digraph architecture {
 
   platform_content -> ingress_content [style=dashed, color="#ef6c00"];
   platform_content -> gateway_content [style=dashed, color="#ef6c00"];
-  platform_content -> sqldb [style=dashed, color="#ef6c00"];
+  platform_content -> cloudsql_instance [style=dashed, color="#ef6c00"];
 }
