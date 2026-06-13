@@ -20,7 +20,7 @@ The main application services are:
     \item \textbf{Auction service}: manages auction listing, creation, detail retrieval, deletion, bidding, bid retrieval, and live auction updates.
 \end{itemize}
 
-The application data is separated by concern. The listing database is shared by read heavy marketplace services because listing, search, market price, and geographical insights all operate over the same vehicle data. User, seller, chat, and auction state are stored in separate PostgreSQL databases. Chat also uses Firestore for message persistence when configured. Redis is used as a cache aside layer for listing detail, listing summary, and search query results. Google Pub/Sub is used by chat and auction services to distribute real-time WebSocket events across replicas.
+The application data is separated by concern. The listing database is shared by read heavy marketplace services because listing, search, market price, geographical insights, and seller listing previews all operate over the same vehicle data. User, seller, chat, and auction state are stored in separate PostgreSQL databases. Chat also uses Firestore for message persistence when configured. Redis is used as a cache aside layer for listing detail, listing summary, and search query results. Google Pub/Sub is used by chat and auction services to distribute real-time WebSocket events across replicas.
 
 \section{Technical Architecture}
 
@@ -44,9 +44,11 @@ service:50051}. WebSocket upstreams are configured separately as \texttt{ws://ch
 
 Figure~\ref{fig:architecture} summarises the connection between the client, gateway, services, data stores, messaging infrastructure, observability stack, deployment automation, and cloud infrastructure.
 
-\begin{figure}[p]
+\begin{landscape}
+\begin{figure}[H]
     \centering
-    \includegraphics[angle=90,width=\textwidth,height=0.78\textheight,keepaspectratio]{architecture/images/architecture.png}
+    \includegraphics[width=\linewidth,height=0.86\textheight,keepaspectratio]{architecture/images/architecture.png}
     \caption{Kloud Motors application and technical architecture}
     \label{fig:architecture}
 \end{figure}
+\end{landscape}

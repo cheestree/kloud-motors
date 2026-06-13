@@ -3,9 +3,11 @@ digraph architecture {
     rankdir=LR,
     bgcolor="white",
     pad="0.35",
-    nodesep="0.45",
-    ranksep="0.8",
+    nodesep="0.6",
+    ranksep="1.05",
     splines=ortho,
+    compound=true,
+    outputorder=edgesfirst,
     fontname="Helvetica",
     fontsize=20,
     labelloc=t
@@ -25,7 +27,8 @@ digraph architecture {
     color="#555555",
     fontname="Helvetica",
     fontsize=11,
-    arrowsize=0.8
+    arrowsize=0.8,
+    penwidth=1.2
   ];
 
   subgraph cluster_client {
@@ -65,40 +68,18 @@ digraph architecture {
     fillcolor="#fbfbfb";
     fontsize=18;
 
-    subgraph cluster_marketplace {
-      label="";
-      color="#dddddd";
-      style="rounded,filled";
-      fillcolor="#fbfbfb";
-      fontsize=16;
-
-      listing_service [label="Listing", fillcolor="#ffffff"];
-      search_service [label="Search", fillcolor="#ffffff"];
-      marketprice_service [label="Market price", fillcolor="#ffffff"];
-      geo_service [label="Geo insights", fillcolor="#ffffff"];
-    }
-
-    subgraph cluster_accounts {
-      label="";
-      color="#dddddd";
-      style="rounded,filled";
-      fillcolor="#fbfbfb";
-      fontsize=16;
-
-      user_service [label="User", fillcolor="#ffffff"];
-      seller_service [label="Seller", fillcolor="#ffffff"];
-    }
-
-    subgraph cluster_realtime {
-      label="";
-      color="#dddddd";
-      style="rounded,filled";
-      fillcolor="#fbfbfb";
-      fontsize=16;
-
-      chat_service [label="Chat", fillcolor="#ffffff"];
-      auction_service [label="Auction", fillcolor="#ffffff"];
-    }
+    services [shape=plain, label=<
+      <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7" COLOR="#777777" BGCOLOR="#ffffff">
+        <TR><TD PORT="listing" BGCOLOR="#f5f5f5"><B>Listing</B><BR/><FONT POINT-SIZE="10">listing_db + Redis cache</FONT></TD></TR>
+        <TR><TD PORT="search" BGCOLOR="#f5f5f5"><B>Search</B><BR/><FONT POINT-SIZE="10">listing_db + Redis cache</FONT></TD></TR>
+        <TR><TD PORT="marketprice" BGCOLOR="#f5f5f5"><B>Market price</B><BR/><FONT POINT-SIZE="10">listing_db</FONT></TD></TR>
+        <TR><TD PORT="geo" BGCOLOR="#f5f5f5"><B>Geo insights</B><BR/><FONT POINT-SIZE="10">listing_db</FONT></TD></TR>
+        <TR><TD PORT="user" BGCOLOR="#ffffff"><B>User</B><BR/><FONT POINT-SIZE="10">user_db + Firebase login APIs</FONT></TD></TR>
+        <TR><TD PORT="seller" BGCOLOR="#ffffff"><B>Seller</B><BR/><FONT POINT-SIZE="10">seller_db + listing_db</FONT></TD></TR>
+        <TR><TD PORT="chat" BGCOLOR="#fff5f5"><B>Chat</B><BR/><FONT POINT-SIZE="10">gRPC + WS from gateway</FONT><BR/><FONT POINT-SIZE="10">uses Listing/Seller</FONT><BR/><FONT POINT-SIZE="10">chat_db + Firestore + Pub/Sub</FONT></TD></TR>
+        <TR><TD PORT="auction" BGCOLOR="#fff5f5"><B>Auction</B><BR/><FONT POINT-SIZE="10">gRPC + WS from gateway</FONT><BR/><FONT POINT-SIZE="10">uses Listing</FONT><BR/><FONT POINT-SIZE="10">auction_db + Pub/Sub</FONT></TD></TR>
+      </TABLE>
+    >];
   }
 
   subgraph cluster_data {
@@ -108,44 +89,22 @@ digraph architecture {
     fillcolor="#fffdf0";
     fontsize=18;
 
-    redis [shape=cylinder, label="Redis\ncache", fillcolor="#fff9c4"];
+    redis [shape=cylinder, label="Redis\ncache\nListing + Search only", fillcolor="#fff9c4"];
 
-    subgraph cluster_cloudsql {
-      label="PostgreSQL databases";
-      color="#f0d98a";
-      style="rounded,filled";
-      fillcolor="#fffdf0";
-      fontsize=16;
+    cloudsql [shape=plain, label=<
+      <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6" COLOR="#b79b37" BGCOLOR="#fffdf0">
+        <TR><TD PORT="instance" COLSPAN="2" BGCOLOR="#fff8d6"><B>Cloud SQL PostgreSQL</B><BR/>cn-db-instance</TD></TR>
+        <TR><TD PORT="listing"><B>listing_db</B></TD><TD ALIGN="LEFT">Listing, Search,<BR/>Market price, Geo insights,<BR/>Seller listing reads</TD></TR>
+        <TR><TD PORT="user"><B>user_db</B></TD><TD ALIGN="LEFT">User</TD></TR>
+        <TR><TD PORT="seller"><B>seller_db</B></TD><TD ALIGN="LEFT">Seller</TD></TR>
+        <TR><TD PORT="chat"><B>chat_db</B></TD><TD ALIGN="LEFT">Chat</TD></TR>
+        <TR><TD PORT="auction"><B>auction_db</B></TD><TD ALIGN="LEFT">Auction</TD></TR>
+      </TABLE>
+    >];
 
-      cloudsql_instance [shape=box, label="Cloud SQL\ncn-db-instance", fillcolor="#fffde7", penwidth=2];
-      listing_db [shape=cylinder, label="listing_db\nPostgreSQL", fillcolor="#fff9c4"];
-      user_db [shape=cylinder, label="user_db\nPostgreSQL", fillcolor="#fff9c4"];
-      seller_db [shape=cylinder, label="seller_db\nPostgreSQL", fillcolor="#fff9c4"];
-      chat_db [shape=cylinder, label="chat_db\nPostgreSQL", fillcolor="#fff9c4"];
-      auction_db [shape=cylinder, label="auction_db\nPostgreSQL", fillcolor="#fff9c4"];
-    }
-
-    subgraph cluster_firebase {
-      label="Firebase Auth";
-      color="#d1c4e9";
-      style="rounded,filled";
-      fillcolor="#f7f3fb";
-      fontsize=16;
-
-      firebase_content [label="ID tokens", fillcolor="#ede7f6"];
-    }
-
-    firestore [shape=cylinder, label="Firestore", fillcolor="#ede7f6"];
-
-    subgraph cluster_pubsub {
-      label="Google Pub/Sub";
-      color="#d1c4e9";
-      style="rounded,filled";
-      fillcolor="#f7f3fb";
-      fontsize=16;
-
-      pubsub_content [label="events", fillcolor="#ede7f6"];
-    }
+    firestore [shape=cylinder, label="Firestore\nchat messages\nChat only", fillcolor="#ede7f6"];
+    firebase_content [label="Firebase Auth\nID tokens + login APIs", fillcolor="#ede7f6"];
+    pubsub_content [label="Google Pub/Sub\nevents\nChat + Auction only", fillcolor="#ede7f6"];
   }
 
   subgraph cluster_platform {
@@ -160,51 +119,32 @@ digraph architecture {
 
   legend [shape=plain, label=<
     <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6" COLOR="#777777" BGCOLOR="#ffffff">
-      <TR><TD COLSPAN="3"><B>Connection types</B></TD></TR>
+      <TR><TD COLSPAN="2"><B>Connection types</B></TD></TR>
       <TR><TD><B>Sample</B></TD><TD><B>Type</B></TD></TR>
-      <TR><TD><FONT COLOR="#1565c0">------&gt;</FONT></TD><TD>gRPC service call</TD></TR>
-      <TR><TD><FONT COLOR="#c62828">------&gt;</FONT></TD><TD>WebSocket / real-time path</TD></TR>
-      <TR><TD><FONT COLOR="#555555">------&gt;</FONT></TD><TD>data, cache, or events</TD></TR>
+      <TR><TD><FONT COLOR="#2e7d32">&#9472;&#9472;&#9472;&#9472;&#9472;&gt;</FONT></TD><TD>public HTTP / WebSocket</TD></TR>
+      <TR><TD><FONT COLOR="#1565c0">&#9472;&#9472;&#9472;&#9472;&#9472;&gt;</FONT></TD><TD>gRPC service call</TD></TR>
+      <TR><TD><FONT COLOR="#c62828">&#9472;&#9472;&#9472;&#9472;&#9472;&gt;</FONT></TD><TD>WebSocket / real-time path</TD></TR>
+      <TR><TD><FONT COLOR="#555555">&#9472;&#9472;&#9472;&#9472;&#9472;&gt;</FONT></TD><TD>data, cache, or events</TD></TR>
       <TR><TD><FONT COLOR="#6a1b9a">- - - &gt;</FONT></TD><TD>authentication</TD></TR>
       <TR><TD><FONT COLOR="#ef6c00">- - - &gt;</FONT></TD><TD>platform operations</TD></TR>
     </TABLE>
   >];
 
-  client_content -> ingress_content;
-  ingress_content -> gateway_content;
+  client_content -> ingress_content [color="#2e7d32", penwidth=1.8];
+  ingress_content -> gateway_content [color="#2e7d32", penwidth=1.8];
 
-  gateway_content -> listing_service [color="#1565c0"];
-  gateway_content -> search_service [color="#1565c0"];
-  gateway_content -> marketprice_service [color="#1565c0"];
-  gateway_content -> geo_service [color="#1565c0"];
-  gateway_content -> user_service [color="#1565c0"];
-  gateway_content -> seller_service [color="#1565c0"];
-  gateway_content -> chat_service [color="#c62828"];
-  gateway_content -> auction_service [color="#c62828"];
+  gateway_content -> services:grpc:w [color="#1565c0", penwidth=1.8];
+  gateway_content -> services:ws:w [color="#c62828", penwidth=1.8];
 
-  chat_service -> listing_service [color="#1565c0"];
-  chat_service -> seller_service [color="#1565c0"];
-  auction_service -> listing_service [color="#1565c0"];
+  services:listing:e -> redis [color="#555555"];
+  services:e -> cloudsql:w [color="#555555", penwidth=1.6];
+  services:chat:e -> firestore [color="#555555"];
+  services:chat:e -> pubsub_content [color="#555555", penwidth=1.5];
 
-  listing_service -> redis;
-  search_service -> redis;
-  listing_service -> listing_db;
-  search_service -> listing_db;
-  marketprice_service -> listing_db;
-  geo_service -> listing_db;
-  seller_service -> listing_db;
-  user_service -> user_db;
-  seller_service -> seller_db;
-  chat_service -> chat_db;
-  auction_service -> auction_db;
-  chat_service -> firestore;
-  chat_service -> pubsub_content;
-  auction_service -> pubsub_content;
+  gateway_content -> firebase_content [style=dashed, color="#6a1b9a", penwidth=1.5, constraint=false];
+  services:user:e -> firebase_content [style=dashed, color="#6a1b9a", penwidth=1.5, constraint=false];
 
-  gateway_content -> firebase_content [style=dashed, color="#6a1b9a"];
-  user_service -> firebase_content [style=dashed, color="#6a1b9a"];
-
-  platform_content -> ingress_content [style=dashed, color="#ef6c00"];
-  platform_content -> gateway_content [style=dashed, color="#ef6c00"];
-  platform_content -> cloudsql_instance [style=dashed, color="#ef6c00"];
+  platform_content -> ingress_content [style=dashed, color="#ef6c00", penwidth=1.5, constraint=false];
+  platform_content -> gateway_content [style=dashed, color="#ef6c00", penwidth=1.5, constraint=false];
+  platform_content -> cloudsql:instance:w [style=dashed, color="#ef6c00", penwidth=1.5, constraint=false];
 }
