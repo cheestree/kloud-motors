@@ -26,6 +26,8 @@ The evaluation covered eight endpoints across the location, authentication and f
     \end{tabular}
 \end{table}
 
+\newpage 
+
 \section{Smoke Test Results}
 
 The smoke tests showed that most basic API behaviours were implemented correctly. The location endpoints were the most consistent: listing locations and retrieving a location by identifier returned the expected structures, handled missing resources with \texttt{404 Not Found}, rejected invalid identifiers with \texttt{400 Bad Request}, and supported the documented year filtering behaviour.
@@ -47,6 +49,8 @@ For \texttt{POST /auth/login}, most normal and negative paths behaved correctly:
     \texttt{POST /auth/login} & Partial pass & 13 out of 16 checks passed. The response schema, wrong content-type handling and cleanup route had issues. \\\hline
     \end{tabular}
 \end{table}
+
+\newpage 
 
 \section{Stress Test Results}
 
