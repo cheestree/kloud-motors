@@ -1,6 +1,6 @@
 \chapter{API specification} \label{cap:api}
 
-The Kloud Motors API follows a RESTful architecture. The endpoints have been categorized by their primary domain, such as User, Chat, Auctions, and Listings. Each table provides the HTTP method, the endpoint path, and a brief description of its functionality. The full OpenAPI specification file is provided as a separate attachment in \texttt{.yaml} format.
+The Kloud Motors public API follows a hybrid RESTful and WebSocket architecture. Most resources are exposed through REST endpoints, organised by HTTP methods such as GET, POST, PUT, DELETE, and PATCH. Real-time features, such as chat and auction updates, use WebSocket entry points: the client connects to a specific endpoint and then exchanges protocol-specific events over that persistent connection. The endpoints have been categorized by their primary domain, such as User, Chat, Auctions, and Listings. Each table provides the protocol or HTTP method, the endpoint path, and a brief description of its functionality. The full OpenAPI specification file is provided as a separate attachment in \texttt{.yaml} format.
 
 \subsection{Users}
 \begin{table}[htpb]
@@ -24,16 +24,20 @@ POST & /api/users/preview & Get user previews \\
 \end{table}
 
 \subsection{Chat}
+
+Chat uses both parts of the public API architecture. Chat discovery, chat creation, and history retrieval are REST operations. Live messaging is handled through the WebSocket endpoint, where the initial request upgrades the connection and subsequent chat actions are represented as message events rather than separate HTTP requests.
+
 \begin{table}[htpb]
 \centering
-\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\footnotesize
+\begin{tabular}{p{2.4cm} p{6.6cm} p{5.2cm}}
 \toprule
-\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\textbf{Operation} & \textbf{Endpoint} & \textbf{Description} \\
 \midrule
-GET* & /api/chat & Get user chats \\
-POST* & /api/chat/open & Open or create a buyer-seller chat session \\
-GET* & /api/chat/\{chat\_id\} & Get chat history \\
-GET* & /api/chat/ws/\{chat\_id\} & Chat WebSocket proxy \\
+REST GET* & /api/chat & Get user chats \\
+REST POST* & /api/chat/open & Open or create a buyer-seller chat session \\
+REST GET* & /api/chat/\{chat\_id\} & Get chat history \\
+WebSocket* & /api/chat/ws/\{chat\_id\} & Upgrade to a persistent chat connection; clients send \texttt{content} events and receive persisted chat message events \\
 \bottomrule
 \multicolumn{3}{l}{\small \textit{* Requires Bearer Token authentication}}
 \end{tabular}
@@ -59,19 +63,23 @@ GET & /api/market/average-price & Get average market price \\
 \end{table}
 
 \subsection{Auctions}
+
+Auctions also use the hybrid public API model. Auction creation, deletion, bid placement, and bid history are REST operations. Live auction monitoring is exposed through a WebSocket connection to the auction-specific endpoint; after a bid is accepted through the REST bid endpoint, the auction service publishes a real-time update to connected clients watching that auction.
+
 \begin{table}[htpb]
 \centering
-\begin{tabular}{p{1.8cm} p{6.5cm} p{6.5cm}}
+\footnotesize
+\begin{tabular}{p{2.4cm} p{6.6cm} p{5.2cm}}
 \toprule
-\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\textbf{Operation} & \textbf{Endpoint} & \textbf{Description} \\
 \midrule
-GET & /api/auctions & List auctions \\
-POST* & /api/auctions & Create an auction \\
-GET & /api/auctions/\{auction\_id\} & Get auction details \\
-DELETE* & /api/auctions/\{auction\_id\} & Delete an auction \\
-POST* & /api/auctions/\{auction\_id\}/bid & Place a bid \\
-GET & /api/auctions/\{auction\_id\}/bids & Get auction bids \\
-GET* & /api/auctions/ws/\{auction\_id\} & Auction WebSocket proxy \\
+REST GET & /api/auctions & List auctions \\
+REST POST* & /api/auctions & Create an auction \\
+REST GET & /api/auctions/\{auction\_id\} & Get auction details \\
+REST DELETE* & /api/auctions/\{auction\_id\} & Delete an auction \\
+REST POST* & /api/auctions/\{auction\_id\}/bid & Place a bid and publish a real-time auction update \\
+REST GET & /api/auctions/\{auction\_id\}/bids & Get auction bids \\
+WebSocket* & /api/auctions/ws/\{auction\_id\} & Upgrade to a persistent monitoring connection that receives live bid update events \\
 \bottomrule
 \multicolumn{3}{l}{\small \textit{* Requires Bearer Token authentication}}
 \end{tabular}
