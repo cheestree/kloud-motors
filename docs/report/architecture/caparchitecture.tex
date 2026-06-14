@@ -1,6 +1,6 @@
 \chapter{Architecture} \label{cap:architecture}
 
-Kloud Motors follows a microservices architecture implemented in Go. The public surface of the application is a REST and WebSocket gateway, while the internal services communicate through gRPC. The same service decomposition is used for local execution with Docker Compose and for cloud execution on Kubernetes.
+Kloud Motors follows a \textbf{microservices architecture} implemented in Go. The public surface of the application is a \textbf{REST and WebSocket gateway}, while the internal services communicate through gRPC. The same service decomposition is used for local execution with Docker Compose and for cloud execution on Kubernetes.
 
 \section{Application Architecture}
 
@@ -20,7 +20,7 @@ The main application services are:
     \item \textbf{Auction service}: manages auction listing, creation, detail retrieval, deletion, bidding, bid retrieval, and live auction updates.
 \end{itemize}
 
-The application data is separated by concern. The listing database is shared by read heavy marketplace services because listing, search, market price, geographical insights, and seller listing previews all operate over the same vehicle data. User, seller, chat, and auction state are stored in separate PostgreSQL databases. Chat also uses Firestore for message persistence when configured. Redis is used as a cache aside layer for listing detail, listing summary, and search query results. Google Pub/Sub is used by chat and auction services to distribute real-time WebSocket events across replicas.
+The application data is separated by concern. The listing database is shared by read-heavy marketplace services because listing, search, market price, geographical insights, and seller listing previews all operate over the same vehicle data. User, seller, chat, and auction state are stored in separate PostgreSQL databases. Chat also uses Firestore for message persistence when configured. Redis is used as a cache-aside layer for listing detail, listing summary, and search query results. Google Pub/Sub is used by chat and auction services to distribute real-time WebSocket events across replicas.
 
 \section{Technical Architecture}
 

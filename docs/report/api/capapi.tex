@@ -1,6 +1,6 @@
 \chapter{API specification} \label{cap:api}
 
-The Kloud Motors public API follows a hybrid RESTful and WebSocket architecture. Most resources are exposed through REST endpoints, organised by HTTP methods such as GET, POST, PUT, DELETE, and PATCH. Real-time features, such as chat and auction updates, use WebSocket entry points: the client connects to a specific endpoint and then exchanges protocol-specific events over that persistent connection. The endpoints have been categorized by their primary domain, such as User, Chat, Auctions, and Listings. Each table provides the protocol or HTTP method, the endpoint path, and a brief description of its functionality. The full OpenAPI specification file is provided as a separate attachment in \texttt{.yaml} format.
+The Kloud Motors public API follows a \textbf{hybrid RESTful and WebSocket architecture}. Most resources are exposed through REST endpoints, organised by HTTP methods such as \texttt{GET}, \texttt{POST}, \texttt{PUT} and \texttt{DELETE}. Real-time features, such as chat and auction updates, use \textbf{WebSocket entry points}: the client connects to a specific endpoint and then exchanges protocol-specific events over that persistent connection. The endpoints have been categorized by their primary domain, such as User, Chat, Auctions, and Listings. Each table provides the protocol or HTTP method, the endpoint path, and a brief description of its functionality. The full OpenAPI specification file is provided as a separate attachment in \texttt{.yaml} format.
 
 \subsection{Users}
 \begin{table}[htpb]
@@ -25,7 +25,7 @@ POST & /api/users/preview & Get user previews \\
 
 \subsection{Chat}
 
-Chat uses both parts of the public API architecture. Chat discovery, chat creation, and history retrieval are REST operations. Live messaging is handled through the WebSocket endpoint, where the initial request upgrades the connection and subsequent chat actions are represented as message events rather than separate HTTP requests.
+Chat uses both parts of the public API architecture. Chat discovery, chat creation, and history retrieval are \textbf{REST operations}. Live messaging is handled through the \textbf{WebSocket endpoint}, where the initial request upgrades the connection and subsequent chat actions are represented as message events rather than separate HTTP requests.
 
 \begin{table}[htpb]
 \centering
@@ -64,7 +64,7 @@ GET & /api/market/average-price & Get average market price \\
 
 \subsection{Auctions}
 
-Auctions also use the hybrid public API model. Auction creation, deletion, bid placement, and bid history are REST operations. Live auction monitoring is exposed through a WebSocket connection to the auction-specific endpoint; after a bid is accepted through the REST bid endpoint, the auction service publishes a real-time update to connected clients watching that auction.
+Auctions also use the hybrid public API model. Auction creation, deletion, bid placement, and bid history are \textbf{REST operations}. \textbf{Live auction monitoring} is exposed through a WebSocket connection to the auction-specific endpoint; after a bid is accepted through the REST bid endpoint, the auction service publishes a real-time update to connected clients watching that auction.
 
 \begin{table}[htpb]
 \centering
@@ -87,6 +87,8 @@ WebSocket* & /api/auctions/ws/\{auction\_id\} & Upgrade to a persistent monitori
 \label{tab:api_auctions}
 \end{table}
 
+\newpage
+
 \subsection{Sellers}
 \begin{table}[htpb]
 \centering
@@ -101,8 +103,6 @@ POST & /api/sellers/preview & Get seller previews \\
 \caption{Seller Management Endpoints}
 \label{tab:api_sellers}
 \end{table}
-
-\newpage 
 
 \subsection{Listings}
 \begin{table}[htpb]

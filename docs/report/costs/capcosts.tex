@@ -1,6 +1,6 @@
 \chapter{Cost analysis} \label{cap:costs}
 
-The cost profile of Kloud Motors is shaped by the managed cloud services required to run a microservices platform: GKE for container orchestration, Compute Engine nodes underneath the GKE Standard node pool, Cloud SQL for PostgreSQL, Artifact Registry for container images, Cloud Storage for backups, Pub/Sub for distributed real-time events, and a small amount of networking cost from ingress and external traffic. The implementation deliberately uses a small configuration suitable for an academic project and for the available 50 USD cloud credit. The deployment was also planned with the practical 30-pod maximum of the subscription in mind, so the system demonstrates cloud-native behaviour without attempting to size the cluster as a production environment.
+The cost profile of Kloud Motors is shaped by the managed cloud services required to run a microservices platform: GKE for container orchestration, Compute Engine nodes underneath the GKE Standard node pool, Cloud SQL for PostgreSQL, Artifact Registry for container images, Cloud Storage for backups, Pub/Sub for distributed real-time events, and a small amount of networking cost from ingress and external traffic. The implementation deliberately uses a \textbf{small configuration} suitable for an academic project and for the available \texttt{50 USD} cloud credit. The deployment was also planned with the practical \texttt{30-pod} maximum of the subscription in mind, so the system demonstrates cloud-native behaviour without attempting to size the cluster as a production environment.
 
 \section{Provisioned Resources}
 
@@ -19,9 +19,9 @@ On top of these cloud resources, the Kubernetes deployment runs the gateway, eig
 
 \section{Main Cost Drivers}
 
-The largest fixed cost is the GKE Standard node pool. In Standard mode, the project pays for the underlying Compute Engine virtual machines while they exist, even when application traffic is low. The cluster management fee is also part of the GKE cost model; Google Cloud currently documents it as a flat fee per cluster hour, with a monthly free-tier credit that can offset one small zonal or Autopilot cluster. For this project, the practical implication is that keeping the cluster running continuously is more expensive than running it only during development, demonstration, or testing periods.
+The largest fixed cost is the \textbf{GKE Standard node pool}. In Standard mode, the project pays for the underlying Compute Engine virtual machines while they exist, even when application traffic is low. The cluster management fee is also part of the GKE cost model; Google Cloud currently documents it as a flat fee per cluster hour, with a monthly free-tier credit that can offset one small zonal or Autopilot cluster. For this project, the practical implication is that keeping the cluster running continuously is more expensive than running it only during development, demonstration, or testing periods.
 
-The second important fixed cost is Cloud SQL. The project uses one small PostgreSQL instance and several logical databases inside it. This is cheaper than provisioning one managed database instance per microservice, while still allowing service-level schema separation. The tradeoff is that all relational data depends on the same Cloud SQL instance, so it is not a high-availability production database topology.
+The second important fixed cost is \textbf{Cloud SQL}. The project uses one small PostgreSQL instance and several logical databases inside it. This is cheaper than provisioning one managed database instance per microservice, while still allowing service-level schema separation. The tradeoff is that all relational data depends on the same Cloud SQL instance, so it is not a high-availability production database topology.
 
 Storage costs are comparatively small. Artifact Registry stores the Docker images for the ten runtime containers. The backup bucket stores daily database exports and prepared dataset artifacts. The lifecycle rule reduces long-term backup cost by moving older backups to Coldline storage after 30 days, which is appropriate because old backups are rarely read but should remain available for recovery.
 
@@ -54,7 +54,7 @@ Table~\ref{tab:cost-drivers} summarises the expected cost behaviour. The values 
     \label{tab:cost-drivers}
 \end{table}
 
-For the assignment environment, the expected baseline cost is therefore dominated by three elements: GKE nodes, the GKE cluster fee, and the Cloud SQL instance. Artifact Registry, Pub/Sub, and Cloud Storage are necessary for a complete cloud-native deployment, but they are not expected to dominate the bill at the observed scale. The 50 USD credit/code acts as the effective monthly budget for this deployment, which is why the infrastructure avoids large node pools, multiple database instances, and long-lived duplicated environments.
+For the assignment environment, the expected baseline cost is therefore dominated by three elements: \textbf{GKE nodes}, \textbf{the GKE cluster fee}, and \textbf{the Cloud SQL instance}. Artifact Registry, Pub/Sub, and Cloud Storage are necessary for a complete cloud-native deployment, but they are not expected to dominate the bill at the observed scale. The \texttt{50 USD} credit/code acts as the effective monthly budget for this deployment, which is why the infrastructure avoids large node pools, multiple database instances, and long-lived duplicated environments.
 
 \section{Cost Optimisations Applied}
 
@@ -63,7 +63,7 @@ Several implementation decisions reduce cost without removing important cloud fe
 \begin{itemize}
     \item \textbf{Small managed database footprint}: all PostgreSQL databases are hosted in one small Cloud SQL instance instead of several independent instances.
     \item \textbf{Small node pool}: the cluster uses a minimal node pool for development and evaluation rather than a larger production-grade pool.
-    \item \textbf{Pod-count awareness}: the deployment was kept within the practical 30-pod subscription limit, so autoscaling settings are useful for tests but cannot all reach their theoretical maximum at the same time.
+    \item \textbf{Pod-count awareness}: the deployment was kept within the practical \texttt{30-pod} subscription limit, so autoscaling settings are useful for tests but cannot all reach their theoretical maximum at the same time.
     \item \textbf{Resource requests and limits}: Kubernetes manifests define CPU and memory requests and limits, preventing individual services from consuming all node resources during tests.
     \item \textbf{Horizontal Pod Autoscalers}: stateless services can scale up during load and scale down afterwards, reducing the need to keep many replicas permanently running.
     \item \textbf{Redis caching on Kubernetes}: repeated listing and search reads can be served from Redis, reducing Cloud SQL pressure during common read paths. Running Redis as a Kubernetes deployment also avoids the extra cost of a separate managed Redis instance for this prototype.
@@ -73,7 +73,7 @@ Several implementation decisions reduce cost without removing important cloud fe
 
 \section{Cost Tradeoffs and Future Improvements}
 
-The main tradeoff is that the current GKE deployment is intentionally small. This is cost-effective for the project and compatible with the 50 USD credit and the practical 30-pod subscription limit, but it constrains scaling. The HPA manifests allow services such as listing, search, seller, user, auction, market price, and geographical insights to scale up to eight replicas, and chat to ten replicas, but these maxima should be interpreted as per-service limits rather than a configuration where every service can reach its maximum simultaneously. A production deployment would need node autoscaling or a larger node pool, which would increase cost but improve capacity during stress periods.
+The main tradeoff is that the current GKE deployment is \textbf{intentionally small}. This is cost-effective for the project and compatible with the \texttt{50 USD} credit and the practical \texttt{30-pod} subscription limit, but it constrains scaling. The HPA manifests allow services such as listing, search, seller, user, auction, market price, and geographical insights to scale up to eight replicas, and chat to ten replicas, but these maxima should be interpreted as per-service limits rather than a configuration where every service can reach its maximum simultaneously. A production deployment would need node autoscaling or a larger node pool, which would increase cost but improve capacity during stress periods.
 
 Another tradeoff is the use of a single small Cloud SQL instance. It keeps the monthly bill lower, but heavy analytical queries over the listing dataset can compete with transactional user, chat, and auction operations. For a production version, separating the largest read-heavy listing workload into a larger instance or a read replica could improve performance, at an additional database cost.
 

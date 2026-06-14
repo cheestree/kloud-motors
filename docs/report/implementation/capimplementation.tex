@@ -1,6 +1,6 @@
 \chapter{Implementation} \label{cap:implementation}
 
-The implementation of Kloud Motors follows the architecture described in the previous chapter. The system is implemented mainly in Go and is organised as a set of independent services under \texttt{code/services}. Each service exposes a gRPC API through Protocol Buffers, while the gateway exposes the public REST and WebSocket API consumed by clients.
+The implementation of Kloud Motors follows the architecture described in the previous chapter. The system is implemented mainly in \textbf{Go} and is organised as a set of independent services under \texttt{code/services}. Each service exposes a \textbf{gRPC API} through Protocol Buffers, while the gateway exposes the public \textbf{REST and WebSocket API} consumed by clients.
 
 \section{Code Organisation}
 
@@ -15,11 +15,11 @@ The project separates application code, infrastructure configuration, deployment
     \item \texttt{api/API.yaml}: OpenAPI specification for the public gateway API.
 \end{itemize}
 
-The Go services share a single module in \texttt{code/services}. Service contracts are declared in \texttt{.proto} files and compiled into Go code. This keeps the internal service boundaries explicit and allows the gateway and dependent services to use typed gRPC clients instead of ad hoc HTTP calls.
+The Go services share a single module in \texttt{code/services}. Service contracts are declared in \texttt{.proto} files and compiled into Go code. This keeps the \textbf{internal service boundaries} explicit and allows the gateway and dependent services to use typed gRPC clients instead of ad hoc HTTP calls.
 
 \section{Gateway Implementation}
 
-The gateway is the only public application entry point. It registers all public routes under \texttt{/api}, exposes \texttt{/metrics} for Prometheus, and connects to the internal services using gRPC clients configured from environment variables. The gateway handles:
+The gateway is the \textbf{only public application entry point}. It registers all public routes under \texttt{/api}, exposes \texttt{/metrics} for Prometheus, and connects to the internal services using gRPC clients configured from environment variables. The gateway handles:
 
 \begin{itemize}
     \item REST routes for listings, search, market insights, market price, users, favourites, sellers, chats, auctions, and health checks.
@@ -30,13 +30,13 @@ The gateway is the only public application entry point. It registers all public 
     \item Prometheus metrics collection and OpenTelemetry HTTP instrumentation.
 \end{itemize}
 
-Authentication is enforced at gateway level for operations that require a logged-in user, such as managing favourites, opening chats, retrieving chat history, creating listings, managing auctions, and placing bids. After a Firebase token is validated, the gateway resolves the Firebase user identifier into an internal user identifier through the user service. This allows the internal services to work with stable platform identifiers without exposing authentication details across all business services.
+\textbf{Authentication} is enforced at gateway level for operations that require a logged-in user, such as managing favourites, opening chats, retrieving chat history, creating listings, managing auctions, and placing bids. After a Firebase token is validated, the gateway resolves the Firebase user identifier into an internal user identifier through the user service. This allows the internal services to work with stable platform identifiers without exposing authentication details across all business services.
 
-The gateway also wraps downstream gRPC clients with circuit breakers. Each circuit breaker opens after repeated consecutive failures and returns a clear unavailable error while the downstream service is unhealthy. This prevents a failing service from exhausting resources in the gateway and causing cascading failures across unrelated user flows.
+The gateway also wraps downstream gRPC clients with \textbf{circuit breakers}. Each circuit breaker opens after repeated consecutive failures and returns a clear unavailable error while the downstream service is unhealthy. This prevents a failing service from exhausting resources in the gateway and causing cascading failures across unrelated user flows.
 
 \section{Domain Services}
 
-Each business capability is implemented in a dedicated service with its own service layer and persistence layer. The services follow the same general structure: request validation, domain  level checks, repository calls, conversion to gRPC responses, and consistent error mapping.
+Each business capability is implemented in a dedicated service with its own service layer and persistence layer. The services follow the same general structure: request validation, domain-level checks, repository calls, conversion to gRPC responses, and consistent error mapping.
 
 \subsection{Listing and Search}
 
@@ -60,7 +60,7 @@ The seller service provides seller profile retrieval, seller previews, and selle
 
 The chat service manages buyer-seller conversations. It stores chat index data in PostgreSQL and can store chat messages through the configured message repository. When a user opens a chat, the service validates the seller, checks the listing summary, verifies listing ownership, prevents conversations for sold listings, and reuses an existing chat when one already exists for the same buyer and listing.
 
-Real-time messaging is handled through a WebSocket server. The gateway authenticates the public WebSocket request and proxies it to the chat service. Google Pub/Sub is used to distribute chat events between service replicas, allowing WebSocket clients connected to different pods to receive the same live updates.
+\textbf{Real-time messaging} is handled through a WebSocket server. The gateway authenticates the public WebSocket request and proxies it to the chat service. Google Pub/Sub is used to distribute chat events between service replicas, allowing WebSocket clients connected to different pods to receive the same live updates.
 
 \newpage
 
@@ -68,11 +68,11 @@ Real-time messaging is handled through a WebSocket server. The gateway authentic
 
 The auction service manages auction listing, creation, deletion, bidding, bid retrieval, and live updates. Auction creation validates the listing identifier, seller identifier, starting price, end time, listing availability, and listing ownership before inserting the auction. Pagination is normalised with default and maximum page sizes.
 
-Auction bids and status updates are broadcast through the auction WebSocket hub. As with chat, Google Pub/Sub allows auction updates to be propagated across replicas when the service is horizontally scaled.
+\textbf{Auction bids and status updates} are broadcast through the auction WebSocket hub. As with chat, Google Pub/Sub allows auction updates to be propagated across replicas when the service is horizontally scaled.
 
 \section{Persistence and Data Loading}
 
-The platform uses PostgreSQL databases separated by domain. Listing, search, market price, and geographic analytics read from the listing database. User, seller, chat, and auction data are stored in separate databases. This separation keeps ownership clear while allowing read heavy marketplace services to share the same listing source of truth.
+The platform uses \textbf{PostgreSQL databases separated by domain}. Listing, search, market price, and geographic analytics read from the listing database. User, seller, chat, and auction data are stored in separate databases. This separation keeps ownership clear while allowing read-heavy marketplace services to share the same listing source of truth.
 
 The dataset preparation scripts under \texttt{code/setup} transform the original dataset into service specific CSV files and initialise the databases. Local setup scripts prepare the environment, start Docker Compose services, and seed the databases. Cloud setup scripts create or configure cloud databases and restore data when needed.
 
@@ -80,11 +80,11 @@ Firestore is supported by the chat service for cloud oriented message persistenc
 
 \section{Caching, Resilience, and Observability}
 
-Redis is implemented as a cache aside layer. Listing details, listing summaries, and search results first check Redis. On a cache miss, the service queries PostgreSQL and writes the response back to Redis with the configured cache behaviour. Write operations that change listing data remove affected listing cache keys.
+\textbf{Redis} is implemented as a cache-aside layer. Listing details, listing summaries, and search results first check Redis. On a cache miss, the service queries PostgreSQL and writes the response back to Redis with the configured cache behaviour. Write operations that change listing data remove affected listing cache keys.
 
 Resilience is implemented through circuit breakers around gateway gRPC clients and selected cross service calls in chat and auction. This is especially important for flows where one service depends on another, such as chat depending on listing and seller validation, or auction depending on listing availability and ownership checks.
 
-Observability is implemented with Prometheus and OpenTelemetry. The gateway exposes Prometheus metrics and wraps HTTP handling with instrumentation. Services initialise OpenTelemetry tracing with service names, propagate trace context, and export traces to Google Cloud Trace when the exporter can be initialised.
+\textbf{Observability} is implemented with Prometheus and OpenTelemetry. The gateway exposes Prometheus metrics and wraps HTTP handling with instrumentation. Services initialise OpenTelemetry tracing with service names, propagate trace context, and export traces to Google Cloud Trace when the exporter can be initialised.
 
 \newpage
 

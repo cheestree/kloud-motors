@@ -2,7 +2,7 @@
 
 As part of Cloudy Day, our group evaluated Group 16's project, the \textit{European Country Metrics Aggregator}. The goal of this evaluation was to validate the public API from the perspective of an external team, checking both functional correctness and behaviour under load. Each group member tested one endpoint with a smoke test and another endpoint with a stress test.
 
-The smoke tests focused on API contract validation: status codes, JSON structure, required fields, error handling and relevant edge cases. The stress tests used Locust to generate concurrent traffic and identify the point where latency or failures became significant. For stress scenarios, a response was only considered successful when both the HTTP response and the response body matched the expected contract within the configured latency threshold.
+The smoke tests focused on \textbf{API contract validation}: status codes, JSON structure, required fields, error handling and relevant edge cases. The stress tests used Locust to generate concurrent traffic and identify the point where latency or failures became significant. For stress scenarios, a response was only considered successful when both the HTTP response and the response body matched the expected contract within the configured latency threshold.
 
 \section{Test Scope}
 
@@ -32,7 +32,7 @@ The evaluation covered eight endpoints across the location, authentication and f
 
 The smoke tests showed that most basic API behaviours were implemented correctly. The location endpoints were the most consistent: listing locations and retrieving a location by identifier returned the expected structures, handled missing resources with \texttt{404 Not Found}, rejected invalid identifiers with \texttt{400 Bad Request}, and supported the documented year filtering behaviour.
 
-The forum and authentication endpoints revealed more important issues. In \texttt{POST /forum/posts}, a valid request using the field name documented in the specification, \texttt{authorID}, was rejected. The same request succeeded when using \texttt{authorId}, showing a case-sensitivity mismatch between the specification and the implementation. The endpoint also allowed creating posts without authentication, which means a client could create posts on behalf of another user by guessing an identifier, which poses a severe security risk.
+The forum and authentication endpoints revealed more important issues. In \texttt{POST /forum/posts}, a valid request using the field name documented in the specification, \texttt{authorID}, was rejected. The same request succeeded when using \texttt{authorId}, showing a \textbf{case-sensitivity mismatch} between the specification and the implementation. The endpoint also allowed creating posts without authentication, which means a client could create posts on behalf of another user by guessing an identifier, which poses a \textbf{severe security risk}.
 
 For \texttt{POST /auth/login}, most normal and negative paths behaved correctly: registration succeeded, duplicate registration returned \texttt{409 Conflict}, valid login returned \texttt{200 OK}, unknown credentials returned \texttt{401 Unauthorized}, and missing fields returned \texttt{400 Bad Request}. However, the successful login response did not include the expected \texttt{User} object, a request with \texttt{Content-Type: text/plain} returned \texttt{500 Internal Server Error}, and the cleanup request used by the test returned \texttt{404 Not Found}.
 
@@ -54,7 +54,7 @@ For \texttt{POST /auth/login}, most normal and negative paths behaved correctly:
 
 \section{Stress Test Results}
 
-The stress tests showed two different behaviours. Some endpoints remained functionally correct but degraded under high concurrency, while \texttt{GET /locations/top} handled the tested load profile without failures.
+The stress tests showed two different behaviours. Some endpoints remained functionally correct but \textbf{degraded under high concurrency}, while \texttt{GET /locations/top} handled the tested load profile without failures.
 
 The \texttt{GET /forum/posts} stress test had to be split into two phases. In the first phase, the unfiltered endpoint failed every request: all \texttt{17,931} requests to the global endpoint returned failures, even though the \texttt{userId} query parameter is documented as optional. In the second phase, the filtered endpoint \texttt{GET /forum/posts?userId=X} behaved correctly at lower load but reached a \texttt{7.34\%} failure rate during the peak, with a maximum response time of \texttt{17,740ms}.
 
@@ -77,7 +77,7 @@ The location stress tests were more stable in terms of correctness. \texttt{GET 
 
 \section{Conclusion and Recommendations}
 
-Overall, the Group 16 API passed several important functional checks, especially for the location endpoints, but upon further inspection, the evaluation uncovered contract mismatches, severe security gaps, unsafe malformed-request handling and performance degradation under high concurrency. The recommendations include:
+Overall, the Group 16 API passed several important functional checks, especially for the location endpoints, but upon further inspection, the evaluation uncovered \textbf{contract mismatches}, \textbf{severe security gaps}, unsafe malformed-request handling and performance degradation under high concurrency. The recommendations include:
 
 \begin{itemize}
     \item The API specification and implementation should be aligned and no mismatches should exist. Namely between \texttt{authorID} and \texttt{authorId} causing a valid documented request to fail and the login response schema should either include the expected \texttt{User} object or the contract should be updated to describe the actual response.
