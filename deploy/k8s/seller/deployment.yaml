@@ -12,8 +12,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: seller-service
@@ -46,7 +46,7 @@ spec:
                 name: seller-config
           resources:
             requests:
-              cpu: 150m
+              cpu: 100m
               memory: 256Mi
             limits:
               cpu: 600m
@@ -86,7 +86,7 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: 100m
+              cpu: 25m
               memory: 128Mi
             limits:
               cpu: 500m

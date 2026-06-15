@@ -6,6 +6,11 @@ metadata:
     app: gateway-service
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: gateway-service
@@ -51,7 +56,7 @@ spec:
 
           resources:
             requests:
-              cpu: "200m"
+              cpu: "75m"
               memory: "256Mi"
             limits:
               cpu: "750m"

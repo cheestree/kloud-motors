@@ -6,14 +6,14 @@ metadata:
   labels:
     app: listing-service
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 300
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: listing-service
@@ -41,7 +41,7 @@ spec:
                 name: listing-config
           resources:
             requests:
-              cpu: 250m
+              cpu: 150m
               memory: 384Mi
             limits:
               cpu: "1"
@@ -81,7 +81,7 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: 100m
+              cpu: 50m
               memory: 128Mi
             limits:
               cpu: 500m

@@ -12,6 +12,7 @@ NAMESPACE_FILE="$K8S_DIR/common/namespace.yaml"
 ACTION="up"
 WAIT_FOR_ROLLOUT=true
 WITH_INGRESS=false
+RESTART_DEPLOYMENTS=false
 
 usage() {
   cat <<EOF
@@ -26,6 +27,7 @@ Commands:
 Flags:
   --with-ingress  Also apply/delete deploy/k8s/ingress.yaml
   --no-wait       Do not wait for deployments to become available (up only)
+  --restart       Restart deployments after applying manifests (up only)
   -h, --help      Show this help
 EOF
 }
@@ -40,6 +42,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-wait)
       WAIT_FOR_ROLLOUT=false
+      ;;
+    --restart)
+      RESTART_DEPLOYMENTS=true
       ;;
     -h|--help)
       usage
@@ -116,14 +121,16 @@ apply_up() {
     k -n "$NAMESPACE" apply -f "$INGRESS_MANIFEST"
   fi
 
-  echo "Restarting deployments so pods pull the latest image..."
-  while IFS= read -r deployment; do
-    [[ -z "$deployment" ]] && continue
-    k -n "$NAMESPACE" rollout restart "$deployment"
-    if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
-      k -n "$NAMESPACE" rollout status "$deployment" --timeout=300s
-    fi
-  done < <(k -n "$NAMESPACE" get deployments -o name)
+  if [[ "$RESTART_DEPLOYMENTS" == true ]]; then
+    echo "Restarting deployments so pods pull the latest image..."
+    while IFS= read -r deployment; do
+      [[ -z "$deployment" ]] && continue
+      k -n "$NAMESPACE" rollout restart "$deployment"
+      if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
+        k -n "$NAMESPACE" rollout status "$deployment" --timeout=300s
+      fi
+    done < <(k -n "$NAMESPACE" get deployments -o name)
+  fi
 
   if [[ "$WAIT_FOR_ROLLOUT" == true ]]; then
     echo "Waiting for deployments in namespace $NAMESPACE..."

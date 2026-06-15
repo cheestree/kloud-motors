@@ -98,9 +98,14 @@ resource "google_container_cluster" "primary" {
 }
 
 resource "google_container_node_pool" "primary_nodes" {
-  name       = "primary-node-pool"
-  cluster    = google_container_cluster.primary.id
-  node_count = 1
+  name               = "primary-node-pool"
+  cluster            = google_container_cluster.primary.id
+  initial_node_count = var.node_pool_min_node_count
+
+  autoscaling {
+    min_node_count = var.node_pool_min_node_count
+    max_node_count = var.node_pool_max_node_count
+  }
 
   node_config {
     machine_type = "e2-standard-2"

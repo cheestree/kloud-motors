@@ -9,7 +9,7 @@ spec:
     kind: Deployment
     name: marketprice-service
   minReplicas: 1
-  maxReplicas: 6
+  maxReplicas: 1
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 0
@@ -30,9 +30,3 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 80

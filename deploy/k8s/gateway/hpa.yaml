@@ -1,13 +1,13 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: listing-service-hpa
+  name: gateway-service-hpa
   namespace: vehicles-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: listing-service
+    name: gateway-service
   minReplicas: 1
   maxReplicas: 1
   behavior:
@@ -29,4 +29,4 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 55
+          averageUtilization: 65

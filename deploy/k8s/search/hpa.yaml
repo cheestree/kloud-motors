@@ -8,8 +8,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: search-service
-  minReplicas: 2
-  maxReplicas: 12
+  minReplicas: 1
+  maxReplicas: 1
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 0
@@ -30,9 +30,3 @@ spec:
         target:
           type: Utilization
           averageUtilization: 60
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 75

@@ -6,14 +6,14 @@ metadata:
   labels:
     app: auction-service
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 300
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: auction-service
@@ -54,7 +54,7 @@ spec:
                 name: auction-config
           resources:
             requests:
-              cpu: 200m
+              cpu: 75m
               memory: 256Mi
             limits:
               cpu: 750m
@@ -95,7 +95,7 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: 100m
+              cpu: 25m
               memory: 128Mi
             limits:
               cpu: 500m
