@@ -1,0 +1,96 @@
+name: Phase 6 UC1 - Privacy & Data Protection
+
+on:
+  push:
+    branches:
+      - main
+      - prod
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  privacy-audit:
+    name: "Privacy & Data Protection Audit"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Gitleaks
+        run: |
+          VERSION="8.18.4"
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Run Gitleaks (detect secrets in commits)
+        run: |
+          gitleaks detect \
+            --source . \
+            --config .gitleaks.toml \
+            --redact \
+            --verbose \
+            --report-format sarif \
+            --report-path gitleaks-report.sarif \
+            --exit-code 1 \
+          || (echo "::error::Gitleaks found potential secrets - see gitleaks-report.sarif artifact" && exit 1)
+
+      - name: Upload Gitleaks SARIF report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.sarif
+          retention-days: 30
+
+      - name: Check .env.example for real credentials
+        run: |
+          PATTERNS=(
+            'AKIA[0-9A-Z]{16}'                              # AWS key ID
+            'AIza[0-9A-Za-z\-_]{35}'                       # Google API key
+            'ya29\.[0-9A-Za-z\-_]+'                        # Google OAuth token
+            'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.' # JWT
+          )
+          FAILED=0
+          for pattern in "${PATTERNS[@]}"; do
+            if grep -qE "$pattern" .env.example 2>/dev/null; then
+              echo "::error file=.env.example::Possible real credential matching /$pattern/ found in .env.example"
+              FAILED=1
+            fi
+          done
+          [ "$FAILED" -eq 0 ] && echo ".env.example looks clean." || exit 1
+
+      - name: Check K8s manifests - no plain-text secrets
+        run: |
+          MANIFEST_DIRS=(deploy)
+          FAILED=0
+          for dir in "${MANIFEST_DIRS[@]}"; do
+            if [ ! -d "$dir" ]; then continue; fi
+            while IFS= read -r file; do
+              if grep -nP '^\s+value:\s+"?[A-Za-z0-9+/=_\-]{32,}"?' "$file" 2>/dev/null; then
+                echo "::warning file=$file::Possible hard-coded secret in K8s manifest. Use secretKeyRef or GCP Secret Manager instead."
+                FAILED=1
+              fi
+            done < <(find "$dir" -name "*.yaml" -o -name "*.yml")
+          done
+          [ "$FAILED" -eq 0 ] && echo "No hard-coded secrets detected in manifests." || exit 1
+
+      - name: Verify service-account.json is not tracked
+        run: |
+          if git ls-files --error-unmatch service-account.json 2>/dev/null; then
+            echo "::error file=service-account.json::service-account.json is tracked by git."
+            echo "  Fix: git rm --cached service-account.json && echo 'service-account.json' >> .gitignore"
+            echo "  Store the key in the GCP_SA_KEY GitHub Secret instead."
+            exit 1
+          else
+            echo "service-account.json is not tracked - OK."
+          fi
+
+      - name: Privacy audit passed
+        run: echo "✅ UC1 privacy & data-protection checks passed."

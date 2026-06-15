@@ -14,6 +14,10 @@ type SearchRepository struct {
 	db *sql.DB
 }
 
+type Searcher interface {
+	Search(ctx context.Context, filters domain.SearchParams) ([]shared.ListingSummary, int32, error)
+}
+
 func NewSearchRepository(db *sql.DB) *SearchRepository {
 	return &SearchRepository{db: db}
 }
@@ -149,7 +153,7 @@ func (r *SearchRepository) Search(ctx context.Context, filters domain.SearchPara
 		); err != nil {
 			return nil, 0, err
 		}
-		s.DealerId = int32(dealerID)
+		s.SellerId = dealerID
 		listings = append(listings, s)
 	}
 	if err := rows.Err(); err != nil {

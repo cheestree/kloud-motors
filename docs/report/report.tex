@@ -1,0 +1,110 @@
+% Relatório em LaTeX para o trabalho de PPC Autor: Daniel Martins Cabrita de
+% Sousa Data: Outubro 2025
+\documentclass[a4paper,openright,twoside,11pt]{report}
+
+% Packages utilizadas e respetivos parâmetros.
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}  
+\usepackage{graphicx}
+\usepackage{pdflscape}
+\usepackage{url}
+\usepackage[Algoritmo]{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{acronym}
+\usepackage{float}
+
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+
+
+\setlist[itemize]{itemsep=0pt, topsep=3pt}
+
+% Índice
+\usepackage{makeidx}
+\makeindex
+
+% Definições das dimensões das páginas
+\setlength{\textheight}{24.00cm}
+\setlength{\textwidth}{15.50cm}
+\setlength{\topmargin}{0.35cm}
+\setlength{\headheight}{0cm}
+\setlength{\headsep}{0cm}
+\setlength{\oddsidemargin}{0.25cm}
+\setlength{\evensidemargin}{0.25cm}
+
+%\renewcommand{\baselinestretch}{1}
+
+% Página inicial (capa)
+\title{
+   \vspace{-50mm}
+   \begin{minipage}[l]{\textwidth}
+      \hspace{-20mm}\resizebox{75mm}{!}{\includegraphics{images/fcul.png}}\\
+   \end{minipage}\\[20mm]
+   \textbf{Kloud Motors} 
+   \\
+   Online Car Dealer
+}
+
+% Nome dos autores (um por linha)
+\author{
+\begin{tabular}{ll}
+             & Daniel Martins Cabrita de Sousa: 66128  \\
+             & Daniel Alexandre Marto Queijo de Carvalho: 66208  \\
+             & Daniel Ribeiro Nunes: 66462 \\
+             & Francisco Lopes da Encarnação: 66131  \\
+\end{tabular}}
+
+\date{
+\begin{tabular}{ll}
+  {Professor:} & Mário Calha \end{tabular}\\[10mm]
+Project report for Cloud Computing \\
+MSc in Computer Engineering \\[5mm]
+GitHub repository: \url{https://github.com/cheestree/comp-nuvem-2026} \\[45mm] June 2026}
+
+
+\begin{document}
+\pagenumbering{roman}
+\thispagestyle{empty}
+\maketitle
+
+\baselineskip 18pt 
+\newpage
+\thispagestyle{empty}
+% Fim da contracapa
+
+\cleardoublepage
+\tableofcontents \cleardoublepage
+
+% Reiniciar a numeração de páginas
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+
+\include{introduction/capintroduction}
+
+\include{api/capapi}
+\include{requirements/caprequirements}
+\include{architecture/caparchitecture}
+\include{implementation/capimplementation}
+\include{deployment/capdeployment}
+\include{pipeline/cappipeline}
+\include{tests/captests}
+\include{improvements/capimprovements}
+\include{costs/capcosts}
+
+\include{conclusion/capconclusion}
+
+
+% \bibliographystyle{unsrt} \bibliography{referencias}
+% \addcontentsline{toc}{chapter}{References}
+
+% Apêndices (opcional)
+% \appendix
+% \include{appendix}
+
+\end{document} 

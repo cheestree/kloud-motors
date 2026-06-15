@@ -1,0 +1,282 @@
+\chapter{Smoke Tests} \label{cap:smoke}
+The main goal of smoke tests is to validate the correct behaviour of the API.
+
+\section{Endpoint \texttt{POST /forum/posts} - Francisco Encarnação}
+
+The goal of this endpoint is to create a new post in the forum. The test evaluated whether the API correctly processes valid posts and rejects invalid ones.
+
+For this test, the tool used was Postman and according to the API specification, this endpoint has 2 possible scenarios:
+
+\subsection{Scenario 1: Valid Post 201 Created}
+After reviewing the API specification, a valid post request was created with the following fields:
+
+\begin{verbatim}
+{
+  "authorID": 0,
+  "title": "string",
+  "content": "string"
+}
+\end{verbatim}
+
+\newpage
+
+When the request is sent to the API, the response is as follows:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{./images/francisco/AuthorIDError.png}
+    \caption{Invalid AuthorID 400 Bad Request}
+    \label{fig:smoke_post_invalid_author}
+\end{figure}
+
+The error message suggests that the AuthorID is required. However if we look into the body of the request, we can see that the AuthorID is there. 
+
+Then I tried to send the same request but with the last 'D' of AuthorID as 'd' and finnaly I got the 201 Created response.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{./images/francisco/SuccessSmoke.png}
+    \caption{Success 201 Created}
+    \label{fig:smoke_post_success}
+\end{figure}
+
+It was a little mistake that the API specification had regarding the case of the field names, but it was easy to fix.
+
+\subsection{Scenario 2: Missing Fields 400 Bad Request}
+For the scenario 2, we evaluate the behavior of the API when the request is missing some fields.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{./images/francisco/BadContentSmoke.png}
+    \caption{Bad Content 400 Bad Request}
+    \label{fig:smoke_post_bad_content}
+\end{figure}
+
+The error message "title: Title is required" suggested that the API correctly identifies missing fields and returns an appropriate error response.
+
+\subsection{Security Vulnerability}
+One interesting thing to note is that everyone could do a post without being authenticated. If someone guesses the ID of another user, he or she could do a post on behalf of that user. This should not be allowed and one way to fix this is to implement a mechanism where the user needs a login token to do a post.
+
+
+\section{Endpoint \texttt{GET /locations/\{id\}} - Daniel Nunes}
+
+The goal of this endpoint is to retrieve the details of a specific location by its numeric identifier. The smoke test evaluated whether the API returns valid location data for existing IDs and whether it handles missing resources, invalid identifiers, query parameters, path variants and unsupported methods correctly. The tests were made with Postman and overall it behaved correctly and as documented.
+
+\newpage
+
+\subsection{Scenario 1: Valid Location 200 OK}
+
+The first scenario checked if existing location IDs returned a successful response with the expected structure:
+
+\begin{itemize}
+    \item \texttt{GET /locations/1}
+    \item \texttt{GET /locations/24}
+    \item \texttt{GET /locations/30}
+\end{itemize}
+
+All three requests returned \texttt{200 OK}. The responses included the expected fields:
+
+\begin{itemize}
+    \item \texttt{id}
+    \item \texttt{name}
+    \item \texttt{country\_code}
+    \item \texttt{metrics}
+\end{itemize}
+
+\subsection{Scenario 2: Missing Location 404 Not Found}
+
+The second scenario evaluated the behavior of the API when the numeric ID does not correspond to an existing location. The following requests were tested:
+
+\begin{itemize}
+    \item \texttt{GET /locations/0}
+    \item \texttt{GET /locations/-1}
+    \item \texttt{GET /locations/999999}
+\end{itemize}
+
+All of these requests returned \texttt{404 Not Found} with the message \texttt{Location not found}. This behavior is expected because the ID is numeric and valid as a path parameter format but the resource does not exist.
+
+\subsection{Scenario 3: Invalid ID 400 Bad Request}
+
+The third scenario checked how the API handles invalid ID formats. The tested values included decimal IDs, alphabetic IDs, alphanumeric IDs, encoded spaces and more:
+
+\begin{itemize}
+    \item \texttt{GET /locations/1.5}
+    \item \texttt{GET /locations/abc}
+    \item \texttt{GET /locations/1abc}
+    \item \texttt{GET /locations/\%20}
+    \item \texttt{GET /locations/1\%20OR\%201=1}
+\end{itemize}
+
+All invalid ID formats returned \texttt{400 Bad Request}. No internal server errors were found which means that the endpoint validates the ID parameter before trying to use it as a location identifier.
+
+\subsection{Scenario 4: Year Query Parameter}
+
+The endpoint also accepts an optional \texttt{year} query parameter. Valid integer years returned \texttt{200 OK}. When data existed for the requested year, the \texttt{metrics} array was filtered to that year. This was observed for:
+
+\begin{itemize}
+    \item \texttt{GET /locations/1?year=2024}
+    \item \texttt{GET /locations/1?year=2023}
+    \item \texttt{GET /locations/1?year=2015}
+    \item \texttt{GET /locations/1?year=2014}
+\end{itemize}
+
+For years without data, such as \texttt{2030}, \texttt{1900}, \texttt{0} and \texttt{-1}, the API returned \texttt{200 OK} with an empty \texttt{metrics} array. This is acceptable because the location does exists but no metrics match the requested year.
+
+Invalid year formats, such as \texttt{year=abcd} and \texttt{year=2023.5}, returned \texttt{400 Bad Request}. An empty year value, \texttt{year=}, was accepted and behaved like no year filter was provided. When duplicate year parameters were sent, as in \texttt{year=2023\&year=2024}, the API returned \texttt{200 OK} and appeared to use the first value.
+
+\subsection{Scenario 5: Extra Query Parameters and Path Variants}
+
+Unknown query parameters did not break this endpoint. The request with \texttt{foo=bar} returned \texttt{200 OK} and the request with both \texttt{year=2023} and \texttt{foo=bar} still applied the year filter correctly.
+
+The endpoint also kept the correct priority between ID validation and query filtering. A missing ID with a valid year, \texttt{GET /locations/999999?year=2023}, returned \texttt{404 Not Found}. An invalid ID with a valid year, \texttt{GET /locations/abc?year=2023}, returned \texttt{400 Bad Request}.
+
+Path variants were stricter, the routes \texttt{GET /locations/1/} and \texttt{GET /locations//1} returned \texttt{404 Not Found}.
+
+\subsection{Scenario 6: Unsupported Methods}
+
+The same route was also tested with other HTTP methods. The \texttt{HEAD /locations/1} request returned \texttt{200 OK} with headers and no body, which is normal. The \texttt{DELETE /locations/1} request returned \texttt{405 Method Not Allowed}, which is also the expected response for an unsupported method.
+
+\newpage 
+
+\subsection{Response Time Notes}
+
+Most smoke checks completed in less than one second. A few requests were slower but still acceptable:
+\begin{table}[H]
+    \centering
+    \caption{Response time notes for selected requests}
+    \begin{tabular}{p{0.7\textwidth} p{0.25\textwidth}}
+    \hline
+    \textbf{Request} & \textbf{Approx. time} \\\hline
+    \texttt{GET /locations/1?year=2015} & \texttt{1.27s} \\
+    \texttt{GET /locations/1.5} & \texttt{1.25s} \\
+    \texttt{GET /locations/0} & \texttt{0.65s} \\\hline
+    \end{tabular}
+\end{table}
+
+\section{Endpoint \texttt{GET /locations} - Daniel Sousa}
+
+The goal of this endpoint is to return the list of European locations available in the platform. According to the API specification, \texttt{GET /locations} has one successful scenario: it should return \texttt{200 OK} with a JSON array of location summaries.
+
+The smoke test was implemented with Locust using one virtual user for a short execution. Besides checking the HTTP status code, the test also validated the response body against the main fields defined in \texttt{combinedAPI.yaml}. Each item in the returned array was expected to include:
+
+\begin{itemize}
+    \item \texttt{id}
+    \item \texttt{name}
+    \item \texttt{country\_code}
+\end{itemize}
+
+\subsection{Scenario 1: List Locations 200 OK}
+
+The request tested was:
+
+\begin{itemize}
+    \item \texttt{GET /locations}
+\end{itemize}
+
+All smoke test requests returned \texttt{200 OK}. The response was valid JSON, the body was a non-empty array, and every location object contained the required fields. No functional failures were captured by Locust, and the API contract was respected.
+
+\begin{table}[H]
+    \centering
+    \caption{Smoke test summary for \texttt{GET /locations}}
+    \begin{tabular}{p{0.45\textwidth} p{0.4\textwidth}}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & \texttt{20} \\
+    Failures & \texttt{0} \\
+    Error rate & \texttt{0\%} \\
+    Median response time & \texttt{47ms} \\
+    Average response time & \texttt{62.7ms} \\
+    95th percentile & \texttt{230ms} \\
+    Maximum response time & \texttt{231.2ms} \\
+    Average response size & \texttt{1406B} \\\hline
+    \end{tabular}
+\end{table}
+
+\subsection{Conclusion}
+
+The endpoint behaved as expected in the smoke test. It matched the API specification by returning a list of locations with the documented summary fields, and all responses were well below the smoke latency threshold of \texttt{800ms}. No inconsistencies were found between the implemented behaviour and the successful response described in \texttt{combinedAPI.yaml}.
+
+\section{Endpoint \texttt{POST /auth/login} - Daniel Carvalho}
+
+The goal of this endpoint is to authenticate an existing user. Since the login endpoint requires a valid user to exist first, the smoke test also used \texttt{POST /auth/register} as a setup step and then cleaned up the created user at the end of the run.
+
+The smoke test was implemented with a Python script using \texttt{httpx}. According to the observed API contract, the login request does not include a password field and uses only \texttt{username} and \texttt{email}. The main valid request tested was:
+
+\begin{verbatim}
+{
+  "username": "avalidusername4",
+  "email": "avalidemail4@email.com"
+}
+\end{verbatim}
+
+\subsection{Scenario 1: Register New User 201 Created}
+
+The first step registered a fresh user with \texttt{POST /auth/register}. The API returned \texttt{201 Created} and the response body contained the expected user data:
+
+\begin{itemize}
+    \item \texttt{id}
+    \item \texttt{email}
+    \item \texttt{userNName}
+\end{itemize}
+
+The test validated that the response was valid JSON, that \texttt{id} was an integer, and that the username and email fields were strings.
+
+\subsection{Scenario 2: Duplicate Registration 409 Conflict}
+
+After the first registration, the same request was sent again. The API returned \texttt{409 Conflict}, which is the expected behaviour because the username and email were already registered.
+
+\newpage 
+
+\subsection{Scenario 3: Login Happy Path 200 OK}
+
+The login request with the registered username and email returned \texttt{200 OK}, and the response body was valid JSON. However, the response did not match the expected shape checked by the script. The test expected a \texttt{User} object in the response body, but received \texttt{None} for that field.
+
+This means that the endpoint accepts the credentials and returns a successful status code, but the response schema is inconsistent with the structure expected by the test.
+
+\subsection{Scenario 4: Invalid and Missing Credentials}
+
+The test also checked negative authentication cases. Login with unknown credentials returned \texttt{401 Unauthorized}, which is correct. Requests with missing fields were also handled correctly:
+
+\begin{itemize}
+    \item username only returned \texttt{400 Bad Request}
+    \item email only returned \texttt{400 Bad Request}
+    \item empty body returned \texttt{400 Bad Request}
+\end{itemize}
+
+An additional schema probe tried to register a user with only an email. The API returned \texttt{400 Bad Request}, showing that the username field is required during registration.
+
+\subsection{Scenario 5: Wrong Content Type}
+
+The script sent a login request with \texttt{Content-Type: text/plain}. The expected response was \texttt{400 Bad Request} or \texttt{415 Unsupported Media Type}. Instead, the API returned \texttt{500 Internal Server Error}. This indicates that the endpoint does not handle invalid content types safely and should return a client error instead of crashing internally.
+
+\subsection{Results}
+
+\begin{table}[H]
+    \centering
+    \caption{Smoke test summary for \texttt{POST /auth/login}}
+    \begin{tabular}{p{0.55\textwidth} p{0.3\textwidth}}
+    \hline
+    \textbf{Check} & \textbf{Result} \\\hline
+    Register new user & \texttt{201 Created} \\
+    Duplicate registration & \texttt{409 Conflict} \\
+    Login with valid credentials & \texttt{200 OK} \\
+    Login response schema & Failed: missing \texttt{User} object \\
+    Login with unknown credentials & \texttt{401 Unauthorized} \\
+    Login with missing fields & \texttt{400 Bad Request} \\
+    Email-only registration & \texttt{400 Bad Request} \\
+    Wrong content type & Failed: returned \texttt{500} \\
+    Cleanup request & Failed: returned \texttt{404} \\
+    Total result & \texttt{13/16 checks passed} \\\hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/daniel_carvalho/user\_crop.png}
+    \caption{Smoke test execution for authentication endpoints}
+    \label{fig:smoke_auth_results}
+\end{figure}
+
+\subsection{Conclusion}
+
+The smoke test showed that most authentication behaviours are implemented correctly: registration works, duplicate users are rejected, valid login returns \texttt{200 OK}, unknown users return \texttt{401 Unauthorized}, and missing fields return \texttt{400 Bad Request}. However, three problems were found. The login response does not include the expected \texttt{User} object, invalid content types return \texttt{500 Internal Server Error}, and the cleanup endpoint returned \texttt{404 Not Found}. For that reason, the endpoint should be adjusted to return a consistent response schema and to handle malformed requests without internal server errors.

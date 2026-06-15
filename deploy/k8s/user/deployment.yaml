@@ -6,7 +6,7 @@ metadata:
   labels:
     app: user-service
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 300
   strategy:
@@ -36,13 +36,18 @@ spec:
                 secretKeyRef:
                   name: user-secrets
                   key: USER_DATABASE_URL
+            - name: FIREBASE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: user-secrets
+                  key: FIREBASE_API_KEY
           envFrom:
             - configMapRef:
                 name: user-config
           resources:
             requests:
               cpu: 100m
-              memory: 128Mi
+              memory: 192Mi
             limits:
               cpu: 500m
               memory: 512Mi
@@ -81,11 +86,11 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
+              cpu: 100m
               memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
           startupProbe:
             httpGet:
               path: /startup

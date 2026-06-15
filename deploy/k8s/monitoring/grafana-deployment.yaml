@@ -33,18 +33,16 @@ spec:
                 secretKeyRef:
                   name: grafana-admin
                   key: admin-password
-            - name: GF_SERVER_ROOT_URL
-              value: http://grafana.exemplo.com
           volumeMounts:
             - name: grafana-datasources
               mountPath: /etc/grafana/provisioning/datasources
           resources:
             requests:
-              cpu: 50m
-              memory: 128Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 300m
-              memory: 512Mi
+              cpu: 500m
+              memory: 768Mi
       volumes:
         - name: grafana-datasources
           configMap:

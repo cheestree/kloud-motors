@@ -2,87 +2,26 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
 
-	geopb "services/geographic-market-insights/proto"
-	"services/utils"
+	georequests "services/gateway/handlers/geo"
 )
 
 func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	q := r.URL.Query()
+
+	query := georequests.AggregatesQuery{}
+	if err := georequests.BindAndValidateQuery(r, &query); err != nil {
+		writeRequestError(w, "Invalid aggregate filters: brand and model are required; metrics must be avg_price, median_price, or count; group_by must be district, city, or country; year_from and year_to must be at least 0 with year_to >= year_from; limit must be at least 1; skip must be at least 0", err)
+		return
+	}
 	ctx := r.Context()
 
-	var metrics []geopb.MetricType
-	for _, m := range q[queryMetrics] {
-		switch strings.ToLower(m) {
-		case metricAvgPrice:
-			metrics = append(metrics, geopb.MetricType_METRIC_TYPE_AVG_PRICE)
-		case metricMedianPrice:
-			metrics = append(metrics, geopb.MetricType_METRIC_TYPE_MEDIAN_PRICE)
-		case metricCount:
-			metrics = append(metrics, geopb.MetricType_METRIC_TYPE_COUNT)
-		}
-	}
-
-	var groupBy geopb.GroupBy
-	switch strings.ToLower(q.Get(queryGroupBy)) {
-	case groupByDistrict:
-		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
-	case groupByCity:
-		groupBy = geopb.GroupBy_GROUP_BY_CITY
-	case groupByCountry:
-		groupBy = geopb.GroupBy_GROUP_BY_COUNTRY
-	default:
-		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
-	}
-
-	var locations *geopb.Locations
-	if locs := q[queryLocations]; len(locs) > 0 {
-		locations = &geopb.Locations{Location: locs}
-	}
-
-	var yearFrom, yearTo, limit, skip *int32
-	if s := q.Get(queryYearFrom); s != "" {
-		v := utils.ParseInt32(s)
-		yearFrom = &v
-	}
-	if s := q.Get(queryYearTo); s != "" {
-		v := utils.ParseInt32(s)
-		yearTo = &v
-	}
-	if s := q.Get(queryLimit); s != "" {
-		v := utils.ParseInt32(s)
-		limit = &v
-	}
-	if s := q.Get(querySkip); s != "" {
-		v := utils.ParseInt32(s)
-		skip = &v
-	}
-
-	var fuelType *string
-	if s := q.Get(queryFuelType); s != "" {
-		fuelType = &s
-	}
-
-	req := &geopb.AggregatesRequest{
-		Brand:     q.Get(queryBrand),
-		Model:     q.Get(queryModel),
-		Metrics:   metrics,
-		GroupBy:   groupBy,
-		Locations: locations,
-		YearFrom:  yearFrom,
-		YearTo:    yearTo,
-		FuelType:  fuelType,
-		Limit:     limit,
-		Skip:      skip,
-	}
-	resp, err := geoClient.Aggregates(ctx, req)
+	resp, err := geoClient.Aggregates(ctx, georequests.BuildAggregatesRequest(query))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -90,65 +29,20 @@ func HandleMarketAggregates(w http.ResponseWriter, r *http.Request) {
 
 func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	q := r.URL.Query()
+
+	query := georequests.PriceComparisonQuery{}
+	if err := georequests.BindAndValidateQuery(r, &query); err != nil {
+		writeRequestError(w, "Invalid price comparison filters: brand and model are required; group_by must be district, city, or country; sort_by must be avg_price or count; order must be asc or desc; limit must be at least 1; skip must be at least 0", err)
+		return
+	}
 	ctx := r.Context()
 
-	var groupBy geopb.GroupBy
-	switch strings.ToLower(q.Get(queryGroupBy)) {
-	case groupByDistrict:
-		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
-	case groupByCity:
-		groupBy = geopb.GroupBy_GROUP_BY_CITY
-	case groupByCountry:
-		groupBy = geopb.GroupBy_GROUP_BY_COUNTRY
-	default:
-		groupBy = geopb.GroupBy_GROUP_BY_DISTRICT
-	}
-
-	var sortBy *geopb.SortBy
-	switch strings.ToLower(q.Get(querySortBy)) {
-	case metricAvgPrice:
-		v := geopb.SortBy_SORT_BY_AVG_PRICE
-		sortBy = &v
-	case metricCount:
-		v := geopb.SortBy_SORT_BY_COUNT
-		sortBy = &v
-	}
-
-	var order *geopb.Order
-	switch strings.ToLower(q.Get(queryOrder)) {
-	case orderAsc:
-		v := geopb.Order_ORDER_ASC
-		order = &v
-	case orderDesc:
-		v := geopb.Order_ORDER_DESC
-		order = &v
-	}
-
-	var limit, skip *int32
-	if s := q.Get(queryLimit); s != "" {
-		v := utils.ParseInt32(s)
-		limit = &v
-	}
-	if s := q.Get(querySkip); s != "" {
-		v := utils.ParseInt32(s)
-		skip = &v
-	}
-	req := &geopb.PriceComparisonRequest{
-		Brand:   q.Get(queryBrand),
-		Model:   q.Get(queryModel),
-		GroupBy: groupBy,
-		SortBy:  sortBy,
-		Order:   order,
-		Limit:   limit,
-		Skip:    skip,
-	}
-	resp, err := geoClient.PriceComparison(ctx, req)
+	resp, err := geoClient.PriceComparison(ctx, georequests.BuildPriceComparisonRequest(query))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -156,39 +50,20 @@ func HandleMarketPriceComparison(w http.ResponseWriter, r *http.Request) {
 
 func HandleStatsByLocation(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	q := r.URL.Query()
+
+	query := georequests.ByLocationQuery{}
+	if err := georequests.BindAndValidateQuery(r, &query); err != nil {
+		writeRequestError(w, "Invalid location statistics filters: brand and model are required; year_from and year_to must be at least 0 with year_to >= year_from", err)
+		return
+	}
 	ctx := r.Context()
-	var location *string
-	if s := q.Get(queryLocation); s != "" {
-		location = &s
-	}
-	var yearFrom, yearTo *int32
-	if s := q.Get(queryYearFrom); s != "" {
-		v := utils.ParseInt32(s)
-		yearFrom = &v
-	}
-	if s := q.Get(queryYearTo); s != "" {
-		v := utils.ParseInt32(s)
-		yearTo = &v
-	}
-	var fuelType *string
-	if s := q.Get(queryFuelType); s != "" {
-		fuelType = &s
-	}
-	req := &geopb.ByLocationRequest{
-		Brand:    q.Get(queryBrand),
-		Model:    q.Get(queryModel),
-		Location: location,
-		YearFrom: yearFrom,
-		YearTo:   yearTo,
-		FuelType: fuelType,
-	}
-	resp, err := geoClient.ByLocation(ctx, req)
+
+	resp, err := geoClient.ByLocation(ctx, georequests.BuildByLocationRequest(query))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)

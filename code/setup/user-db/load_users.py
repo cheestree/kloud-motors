@@ -8,7 +8,7 @@ from typing import Dict, List
 
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import Integer, MetaData, Table, Text, Column, create_engine
+from sqlalchemy import BigInteger, MetaData, Table, Text, Column, create_engine
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 import firebase_admin
 from firebase_admin import auth, credentials
@@ -38,7 +38,7 @@ def define_users_table(table_name: str, metadata: MetaData) -> Table:
     return Table(
         table_name,
         metadata,
-        Column("id", Integer, primary_key=True),
+        Column("id", BigInteger, primary_key=True),
         Column("firebase_uid", Text, unique=True, index=True),
         Column("name", Text),
         Column("email", Text, unique=True, index=True),

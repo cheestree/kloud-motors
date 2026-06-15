@@ -1,0 +1,38 @@
+package seller
+
+import (
+	"encoding/json"
+	"net/http"
+	"reflect"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
+)
+
+var validatorV10 = validator.New()
+
+func init() {
+	validatorV10.RegisterTagNameFunc(func(field reflect.StructField) string {
+		for _, tag := range []string{"schema", "json"} {
+			name := strings.SplitN(field.Tag.Get(tag), ",", 2)[0]
+			if name == "-" {
+				return ""
+			}
+			if name != "" {
+				return name
+			}
+		}
+		return ""
+	})
+}
+
+func BindAndValidateJSON(r *http.Request, target interface{}) error {
+	if err := json.NewDecoder(r.Body).Decode(target); err != nil {
+		return err
+	}
+	return Validate(target)
+}
+
+func Validate(target interface{}) error {
+	return validatorV10.Struct(target)
+}

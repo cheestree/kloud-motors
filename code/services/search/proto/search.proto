@@ -24,13 +24,13 @@ message SearchRequest {
   string transmission = 10;
   google.protobuf.BoolValue is_new = 11;
   int32 page = 12;
-  int32 page_size = 13;
+  int32 pageSize = 13;
   google.protobuf.BoolValue include_sold = 14;
 }
 
 message SearchResponse {
   int32 total = 1;
   int32 page = 2;
-  int32 page_size = 3;
+  int32 pageSize = 3;
   repeated shared.ListingSummary listings = 4;
 }

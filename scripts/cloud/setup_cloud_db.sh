@@ -6,8 +6,10 @@ DB_USER=${DB_USER:-"postgres"}
 DB_PASS=${DB_PASS:-"uma_password_forte_aqui"}
 DB_HOST="host.docker.internal"
 DB_PORT="5432"
-
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-"cn-project-491618"}
+GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-"$FIREBASE_PROJECT_ID"}
+GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-"$REPO_ROOT/service-account.json"}
 ORIGINAL_CSV="$REPO_ROOT/code/setup/CIS_Automotive_Kaggle_Sample.csv"
 PREPARED_CSV="$REPO_ROOT/code/setup/dataset_prepared.csv"
 USERS_PREPARED_CSV="$REPO_ROOT/code/setup/users_prepared.csv"
@@ -29,8 +31,9 @@ docker run --rm \
     -e AUCTION_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/auction_db" \
     -e LISTING_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/listing_db" \
     -e CHAT_PYTHON_DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/chat_db" \
-    -e FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID} \
-    -e GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS} \
+    -e FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID" \
+    -e GOOGLE_CLOUD_PROJECT="$GOOGLE_CLOUD_PROJECT" \
+    -e GOOGLE_APPLICATION_CREDENTIALS="/workspace/$(basename "$GOOGLE_APPLICATION_CREDENTIALS")" \
     -v "$REPO_ROOT:/workspace" \
     -w /workspace/code/setup \
     python:3.12-slim \

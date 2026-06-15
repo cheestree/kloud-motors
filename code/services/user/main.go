@@ -23,6 +23,27 @@ type server struct {
 	service *service.UserService
 }
 
+func (s *server) Login(ctx context.Context, req *userpb.AuthRequest) (*userpb.AuthResponse, error) {
+	if req.Email == "" || req.Password == "" {
+		return nil, status.Error(codes.InvalidArgument, "email and password are required")
+	}
+	return s.service.Login(ctx, req)
+}
+
+func (s *server) Register(ctx context.Context, req *userpb.AuthRequest) (*userpb.AuthResponse, error) {
+	if req.Email == "" || req.Password == "" {
+		return nil, status.Error(codes.InvalidArgument, "email and password are required")
+	}
+	return s.service.Register(ctx, req)
+}
+
+func (s *server) RefreshToken(ctx context.Context, req *userpb.RefreshTokenRequest) (*userpb.AuthResponse, error) {
+	if req.RefreshToken == "" {
+		return nil, status.Error(codes.InvalidArgument, "refresh_token is required")
+	}
+	return s.service.RefreshToken(ctx, req)
+}
+
 func (s *server) GetOrCreateByFirebaseUID(ctx context.Context, req *userpb.GetOrCreateByFirebaseUIDRequest) (*userpb.GetOrCreateByFirebaseUIDResponse, error) {
 	if req.FirebaseUid == "" {
 		return nil, status.Error(codes.InvalidArgument, "firebase_uid is required")

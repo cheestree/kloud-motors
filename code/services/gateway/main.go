@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 
-	firebase "firebase.google.com/go/v4"
 	auctionpb "services/auction/proto"
 	chatpb "services/chat/proto"
 	"services/gateway/handlers"
@@ -18,7 +17,7 @@ import (
 	sellerpb "services/seller/proto"
 	userpb "services/user/proto"
 
-
+	firebase "firebase.google.com/go/v4"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -31,6 +30,8 @@ import (
 
 var Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
+const heavyEndpointConcurrencyLimit = 8
+
 func registerRoutes() {
 	http.HandleFunc(routeHealth, handlers.HandleHealth)
 	registerListingRoutes()
@@ -42,11 +43,11 @@ func registerRoutes() {
 }
 
 func registerListingRoutes() {
-	http.HandleFunc(routeListings, handlers.HandleListings)
-	http.HandleFunc(routeListingsSearch, handlers.HandleSearch)
-	http.HandleFunc(routeListingsCompare, handlers.HandleCompare)
+	http.HandleFunc(routeListings, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleListings))
+	http.HandleFunc(routeListingsSearch, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleSearch))
+	http.HandleFunc(routeListingsCompare, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleCompare))
 	http.HandleFunc(routeListingsByID, handlers.HandleGetListing)
-	http.HandleFunc(routeListingsStatsByLocation, handlers.HandleStatsByLocation)
+	http.HandleFunc(routeListingsStatsByLocation, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleStatsByLocation))
 }
 
 func registerChatRoutes() {
@@ -57,18 +58,21 @@ func registerChatRoutes() {
 }
 
 func registerMarketRoutes() {
-	http.HandleFunc(routeMarketAggregates, handlers.HandleMarketAggregates)
-	http.HandleFunc(routeMarketPriceComparison, handlers.HandleMarketPriceComparison)
-	http.HandleFunc(routeMarketAveragePrice, handlers.HandleAveragePrice)
+	http.HandleFunc(routeMarketAggregates, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleMarketAggregates))
+	http.HandleFunc(routeMarketPriceComparison, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleMarketPriceComparison))
+	http.HandleFunc(routeMarketAveragePrice, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleAveragePrice))
 }
 
 func registerAuctionRoutes() {
-	http.HandleFunc(routeAuctions, handlers.HandleAuctions)
+	http.HandleFunc(routeAuctions, ConcurrencyLimitMiddleware(heavyEndpointConcurrencyLimit, handlers.HandleAuctions))
 	http.HandleFunc(routeAuctionWS, handlers.HandleAuctionWebSocket)
 	http.HandleFunc(routeAuctionByID, handlers.HandleAuctionByIDRoutes)
 }
 
 func registerUserRoutes() {
+	http.HandleFunc(routeUserLogin, handlers.HandleUserLogin)
+	http.HandleFunc(routeUserRegister, handlers.HandleUserRegister)
+	http.HandleFunc(routeUserRefresh, handlers.HandleUserRefresh)
 	http.HandleFunc(routeFavorites, handlers.HandleGetFavorites)
 	http.HandleFunc(routeFavoriteByListingID, handlers.HandleFavoriteListing)
 	http.HandleFunc(routeUsersPreview, handlers.HandleGetUsersPreview)

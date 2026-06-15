@@ -1,0 +1,253 @@
+\chapter{Stress Tests} \label{cap:stress}
+
+\section{Endpoint \texttt{GET /forum/posts} - Francisco Encarnação}
+The main goal of this test is to evaluate the behavior of the API when it is subjected to a high volume of requests. The test was conducted using the Locust tool, with a load profile that simulates a peak usage scenario.
+
+According to the API specification, the request gets the forum posts and this can be done in two ways: without the userId parameter (global endpoint) or with the userId parameter (filtered endpoint). 
+
+\subsection{Load Profile}
+The stress test used a staged load profile. As showed in the bottom chart of Figure \ref{fig:stress_total_requests_per_second}, the test started with a ramp-up to 10 virtual users, increased to 50 users, then to 100 users, and finally peaked at 200 users before ramping down.
+
+To properly diagnose the system's behavior, the stress testing was divided into two distinct execution phases.
+
+\subsection{Phase 1: Test \& Bug Discovery}
+In the first phase, the test generated traffic to both the global endpoint (\texttt{GET /api/v1/forum/posts}) and the filtered endpoint (\texttt{GET /api/v1/forum/posts?userId=X}).
+
+The global endpoint showed a 100\% failure rate. As illustrated in the top chart of Figure \ref{fig:stress_total_requests_per_second}, the failure rate (red line) follows, but does not completely overlap, the total requests per second (green line). This gap exists because the test was simultaneously hitting both routes: the filtered endpoint was processing requests successfully, while every single request directed to the unparameterized global endpoint crashed, resulting in a 500 Internal Server Error.
+
+In total, all 17,931 requests directed to the global endpoint failed. The API specification explicitly defines the userId query parameter as optional however, omitting it causes a crash. As the response times were impacted by the high failure rate, the 95th percentile showed latency spikes (middle chart of Figure \ref{fig:stress_total_requests_per_second}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/francisco/total_requests_per_second_1780501954.833.png}
+    \caption{Graphs from Locust showing the results of the stress test}
+    \label{fig:stress_total_requests_per_second}
+\end{figure}
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{ll}
+        \hline
+        \textbf{Metric} & \textbf{Result} \\ \hline
+        Total requests & 17,931 \\
+        Failures & 17,931 \\
+        Error rate & 100\% \\
+        Median response time & 45 ms \\
+        Average response time & 148.02 ms \\
+        95th percentile & 620 ms \\
+        99th percentile & 1500 ms \\
+        Maximum response time & 3878 ms \\
+        Average throughput & 22.7 requests/s \\ \hline
+    \end{tabular}
+    \caption{Stress test summary for Phase 1 (Global Endpoint GET /forum/posts)}
+    \label{tab:stress_phase1}
+\end{table}
+
+
+\subsection{Phase 2: Filtered Route Only}
+After understanding the issue, I modified the test to only send requests to the filtered endpoint (\texttt{GET /api/v1/forum/posts?userId=X}).
+
+The system handled the initial ramp-up phases fine. However, during the peak load phase, the server reached its processing limit and began to drop requests.
+
+As shown in the statistics below, the test generated over 18,700 requests, of which 1,337 failed, resulting in a 7\% failure rate. This indicates that the application logic works correctly, but the infrastructure or database connection pool cannot sustain 200 concurrent users performing read operations.
+
+
+The response times were also affected by the high load. The average response time was around 614ms, with the 99th percentile reaching 5400ms and a maximum peak of 17,740ms. These latency spikes correlate directly with the dropped requests visible on the failure rate graph.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/francisco/total_requests_per_second_1780506598.451.png}
+    \caption{Graphs from Locust showing the results of the stress test}
+    \label{fig:stress_total_requests_per_second_filtered}
+\end{figure}
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{ll}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\ \hline
+    Total requests & 18,748 \\
+    Failures & 1,377 \\
+    Error rate & 7.34\% \\
+    Median response time & 120 ms \\
+    Average response time & 613.99 ms \\
+    95th percentile & 2400 ms \\
+    99th percentile & 5400 ms \\
+    Maximum response time & 17,740 ms \\
+    Average throughput & 30.6 requests/s \\ \hline
+    \end{tabular}
+    \caption{Stress test summary for Phase 2 (Filtered Endpoint GET /forum/posts?userId=X)}
+    \label{tab:stress_phase2}
+\end{table}
+
+\newpage 
+
+\subsection{Conclusion}
+
+The stress testing revealed two issues in the target API:
+
+\begin{enumerate}
+    \item The global endpoint (\texttt{GET /forum/posts}) is broken and returns a 500 Internal Server Error response.
+    \item The filtered endpoint (\texttt{GET /forum/posts?userId=X}) is implemented well but cannot handle high concurrency.
+\end{enumerate}
+
+For that reason I suggest fixing the global endpoint and increasing the infrastructure resources to handle the high load.
+
+\section{Endpoint \texttt{GET /locations/code/{code}} - Daniel Nunes}
+This endpoint fetches the location data by country code and has the option for results to be filtered by year.
+
+\subsection{The test}
+
+Locust was used for the stress test, it generates requests with a very small wait time between them in order to impose stress on the system. Each virtual user sends requests to the endpoint with a random country code and a random year. The tested country codes and years were:
+
+\begin{itemize}
+    \item \texttt{AT}, \texttt{BE}, \texttt{DE}, \texttt{ES}, \texttt{FR}, \texttt{IE}, \texttt{IT}, \texttt{NL}, \texttt{PT}, \texttt{SE}
+    \item \texttt{2020}, \texttt{2021}, \texttt{2022}, \texttt{2023}, \texttt{2024}
+\end{itemize}
+
+For this test, a request was only counted as successful if both the HTTP response and the response body were correct. Also, the number of users was set to increase by 100 every 30 seconds until reaching 1000 concurrent users. After that the test ramped down to 0 users.
+
+\newpage
+
+\subsection{Results}
+The final results from Locust were:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & 24,762 \\
+    Failures & 1,416 \\
+    Failure ratio & 5.72\% \\
+    Average RPS & 42.85 \\
+    Average response time & 681.4 ms \\
+    Minimum response time & 38 ms \\
+    Median response time & 72 ms \\
+    p90 response time & 1,250 ms \\
+    p95 response time & 3,700 ms \\
+    p98 response time & 7,600 ms \\
+    p99 response time & 9,800 ms \\
+    Maximum response time & 21,486.7 ms \\\hline
+    \end{tabular}
+    \caption{Stress test summary for \texttt{GET /locations/code/\{code\}}}
+    \label{tab:stress_locations_code}
+\end{table}
+
+Overall, the endpoint remained functionally correct for most of the run, but the stress threshold was exceeded during the peak load stages. The recorded failures were caused by requests taking longer than the accepted latency limit.
+
+The response time distribution shows that the service became saturated under heavier load. The median response time remained low at \texttt{72ms} but the tail latency increased significantly. A relevant portion of requests experienced multi-second latency during the highest load stages, with the 95th percentile reaching \texttt{3700ms}.
+
+\subsection{Conclusion}
+
+The main limitation found in this endpoint was performance degradation under high concurrency. The failure ratio of \texttt{5.72\%} and the high p95 and p99 response times show that the endpoint is stable in terms of correctness, but not yet comfortable at the level of load enforced by this test.
+
+
+\section{Endpoint \texttt{GET /locations/compare} - Daniel Sousa}
+
+The goal of this endpoint is to compare multiple locations side by side. According to the API specification, \texttt{GET /locations/compare} requires the query parameter \texttt{ids}, with at least two comma-separated location identifiers. The optional \texttt{metrics} parameter can be used to restrict the comparison to specific metrics.
+
+The stress test was implemented with Locust and used the following request:
+
+\begin{itemize}
+    \item \texttt{GET /locations/compare?ids=1,2,3\&metrics=hpi,crime,life\_expectancy}
+\end{itemize}
+
+This request follows the contract in \texttt{combinedAPI.yaml}: it compares three valid locations and asks for three metrics from the documented enum. The test validated that the API returned \texttt{200 OK}, that the body was valid JSON, that the response was an array with at least two locations, and that each item contained \texttt{id}, \texttt{name}, \texttt{country\_code} and \texttt{metrics}.
+
+\subsection{Load Profile}
+
+The stress test used a staged load profile. It started with a slow ramp-up to 10 virtual users, increased to 50 users, then to 100 users, and finally introduced a spike to 200 users before reducing the load again. This profile was useful to observe both normal behaviour and degradation under peak concurrency.
+
+\subsection{Results}
+
+The endpoint remained functionally correct during the run: the failures recorded by Locust were caused by the test latency limit of \texttt{3000ms}, not by unexpected status codes or invalid response bodies. In other words, when responses arrived within the accepted time window, they matched the API contract.
+
+\begin{table}[H]
+    \centering
+    \caption{Stress test summary for \texttt{GET /locations/compare}}
+    \begin{tabular}{p{0.45\textwidth} p{0.4\textwidth}}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & \texttt{18858} \\
+    Failures & \texttt{1067} \\
+    Error rate & \texttt{5.66\%} \\
+    Median response time & \texttt{57ms} \\
+    Average response time & \texttt{607.1ms} \\
+    90th percentile & \texttt{1200ms} \\
+    95th percentile & \texttt{3600ms} \\
+    99th percentile & \texttt{9900ms} \\
+    Maximum response time & \texttt{22546.9ms} \\
+    Average throughput & \texttt{38.16 requests/s} \\\hline
+    \end{tabular}
+\end{table}
+
+The median response time stayed very low at \texttt{57ms}, which shows that the endpoint is fast for most requests. However, the upper percentiles increased significantly during the heavier phases. The 95th percentile reached \texttt{3600ms}, already above the stress threshold, and the maximum response time reached approximately \texttt{22.5s}. The failure log confirms this pattern, with repeated entries such as \texttt{Latência 3667ms excede limite stress (3000ms)}.
+
+\subsection{Conclusion}
+
+The stress test did not reveal a specification mismatch for \texttt{GET /locations/compare}. The endpoint returned the expected data structure for valid comparison requests. The main issue is performance under high concurrency: once the test reached the stress and spike phases, a relevant number of requests took more than \texttt{3000ms}. This suggests that the comparison endpoint or its underlying data access layer should be optimized before the system is expected to support around 100 to 200 concurrent users.
+
+\section{Endpoint \texttt{GET /locations/top} - Daniel Carvalho}
+
+The goal of this endpoint is to return the top locations for a selected metric. According to the API specification, \texttt{GET /locations/top} receives the query parameters \texttt{metric}, \texttt{order} and \texttt{limit}. The \texttt{metric} parameter defines which metric is used for the ranking, \texttt{order} defines if the ranking should be ascending or descending, and \texttt{limit} controls the maximum number of returned locations.
+
+The stress test was implemented with Locust and used multiple valid scenarios instead of testing only one fixed query:
+
+\begin{itemize}
+    \item \texttt{GET /locations/top?metric=hpi\&order=desc\&limit=5}
+    \item \texttt{GET /locations/top?metric=crime\&order=asc\&limit=10}
+    \item \texttt{GET /locations/top?metric=life\_expectancy\&order=desc\&limit=15}
+    \item \texttt{GET /locations/top?metric=pli\&order=asc\&limit=5}
+\end{itemize}
+
+These requests follow the contract of the endpoint and cover different combinations of metrics, ordering and response sizes. The test also validated that the API returned \texttt{200 OK}, that the body was valid JSON, that the response was a non-empty array, and that each returned object contained \texttt{rank}, \texttt{name} and \texttt{value}. The test also checked that the number of returned locations did not exceed the requested \texttt{limit} and that the values were correctly sorted according to the selected \texttt{order}.
+
+\subsection{Load Profile}
+
+The stress test used a staged load profile. It started with 10 virtual users, increased to 50 users, then to 100 users, and finally introduced a spike to 200 users before reducing the load again. This profile was useful to verify the behaviour of the endpoint under normal traffic and under a short peak of concurrency.
+
+\subsection{Results}
+
+The endpoint behaved correctly during the whole run. Locust recorded \texttt{25502} requests and no failures. This means that no unexpected status codes, invalid JSON responses, invalid response structures or latency violations above the configured \texttt{3000ms} threshold were detected.
+
+\begin{table}[H]
+    \centering
+    \caption{Stress test summary for \texttt{GET /locations/top}}
+    \begin{tabular}{p{0.45\textwidth} p{0.4\textwidth}}
+    \hline
+    \textbf{Metric} & \textbf{Result} \\\hline
+    Total requests & \texttt{25502} \\
+    Failures & \texttt{0} \\
+    Error rate & \texttt{0\%} \\
+    Median response time & \texttt{37ms} \\
+    Average response time & \texttt{66.6ms} \\
+    90th percentile & \texttt{110ms} \\
+    95th percentile & \texttt{190ms} \\
+    99th percentile & \texttt{640ms} \\
+    Maximum response time & \texttt{2972ms} \\
+    Average throughput & \texttt{51.62 requests/s} \\\hline
+    \end{tabular}
+\end{table}
+
+The Locust graphs show that the endpoint remained stable even during the 200 user spike. The median response time stayed around \texttt{37ms}, and the 95th percentile stayed at \texttt{190ms}. The maximum response time was \texttt{2972ms}, which was close to the stress threshold but still below the configured limit.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/daniel_carvalho/req.png}
+    \caption{Locust graphs for \texttt{GET /locations/top}}
+    \label{fig:stress_top_locust_graphs}
+\end{figure}
+
+The request graph confirms that the endpoint sustained the generated load without errors. During the peak phase, throughput reached more than \texttt{120} requests per second, while the aggregated average throughput for the whole run was \texttt{51.62} requests per second.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/daniel_carvalho/log.png}
+    \caption{Locust final summary for \texttt{GET /locations/top}}
+    \label{fig:stress_top_log_summary}
+\end{figure}
+
+\subsection{Conclusion}
+
+The stress test did not reveal any functional problem in \texttt{GET /locations/top}. The endpoint respected the API contract for all tested scenarios and kept response times low for most requests. Since the maximum latency was close to the \texttt{3000ms} threshold, the endpoint should still be monitored under heavier or longer runs, but for the tested load profile it handled up to 200 concurrent users without failures.

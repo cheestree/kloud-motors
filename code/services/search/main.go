@@ -80,7 +80,7 @@ func toSearchResponse(result *domain.SearchResult) *proto.SearchResponse {
 func toListingSummary(item shared.ListingSummary) *shared.ListingSummary {
 	return &shared.ListingSummary{
 		Id:           item.Id,
-		DealerId:     item.DealerId,
+		SellerId:     item.SellerId,
 		Make:         item.Make,
 		Model:        item.Model,
 		Year:         item.Year,

@@ -1,30 +1,42 @@
 package handlers
 
 import (
-	"encoding/json"
+	"errors"
 	"net/http"
-	"strings"
 
-	sellerpb "services/seller/proto"
-	"services/utils"
+	sellerrequests "services/gateway/handlers/seller"
+
+	"github.com/go-playground/validator/v10"
 )
 
 func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 || parts[3] == "" {
-		http.Error(w, "Missing seller id", http.StatusBadRequest)
-		return
-	}
-	sellerID := parts[3]
-	ctx := r.Context()
-	req := &sellerpb.GetSellerProfileRequest{SellerId: utils.ParseInt64(sellerID)}
-	resp, err := sellerClient.GetSellerProfile(ctx, req)
+
+	sellerID, err := sellerrequests.SellerIDFromPath(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if errors.Is(err, sellerrequests.ErrMissingSellerID) {
+			writeError(w, http.StatusBadRequest, "Missing seller id", nil)
+			return
+		}
+		var validationErrs validator.ValidationErrors
+		if errors.As(err, &validationErrs) {
+			writeRequestError(w, "Invalid seller id", err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, "Invalid seller id", []fieldError{{
+			Field:   "seller_id",
+			Message: "must be a positive integer",
+		}})
+		return
+	}
+	ctx := r.Context()
+
+	resp, err := sellerClient.GetSellerProfile(ctx, sellerrequests.BuildGetSellerProfileRequest(sellerID))
+	if err != nil {
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -32,18 +44,19 @@ func HandleGetSellerProfile(w http.ResponseWriter, r *http.Request) {
 
 func HandleGetSellersPreview(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, msgMethodNotAllowed, http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
-	var req sellerpb.SellersPreviewRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, msgInvalidBody, http.StatusBadRequest)
+	var body sellerrequests.SellersPreviewBody
+	if err := sellerrequests.BindAndValidateJSON(r, &body); err != nil {
+		writeRequestError(w, "Invalid seller preview body", err)
 		return
 	}
 	ctx := r.Context()
-	resp, err := sellerClient.GetSellersPreview(ctx, &req)
+
+	resp, err := sellerClient.GetSellersPreview(ctx, sellerrequests.BuildSellersPreviewRequest(body))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)

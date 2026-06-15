@@ -84,7 +84,7 @@ func (s *server) CreateListing(ctx context.Context, req *listingpb.CreateListing
 		Transmission: req.Transmission,
 		Trim:         req.Trim,
 		Color:        req.Color,
-		DealerID:     req.DealerId,
+		DealerID:     req.SellerId,
 		IsNew:        req.IsNew,
 		IsSold:       req.IsSold,
 	})
@@ -117,7 +117,7 @@ func (s *server) UpdateListing(ctx context.Context, req *listingpb.UpdateListing
 		Transmission: req.Transmission,
 		Trim:         req.Trim,
 		Color:        req.Color,
-		DealerID:     req.DealerId,
+		DealerID:     req.SellerId,
 		IsNew:        req.IsNew,
 	})
 	if err != nil {
@@ -129,9 +129,9 @@ func (s *server) UpdateListing(ctx context.Context, req *listingpb.UpdateListing
 
 func (s *server) SetListingSoldStatus(ctx context.Context, req *listingpb.SetListingSoldStatusRequest) (*listingpb.ListingDetailsResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "listing id, dealer id, and sold status are required")
+		return nil, status.Error(codes.InvalidArgument, "listing id, seller id, and sold status are required")
 	}
-	listing, err := s.service.SetListingSoldStatus(ctx, req.Id, req.DealerId, req.IsSold)
+	listing, err := s.service.SetListingSoldStatus(ctx, req.Id, req.SellerId, req.IsSold)
 	if err != nil {
 		return nil, models.MapListingError("set listing sold status", err)
 	}
@@ -140,10 +140,10 @@ func (s *server) SetListingSoldStatus(ctx context.Context, req *listingpb.SetLis
 
 func (s *server) DeleteListing(ctx context.Context, req *listingpb.DeleteListingRequest) (*listingpb.DeleteListingResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "listing id and dealer id are required")
+		return nil, status.Error(codes.InvalidArgument, "listing id and seller id are required")
 	}
 
-	deleted, err := s.service.DeleteListing(ctx, req.Id, req.DealerId)
+	deleted, err := s.service.DeleteListing(ctx, req.Id, req.SellerId)
 	if err != nil {
 		return nil, models.MapListingError("delete listing", err)
 	}
@@ -153,9 +153,9 @@ func (s *server) DeleteListing(ctx context.Context, req *listingpb.DeleteListing
 
 func (s *server) CheckListingOwnership(ctx context.Context, req *listingpb.CheckListingOwnershipRequest) (*listingpb.CheckListingOwnershipResponse, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "listing_id and dealer_id are required")
+		return nil, status.Error(codes.InvalidArgument, "listing_id and seller_id are required")
 	}
-	isOwner, err := s.service.CheckListingOwnership(ctx, req.ListingId, req.DealerId)
+	isOwner, err := s.service.CheckListingOwnership(ctx, req.ListingId, req.SellerId)
 	if err != nil {
 		return nil, models.MapListingError("check listing ownership", err)
 	}
@@ -206,7 +206,7 @@ func (s *server) CheckListingOpen(ctx context.Context, req *listingpb.CheckListi
 		return nil, models.MapListingError("check listing open", err)
 	}
 
-	return &listingpb.CheckListingOpenResponse{IsOpen: open, DealerId: dealerID}, nil
+	return &listingpb.CheckListingOpenResponse{IsOpen: open, SellerId: dealerID}, nil
 }
 
 func main() {

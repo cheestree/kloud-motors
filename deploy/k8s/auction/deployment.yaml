@@ -6,7 +6,7 @@ metadata:
   labels:
     app: auction-service
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 300
   strategy:
@@ -54,11 +54,11 @@ spec:
                 name: auction-config
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 200m
+              memory: 256Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 750m
+              memory: 768Mi
           startupProbe:
             grpc:
               port: 50051
@@ -95,11 +95,11 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
+              cpu: 100m
               memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
           startupProbe:
             httpGet:
               path: /startup

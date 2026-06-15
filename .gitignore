@@ -1,11 +1,9 @@
 .DS_Store
-code/setup/data/*.csv
+CIS_Automotive_Kaggle_Sample.csv
 venv/
 .env
 .env.secrets
 .env.variables
-
-*.csv
 
 # Go Binaries
 *.exe

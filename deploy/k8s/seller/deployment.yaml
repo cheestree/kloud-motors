@@ -46,10 +46,10 @@ spec:
                 name: seller-config
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 150m
+              memory: 256Mi
             limits:
-              cpu: 500m
+              cpu: 600m
               memory: 512Mi
           startupProbe:
             grpc:
@@ -86,11 +86,11 @@ spec:
                   key: instance-connection-name
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
+              cpu: 100m
               memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
           startupProbe:
             httpGet:
               path: /startup

@@ -45,7 +45,7 @@ func ToListingSummary(summary *shared.ListingSummary) *shared.ListingSummary {
 
 	return &shared.ListingSummary{
 		Id:           summary.Id,
-		DealerId:     summary.DealerId,
+		SellerId:     summary.SellerId,
 		Make:         summary.Make,
 		Model:        summary.Model,
 		Year:         summary.Year,

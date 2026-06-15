@@ -69,11 +69,15 @@ until docker exec chat-db pg_isready -U ${CHAT_POSTGRES_USER} -d ${CHAT_POSTGRES
 done
 
 echo "Preparing dataset and initializing databases inside docker run..."
+FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-"cn-project-491618"}
+GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-"$FIREBASE_PROJECT_ID"}
+GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-"$REPO_ROOT/service-account.json"}
 docker run --rm \
     --network host \
     -v "$REPO_ROOT:/workspace" \
-    -e FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID} \
-    -e GOOGLE_APPLICATION_CREDENTIALS="/workspace/$(basename ${GOOGLE_APPLICATION_CREDENTIALS})" \
+    -e FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID" \
+    -e GOOGLE_CLOUD_PROJECT="$GOOGLE_CLOUD_PROJECT" \
+    -e GOOGLE_APPLICATION_CREDENTIALS="/workspace/$(basename "$GOOGLE_APPLICATION_CREDENTIALS")" \
     -e USER_PYTHON_DATABASE_URL=${USER_PYTHON_DATABASE_URL} \
     -w /workspace/code/setup \
     python:3.12-slim \

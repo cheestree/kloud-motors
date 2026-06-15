@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -34,7 +33,7 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req chatpb.OpenChatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSONBody(r, &req); err != nil {
 		http.Error(w, msgInvalidBody, http.StatusBadRequest)
 		return
 	}
@@ -43,7 +42,7 @@ func HandleChatOpen(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	resp, err := chatClient.OpenChat(ctx, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -66,7 +65,7 @@ func HandleGetChats(w http.ResponseWriter, r *http.Request) {
 	resp, err := chatClient.GetChats(ctx, req)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 
@@ -92,10 +91,26 @@ func HandleChatHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	chatID := parts[3]
 	ctx := r.Context()
-	req := &chatpb.GetChatHistoryRequest{ChatId: chatID, UserId: userID}
+	q := r.URL.Query()
+	limit, fieldErr := parseInt32Query(q, queryLimit, 20, 1)
+	if fieldErr != nil {
+		writeError(w, http.StatusBadRequest, "Invalid chat history pagination parameters", []fieldError{*fieldErr})
+		return
+	}
+	skip, fieldErr := parseInt32Query(q, querySkip, 0, 0)
+	if fieldErr != nil {
+		writeError(w, http.StatusBadRequest, "Invalid chat history pagination parameters", []fieldError{*fieldErr})
+		return
+	}
+	req := &chatpb.GetChatHistoryRequest{
+		ChatId: chatID,
+		UserId: userID,
+		Limit:  limit,
+		Skip:   skip,
+	}
 	resp, err := chatClient.GetChatHistory(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -122,7 +137,7 @@ func HandleChatWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	upstreamURL, err := chatWSProxyURL(chatID, r.URL.RawQuery)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err)
 		return
 	}
 

@@ -4,12 +4,33 @@ package user;
 option go_package = "./proto";
 
 service UserService {
+    rpc Login (AuthRequest) returns (AuthResponse);
+    rpc Register (AuthRequest) returns (AuthResponse);
+    rpc RefreshToken (RefreshTokenRequest) returns (AuthResponse);
     rpc GetFavorites (GetFavoritesRequest) returns (FavoritesResponse);
     rpc AddFavorite (AddFavoriteRequest) returns (FavoriteMutationResponse);
     rpc RemoveFavorite (RemoveFavoriteRequest) returns (FavoriteMutationResponse);
     rpc GetUsersPreview (UsersPreviewRequest) returns (UsersPreviewResponse);
     rpc CreateUserProfile (CreateUserProfileRequest) returns (CreateUserProfileResponse);
     rpc GetOrCreateByFirebaseUID (GetOrCreateByFirebaseUIDRequest) returns (GetOrCreateByFirebaseUIDResponse);
+}
+
+message AuthRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message AuthResponse {
+  string id_token = 1;
+  string email = 2;
+  string refresh_token = 3;
+  string expires_in = 4;
+  string local_id = 5;
+  int64 user_id = 6;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
 }
 
 message GetOrCreateByFirebaseUIDRequest {

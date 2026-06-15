@@ -1,0 +1,62 @@
+\chapter{CI/CD pipeline} \label{cap:pipeline}
+
+The project includes a \textbf{continuous integration and continuous deployment} pipeline implemented with GitHub Actions. The pipeline is split into different specialised flows instead of a single large job: one flow validates the application code, one builds and deploys the containerised services to GKE, one manages Terraform infrastructure changes, and additional flows cover backup and privacy checks. This separation keeps each automation concern explicit and reduces the risk of deploying an application version that has not passed the expected validation steps.
+
+\section{Continuous Integration}
+
+The main CI workflow runs on pushes to the \texttt{main} branch and can also be started manually through \texttt{workflow\_dispatch}. It contains two jobs: \textbf{Go unit tests} and \textbf{Docker Compose based integration tests}.
+
+The unit test job checks out the repository, configures Go using the version declared in \texttt{code/services/go.mod}, generates the gRPC files with \texttt{gen\_proto.sh}, downloads the module dependencies, and runs \texttt{go test ./...}. This validates the service packages and catches errors in the shared Go module \textit{before} a container image is produced.
+
+The integration test job validates the test Compose file and then starts the test stack defined in \texttt{docker-compose.test.yml}. This stack creates PostgreSQL databases for listing, user, and seller data, starts Redis, loads prepared datasets into the databases, builds the relevant service containers, waits for the gRPC ports to become available, and finally runs the integration test packages from a Go test runner container. The Compose command is executed with \texttt{--abort-on-container-exit} and \texttt{--exit-code-from test-runner-test}, so the GitHub Actions job fails when the test runner fails. A cleanup step always executes \texttt{docker compose down --volumes --remove-orphans} to remove containers and volumes created during the run.
+
+This CI stage is important because it tests the project in an environment close to the deployed architecture. Instead of only running isolated unit tests, the integration workflow exercises service containers, real PostgreSQL instances, Redis, dataset loading scripts, gRPC communication, and service startup dependencies.
+
+\section{Infrastructure Pipeline}
+
+Infrastructure changes are handled by the Terraform workflow. The workflow runs on pull requests to \texttt{prod} and on pushes to \texttt{prod}. In both cases it authenticates to Google Cloud using the repository service account secret, installs Terraform, and initialises Terraform with the configured remote state bucket.
+
+For pull requests, the workflow runs \texttt{terraform plan}. This gives visibility into the infrastructure changes before they are merged. For pushes to \texttt{prod}, the workflow runs \texttt{terraform apply -auto-approve}, applying the infrastructure definition under \texttt{terraform}. The managed resources include the Cloud SQL instance and databases, the backup bucket, the Artifact Registry repository, Pub/Sub topics, the service account and IAM bindings, the VPC/subnet, and the GKE cluster with its node pool.
+
+Using Terraform in CI/CD makes the cloud environment \textbf{reproducible}. The cluster, database, storage, registry, messaging, and service-account configuration are defined as code instead of depending on manual console actions.
+
+\section{Build and Deployment Pipeline}
+
+Application deployment is triggered by pushes to the \texttt{prod} branch. The deployment workflow first runs a \textbf{matrix job} that builds and pushes one container image per runtime service. The matrix covers:
+
+\begin{itemize}
+    \item Core marketplace services: \texttt{listing}, \texttt{search}, \texttt{marketprice}, and the geographical insights service.
+    \item Account and interaction services: \texttt{user}, \texttt{seller}, \texttt{chat}, and \texttt{auction}.
+    \item Platform services: \texttt{gateway} and \texttt{redis}.
+\end{itemize}
+
+For each matrix entry, the workflow authenticates to Google Cloud, configures Docker for Artifact Registry, regenerates the gRPC sources, builds the service image from \path{code/services}, tags it with the Artifact Registry repository path, and pushes it as \texttt{latest}. The matrix is configured with \texttt{fail-fast: false}, allowing GitHub Actions to report which service images succeeded or failed instead of stopping at the first failed build.
+
+After all images are pushed, the deploy job authenticates again, obtains GKE credentials with \texttt{google-github-actions/get-gke-credentials}, and runs the Kubernetes helper script:
+
+\begin{itemize}
+    \item \texttt{scripts/cloud/k8s.sh up --with-ingress} applies the application manifests, installs or updates the ingress controller and ingress, restarts deployments, and waits for rollouts.
+    \item \texttt{scripts/cloud/monitoring\_k8s.sh up} applies the monitoring stack in the monitoring namespace.
+\end{itemize}
+
+The Kubernetes deployment is declarative through Kustomize. The root \path{deploy/k8s/kustomization.yaml} includes the namespace, shared service account, Cloud SQL configuration, microservice deployments and services, Redis, the backup CronJob, and ingress. Since the workflow pushes images with the same \texttt{latest} tag, the deployment script explicitly restarts deployments so that pods pull the new image version.
+
+\section{Operational Workflows}
+
+The \textbf{backup workflow} supports the recovery strategy of the project. It runs on pushes to \texttt{prod}, on a daily schedule at \texttt{02:00 UTC}, and manually through \texttt{workflow\_dispatch}. It verifies that the backup bucket exists, runs \texttt{scripts/cloud/backup\_data.sh}, lists the resulting objects, and can optionally execute a restore smoke-test that verifies the latest exported listing database object is present and non-empty.
+
+The \textbf{privacy workflow} runs on pushes to \texttt{main} and \texttt{prod}. It installs Gitleaks, scans the repository for possible secrets, checks that \texttt{.env.example} does not contain real credential patterns, checks Kubernetes manifests for suspicious hard-coded secret values, and verifies that \texttt{service-account.json} is not tracked by Git. This workflow reduces the risk of leaking credentials into the repository or deployment manifests.
+
+\section{Pipeline Summary}
+
+The final CI/CD automation is therefore composed of different flows with different triggers:
+
+\begin{enumerate}
+    \item \textbf{Development validation flow}: pushes to \texttt{main} run unit tests and Docker Compose based integration tests.
+    \item \textbf{Infrastructure flow}: pull requests to \texttt{prod} run \texttt{terraform plan}, while pushes to \texttt{prod} apply Terraform.
+    \item \textbf{Application delivery flow}: pushes to \texttt{prod} build all service images, push them to Artifact Registry, and deploy the application and monitoring manifests to GKE.
+    \item \textbf{Backup and recovery flow}: scheduled and manual runs export Cloud SQL data to the backup bucket and can verify restore readiness.
+    \item \textbf{Privacy flow}: pushes to \texttt{main} and \texttt{prod} scan the repository and manifests for accidental secret exposure.
+\end{enumerate}
+
+This automation connects the local implementation model to the cloud deployment model: services are tested in Docker, packaged as Docker images, published to Artifact Registry, and then rolled out to Kubernetes on GKE.

@@ -10,7 +10,6 @@ on:
 
 env:
   TF_STATE_BUCKET: cn-terraform-state-cn-project-491618
-  TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
 
 jobs:
   terraform:
@@ -40,8 +39,8 @@ jobs:
 
       - name: Terraform Plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -var="db_password=${{ secrets.TF_VAR_DB_PASSWORD }}"
+        run: terraform plan -no-color
 
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/prod'
-        run: terraform apply -auto-approve -var="db_password=${{ secrets.TF_VAR_DB_PASSWORD }}"
+        run: terraform apply -auto-approve

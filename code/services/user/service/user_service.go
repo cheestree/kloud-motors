@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	. "services/user/models"
 	proto "services/user/proto"
@@ -13,10 +14,47 @@ import (
 
 type UserService struct {
 	repo *repository.Repository
+	auth *firebaseAuthClient
 }
 
 func NewUserService(repo *repository.Repository) *UserService {
-	return &UserService{repo: repo}
+	return &UserService{
+		repo: repo,
+		auth: newFirebaseAuthClientFromEnv(),
+	}
+}
+
+func (s *UserService) Login(ctx context.Context, req *proto.AuthRequest) (*proto.AuthResponse, error) {
+	authResp, err := s.auth.login(ctx, req.Email, req.Password)
+	if err != nil {
+		return nil, err
+	}
+	return s.withUserID(ctx, authResp)
+}
+
+func (s *UserService) Register(ctx context.Context, req *proto.AuthRequest) (*proto.AuthResponse, error) {
+	authResp, err := s.auth.register(ctx, req.Email, req.Password)
+	if err != nil {
+		return nil, err
+	}
+	return s.withUserID(ctx, authResp)
+}
+
+func (s *UserService) RefreshToken(ctx context.Context, req *proto.RefreshTokenRequest) (*proto.AuthResponse, error) {
+	authResp, err := s.auth.refreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+	return s.withUserID(ctx, authResp)
+}
+
+func (s *UserService) withUserID(ctx context.Context, authResp *proto.AuthResponse) (*proto.AuthResponse, error) {
+	user, err := s.repo.GetOrCreateByFirebaseUID(ctx, authResp.LocalId, authResp.Email, "")
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to resolve authenticated user")
+	}
+	authResp.UserId = user.ID
+	return authResp, nil
 }
 
 func (s *UserService) GetOrCreateByFirebaseUID(ctx context.Context, req *proto.GetOrCreateByFirebaseUIDRequest) (*proto.GetOrCreateByFirebaseUIDResponse, error) {
@@ -66,6 +104,9 @@ func (s *UserService) AddFavorite(ctx context.Context, req *proto.AddFavoriteReq
 
 	err := s.repo.AddFavorite(ctx, fav)
 	if err != nil {
+		if isDuplicateFavoriteError(err) {
+			return nil, status.Error(codes.AlreadyExists, "favorite already exists")
+		}
 		return nil, status.Error(codes.Internal, "failed to add favorite")
 	}
 
@@ -73,6 +114,13 @@ func (s *UserService) AddFavorite(ctx context.Context, req *proto.AddFavoriteReq
 		Success: true,
 		Message: "favorite added",
 	}, nil
+}
+
+func isDuplicateFavoriteError(err error) bool {
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "duplicate") ||
+		strings.Contains(msg, "unique") ||
+		strings.Contains(msg, "idx_user_listing")
 }
 
 func (s *UserService) RemoveFavorite(ctx context.Context, req *proto.RemoveFavoriteRequest) (*proto.FavoriteMutationResponse, error) {

@@ -152,15 +152,15 @@ func CreateListing(ctx context.Context, listingDB *gorm.DB, req *proto.CreateLis
 		}
 
 		now := time.Now().UTC()
-		yearValue := utils.Int32Ptr(req.Year)
-		priceValue := utils.Int64PtrFromFloat(req.Price)
-		mileageValue := utils.Int64PtrFromInt32(req.Mileage)
-		trimValue := utils.StringPtr(req.Trim)
-		cityValue := utils.StringPtr(req.City)
-		districtValue := utils.StringPtr(req.District)
-		stateValue := utils.StringPtr(req.State)
-		countryValue := utils.StringPtr(req.Country)
-		colorValue := utils.StringPtr(req.Color)
+		yearValue := utils.PositiveInt32Ptr(req.Year)
+		priceValue := utils.PositiveInt64PtrFromFloat(req.Price)
+		mileageValue := utils.PositiveInt64PtrFromInt32(req.Mileage)
+		trimValue := utils.StringPtrIfNotEmpty(req.Trim)
+		cityValue := utils.StringPtrIfNotEmpty(req.City)
+		districtValue := utils.StringPtrIfNotEmpty(req.District)
+		stateValue := utils.StringPtrIfNotEmpty(req.State)
+		countryValue := utils.StringPtrIfNotEmpty(req.Country)
+		colorValue := utils.StringPtrIfNotEmpty(req.Color)
 
 		listing := AutomotiveData{
 			Vin:            req.Vin,
