@@ -10,10 +10,17 @@ spec:
   rules:
     - http:
         paths:
-          - path: /
+          - path: /grafana
             pathType: Prefix
             backend:
               service:
                 name: grafana
+                port:
+                  name: http
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-service
                 port:
                   name: http

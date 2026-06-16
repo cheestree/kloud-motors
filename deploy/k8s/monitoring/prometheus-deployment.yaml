@@ -25,6 +25,8 @@ spec:
             - "--storage.tsdb.path=/prometheus"
             - "--storage.tsdb.retention.time=7d"
             - "--web.enable-lifecycle"
+            - "--web.external-url=/prometheus/"
+            - "--web.route-prefix=/prometheus"
           ports:
             - name: http
               containerPort: 9090
