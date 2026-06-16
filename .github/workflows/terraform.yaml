@@ -39,8 +39,12 @@ jobs:
 
       - name: Terraform Plan
         if: github.event_name == 'pull_request'
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_VAR_db_password }}
         run: terraform plan -no-color
 
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/prod'
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_VAR_db_password }}
         run: terraform apply -auto-approve
