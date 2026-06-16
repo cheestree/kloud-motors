@@ -23,6 +23,7 @@ go.work.sum
 cloud-sql-proxy
 proxy.log
 
+service-account.json
 .env.secrets
 gcp-sa-key.json
 .env.variables
