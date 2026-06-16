@@ -99,6 +99,44 @@ k() {
   kubectl "${KUBE_ARGS[@]}" "$@"
 }
 
+read_env_file_value() {
+  local key="$1"
+  local file="$2"
+  local line value
+
+  [[ -f "$file" ]] || return 1
+
+  line="$(grep -E "^(export[[:space:]]+)?${key}=" "$file" | tail -n 1 || true)"
+  [[ -n "$line" ]] || return 1
+
+  value="${line#*=}"
+  value="${value%$'\r'}"
+
+  if [[ "$value" =~ ^\".*\"$ || "$value" =~ ^\'.*\'$ ]]; then
+    value="${value:1:${#value}-2}"
+  fi
+
+  printf '%s' "$value"
+}
+
+patch_user_runtime_secrets() {
+  local firebase_api_key encoded_value
+
+  firebase_api_key="${FIREBASE_API_KEY:-}"
+  if [[ -z "$firebase_api_key" ]]; then
+    firebase_api_key="$(read_env_file_value FIREBASE_API_KEY "$ROOT_DIR/.env.secrets" || true)"
+  fi
+
+  if [[ -z "$firebase_api_key" ]]; then
+    echo "FIREBASE_API_KEY is required but was not found in the environment or .env.secrets."
+    exit 1
+  fi
+
+  echo "Patching user-secrets with runtime-only secret keys..."
+  encoded_value="$(printf '%s' "$firebase_api_key" | base64 | tr -d '\n')"
+  k -n "$NAMESPACE" patch secret user-secrets --type merge -p "{\"data\":{\"FIREBASE_API_KEY\":\"$encoded_value\"}}" >/dev/null
+}
+
 if ! k cluster-info >/dev/null 2>&1; then
   echo "Cannot connect to the Kubernetes cluster. Check your kubeconfig/context."
   exit 1
@@ -115,6 +153,7 @@ apply_up() {
 
   echo "Applying application manifests with kustomize..."
   k apply -k "$KUSTOMIZE_DIR"
+  patch_user_runtime_secrets
 
   if [[ "$WITH_INGRESS" == true ]]; then
     echo "Applying ingress manifest..."
