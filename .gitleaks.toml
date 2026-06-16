@@ -4,6 +4,12 @@ useDefault = true
 [allowlist]
 description = "Ignore example and sample-data files that produce false positives"
 paths = [
+  '''^\.env$''',
+  '''^\.env\.secrets$''',
+  '''^\.env\.variables$''',
   '''^\.env\.example$''',
-  '''^code/setup/.csv$''',
+  '''^service-account\.json$''',
+  '''^gcp-sa-key\.json$''',
+  '''^venv/''',
+  '''^code/setup/.*\.csv$''',
 ]
