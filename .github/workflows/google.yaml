@@ -109,4 +109,4 @@ jobs:
       - name: Deploy monitoring manifests to GKE
         env:
           KUBECONFIG: ${{ steps.gke-credentials.outputs.kubeconfig_path }}
-        run: bash scripts/cloud/monitoring_k8s.sh up
+        run: bash scripts/cloud/monitoring_k8s.sh up --with-ingress
