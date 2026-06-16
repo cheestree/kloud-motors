@@ -82,8 +82,6 @@ resource "google_container_cluster" "primary" {
   network    = google_compute_network.vpc_network.id
   subnetwork = google_compute_subnetwork.subnet.id
 
-  # Retiramos o default node pool, mas ele é criado temporariamente antes de ser apagado.
-  # Por isso definimos um disco mínimo (10GB) para não rebentar a quota!
   remove_default_node_pool = true
   initial_node_count       = 1
 
