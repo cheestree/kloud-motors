@@ -32,6 +32,12 @@ resource "google_storage_bucket" "backup_bucket" {
   }
 }
 
+resource "google_storage_bucket_iam_member" "cloud_sql_backup_writer" {
+  bucket = google_storage_bucket.backup_bucket.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_sql_database_instance.db_instance.service_account_email_address}"
+}
+
 # Artifact Registry para as imagens Docker
 resource "google_artifact_registry_repository" "vehicles_repo" {
   location      = var.region

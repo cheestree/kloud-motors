@@ -60,6 +60,22 @@ jobs:
             echo "Bucket gs://${BACKUP_BUCKET} already exists."
           fi
 
+      - name: Allow Cloud SQL exports to write backups
+        run: |
+          CLOUD_SQL_SERVICE_ACCOUNT=$(gcloud sql instances describe "${CLOUD_SQL_INSTANCE}" \
+            --project="${PROJECT_ID}" \
+            --format="value(serviceAccountEmailAddress)")
+
+          if [ -z "$CLOUD_SQL_SERVICE_ACCOUNT" ]; then
+            echo "::error::Could not resolve Cloud SQL service account for ${CLOUD_SQL_INSTANCE}."
+            exit 1
+          fi
+
+          gcloud storage buckets add-iam-policy-binding "gs://${BACKUP_BUCKET}" \
+            --member="serviceAccount:${CLOUD_SQL_SERVICE_ACCOUNT}" \
+            --role="roles/storage.objectAdmin" \
+            --project="${PROJECT_ID}"
+
       - name: Run backup script
         id: run-backup
         env:
